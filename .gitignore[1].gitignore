@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+humanity_horizons.db
+.streamlit/secrets.toml
+.env

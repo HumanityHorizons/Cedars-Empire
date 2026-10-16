@@ -1,4 +1,4 @@
-stream_name = st.selectbox("Opportunity", [n for n,_ in revenue_streams])
+        stream_name = st.selectbox("Opportunity", [n for n,_ in revenue_streams])
         category = dict(revenue_streams)[stream_name]
         stage = st.selectbox("Planning status", ["Idea", "Validation needed", "Business case drafted", "Approved to test", "Pilot", "Active", "Paused", "Rejected"])
         estimate = st.text_input("Estimated amount (optional; planning estimate only)")

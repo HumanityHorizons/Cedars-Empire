@@ -81,7 +81,7 @@ def setting(name: str, default: str = "") -> str:
 
 
 DATABASE_URL = setting("DATABASE_URL", "").strip()
-ADMIN_EMAILS = {e.strip().lower() for e in setting("ADMIN_EMAILS", "").split(",") if e.strip()}
+  ADMIN_EMAILS = {     e.strip().lower()     for e in setting("ADMIN_EMAILS", "ogwal.bemmanuel@gmail.com").split(",")     if e.strip() } {     e.strip().lower()     for e in setting("ADMIN_EMAILS", "ogwal.bemmanuel@gmail.com").split(",")     if e.strip() } {e.strip().lower() for e in setting("ADMIN_EMAILS", "").split(",") if e.strip()}
 TREASURY_ADDRESS = setting("TRON_TREASURY_ADDRESS", "").strip()
 OPENAI_API_KEY = setting("OPENAI_API_KEY", "").strip()
 OPENAI_MODEL = setting("OPENAI_MODEL", "gpt-5-mini").strip() or "gpt-5-mini"

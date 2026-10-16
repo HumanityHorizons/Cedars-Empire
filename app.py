@@ -93,4 +93,4 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
-def run_optional_ai(prompt: str) -> str | None:
+ def run_optional_ai(prompt: str) -> str | None:     """Use the configured AI service when an API key is available."""     if not OPENAI_API_KEY:         return None     try:         from openai import OpenAI         client = OpenAI(api_key=OPENAI_API_KEY)         response = client.responses.create(             model=OPENAI_MODEL,             input=prompt         )         return (getattr(response, "output_text", "") or "").strip() or None     except Exception as exc:         st.warning(             "The AI service did not return a draft. "             f"Details: {type(exc).__name__}"         )         return None

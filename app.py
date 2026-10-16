@@ -81,8 +81,10 @@ def setting(name: str, default: str = "") -> str:
 
 
 DATABASE_URL = setting("DATABASE_URL", "").strip()
-ADMIN_EMAILS = {e.strip().lower() for e in setting("ADMIN_EMAILS", "").split(",") if e.strip()}
-TREASURY_ADDRESS = setting("TRON_TREASURY_ADDRESS", "").strip()
+ADMIN_EMAILS = {e.strip().lower() for e in setting("ADMIN_EMAILS", "ogwal.bemmanuel@gmail.com").split(",") if e.strip()}
+# Public TRON receiving address requested for the Humanity Horizons treasury display.
+# This is a public wallet address, NOT a private key. The app does not execute transfers.
+TREASURY_ADDRESS = "TE26B7zQjMbahYAWcxEsSPC6aZEr2Hcz1u"
 OPENAI_API_KEY = setting("OPENAI_API_KEY", "").strip()
 OPENAI_MODEL = setting("OPENAI_MODEL", "gpt-5-mini").strip() or "gpt-5-mini"
 
@@ -92,5 +94,3 @@ def now_iso() -> str:
 
 
 def run_optional_ai(prompt: str) -> str | None:
-    """Use an optional configured model only when the user explicitly opts in."""
-    if not OPENAI_API_KEY:

@@ -493,7 +493,7 @@ IS_ADMIN = USER_EMAIL.lower() in ADMIN_EMAILS
 with st.sidebar:
     st.markdown(f"**Signed in as:** {USER_NAME}")
     st.caption(USER_EMAIL)
-    if IS_ADMIN: st.success("Administrator workspace")
+     if IS_ADMIN:     st.subheader("Platform-wide schedules (administrator only)")      admin_schedules = db_all(         "SELECT owner_email, report_name, frequency, run_day, "         "recipient_email, enabled, timezone_name, created_at "         "FROM report_schedules "         "ORDER BY created_at DESC LIMIT 500"     )      st.dataframe(         pd.DataFrame(admin_schedules),         use_container_width=True,         hide_index=True     ) else:     st.error(         "This administrator page is not available for the current account."     ) st.success("Administrator workspace")
     pages = [
         "Dashboard", "My Tasks", "Opportunity Analysis", "Proposal Studio", "CV / Resume Studio",
         "SDG Navigator", "Noticeboard", "HH Standards & Impact", "Donor Feedback",
@@ -1126,7 +1126,7 @@ elif page == "HR & Volunteers":
         download_gate("HR / volunteer records", frame.to_csv(index=False), "humanity_horizons_hr_volunteers.csv", "text/csv", "hr_volunteers")
     else:
         st.info("No HR or volunteer records yet.")
-    if IS_ADMIN:
+     if IS_ADMIN:     st.subheader("Platform-wide schedules (administrator only)")      admin_schedules = db_all(         "SELECT owner_email, report_name, frequency, run_day, "         "recipient_email, enabled, timezone_name, created_at "         "FROM report_schedules "         "ORDER BY created_at DESC LIMIT 500"     )      st.dataframe(         pd.DataFrame(admin_schedules),         use_container_width=True,         hide_index=True     ) else:     st.error(         "This administrator page is not available for the current account."     )
         st.subheader("All platform records — administrator only")
         all_records = db_all("SELECT owner_email,person_name,record_type,role_title,availability,status,created_at,updated_at FROM volunteer_records ORDER BY updated_at DESC LIMIT 1000")
         st.dataframe(pd.DataFrame(all_records), use_container_width=True, hide_index=True)
@@ -1256,7 +1256,7 @@ elif page == "Report Automation":
     schedules = db_all("SELECT report_name,frequency,run_day,recipient_email,enabled,timezone_name,created_at FROM report_schedules WHERE owner_email=? ORDER BY created_at DESC", (USER_EMAIL,))
     if schedules:
         st.dataframe(pd.DataFrame(schedules), use_container_width=True, hide_index=True)
-    if IS_ADMIN:
+     if IS_ADMIN:     st.subheader("Platform-wide schedules (administrator only)")      admin_schedules = db_all(         "SELECT owner_email, report_name, frequency, run_day, "         "recipient_email, enabled, timezone_name, created_at "         "FROM report_schedules "         "ORDER BY created_at DESC LIMIT 500"     )      st.dataframe(         pd.DataFrame(admin_schedules),         use_container_width=True,         hide_index=True     ) else:     st.error(         "This administrator page is not available for the current account."     )
         st.subheader("Platform-wide schedules (administrator only)")
         admin_schedules = db_all("SELECT owner_email,report_name,frequency,run_day,recipient_email,enabled,timezone_name,created_at FROM report_schedules ORDER BY created_at DESC LIMIT 500")
         st.dataframe(pd.DataFrame(admin_schedules), use_container_width=True, hide_index=True)

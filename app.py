@@ -19,6 +19,7 @@ import pandas as pd
 import streamlit as st
 import pymupdf
 from docx import Document
+from hh_workspace_widgets import render_action_grid, render_calendar, render_document_exports
 
 # -----------------------------------------------------------------------------
 # Humanity Horizons 360 — functional MVP / deployment-safe prototype
@@ -224,6 +225,16 @@ def init_db() -> None:
             disaggregation TEXT, data_source TEXT, reporting_frequency TEXT,
             reporting_period TEXT, notes TEXT, created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL
+        )""",
+        """CREATE TABLE IF NOT EXISTS workspace_grids (
+            id TEXT PRIMARY KEY, owner_email TEXT NOT NULL, page_name TEXT NOT NULL,
+            grid_json TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+        )""",
+        """CREATE TABLE IF NOT EXISTS calendar_events (
+            id TEXT PRIMARY KEY, owner_email TEXT NOT NULL, title TEXT NOT NULL,
+            event_date TEXT NOT NULL, event_time TEXT NOT NULL, timezone_name TEXT NOT NULL,
+            reminder_minutes INTEGER NOT NULL DEFAULT 15, status TEXT NOT NULL DEFAULT 'Scheduled',
+            details TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
         )""",
     ]
     conn, kind = db_connect()
@@ -500,7 +511,7 @@ with st.sidebar:
         "Dashboard", "My Tasks", "Opportunity Analysis", "Proposal Studio", "CV / Resume Studio",
         "SDG Navigator", "Noticeboard", "HH Standards & Impact", "Donor Feedback",
         "B2B Collaboration", "HR & Volunteers", "Revenue & Sustainability",
-        "Report Automation", "Privacy and Data", "Admin Console"
+        "Report Automation", "Calendar & Events", "Privacy and Data", "Admin Console"
     ]
     if not IS_ADMIN:
         pages.remove("Admin Console")
@@ -515,6 +526,11 @@ with st.sidebar:
     st.caption("Platform release: 1.1 upgrade package")
     st.caption("AI: connected" if OPENAI_API_KEY else "AI: local structured mode (API key not configured)")
     st.caption("No funding, AI accuracy, compliance certification or payment settlement is guaranteed.")
+
+# Shared working grids and calendar controls are available throughout the authenticated workspace.
+render_action_grid(page, USER_EMAIL, db_all, db_exec, record_event)
+if page != "Calendar & Events":
+    render_calendar(USER_EMAIL, IS_ADMIN, db_all, db_exec, record_event, full_page=False)
 
 # -----------------------------------------------------------------------------
 # Dashboard
@@ -613,6 +629,7 @@ elif page == "Opportunity Analysis":
                 if st.session_state.get("ai_opportunity_result"):
                     st.text_area("AI opportunity review (verify against the original)", st.session_state["ai_opportunity_result"], height=360)
                     download_gate("AI opportunity review", st.session_state["ai_opportunity_result"], "humanity_horizons_ai_opportunity_review.txt", key="ai_opportunity_review")
+                    render_document_exports("AI opportunity review", st.session_state["ai_opportunity_result"], "ai_opportunity_review", record_event, USER_EMAIL)
                 categories = {
                     "Eligibility": [r"eligib(?:le|ility)", r"who can apply", r"applicant must", r"applicants must", r"registered organization"],
                     "Deadline": [r"deadline", r"closing date", r"due date", r"submit.{0,30}by"],
@@ -629,6 +646,7 @@ elif page == "Opportunity Analysis":
                             for i, item in enumerate(found, 1): st.markdown(f"**Evidence candidate {i}:** {item}")
                         else: st.write("No matching phrase found automatically. Check the whole source; this is not proof the criterion is absent.")
                 download_gate("extracted opportunity text", txt, "humanity_horizons_source_extract.txt", key="source_extract")
+                render_document_exports("Opportunity source extract", txt, "source_extract", record_event, USER_EMAIL)
             except Exception as e:
                 st.error(f"Could not read this document: {e}")
     st.warning("Scanned PDFs may need OCR. Tables, footnotes and annexes must be checked against the original call. Do not upload case files or unnecessary beneficiary details.")
@@ -668,6 +686,7 @@ elif page == "Proposal Studio":
         st.caption("Connected AI draft" if st.session_state.get("proposal_ai_used") else "Structured local draft — connect an API key and opt in for generative drafting")
         st.text_area("Editable proposal brief", st.session_state["proposal_draft"], height=420)
         download_gate("proposal brief", st.session_state["proposal_draft"], "humanity_horizons_proposal_brief.txt", key="proposal_brief")
+        render_document_exports("Proposal drafting brief", st.session_state["proposal_draft"], "proposal_brief", record_event, USER_EMAIL)
 
 # -----------------------------------------------------------------------------
 # CV / Resume Studio
@@ -1262,6 +1281,9 @@ elif page == "Report Automation":
         st.subheader("Platform-wide schedules (administrator only)")
         admin_schedules = db_all("SELECT owner_email,report_name,frequency,run_day,recipient_email,enabled,timezone_name,created_at FROM report_schedules ORDER BY created_at DESC LIMIT 500")
         st.dataframe(pd.DataFrame(admin_schedules), use_container_width=True, hide_index=True)
+
+elif page == "Calendar & Events":
+    render_calendar(USER_EMAIL, IS_ADMIN, db_all, db_exec, record_event, full_page=True)
 
 # Unknown page guard
 else:

@@ -88,6 +88,39 @@ def render_action_grid(page: str, user_email: str, db_all, db_exec, record_event
                 rows = base_rows(page)
             st.session_state[key] = pd.DataFrame(rows, columns=GRID_COLUMNS)
         editor_key = key + "_editor"
+        if page == "Opportunity Analysis":
+            source_text = str(st.session_state.get("source_text", "") or "")
+            if st.button("Find source evidence candidates", key=key + "_find_evidence", disabled=not source_text):
+                patterns = {
+                    "Applicant eligibility": r"eligib(?:le|ility)|who can apply|applicant(?:s)? must|registered organization|eligible applicant",
+                    "Deadline and time zone": r"deadline|closing date|due date|submit.{0,35}by|time zone|timezone",
+                    "Geographic and applicant restrictions": r"eligible countr(?:y|ies)|geographic(?:al)? focus|country|countries|region",
+                    "Funding amount and eligible costs": r"funding available|grant size|maximum award|budget limit|eligible costs|ineligible costs|amount of funding",
+                    "Mandatory attachments": r"required documents|supporting documents|attachments?|letter of support|CVs?",
+                    "Evaluation criteria and scoring": r"evaluation criteria|selection criteria|scoring|assessment criteria|weighted",
+                    "Submission channel and format": r"submission portal|submit.{0,25}application|email.{0,30}application|online application",
+                    "Safeguarding, inclusion and data protection": r"safeguarding|child protection|data protection|inclusion|gender|disability",
+                    "Reporting and implementation obligations": r"reporting requirements|progress report|final report|implementation period|project duration|monitoring and evaluation",
+                }
+                source_name = str(st.session_state.get("source_name", "uploaded source"))
+                updated = st.session_state[key].copy()
+                for idx, row in updated.iterrows():
+                    label = str(row.get("Action / requirement", ""))
+                    pattern = next((pat for action, pat in patterns.items() if action.lower() in label.lower()), None)
+                    match = re.search(pattern, source_text, flags=re.I | re.S) if pattern else None
+                    if match:
+                        start_pos, end_pos = match.span()
+                        lo, hi = max(0, start_pos - 100), min(len(source_text), end_pos + 180)
+                        snippet = " ".join(source_text[lo:hi].split())
+                        updated.at[idx, "Evidence reference"] = f"{source_name} · character offsets {lo}–{hi}"
+                        updated.at[idx, "Notes"] = f"Candidate only — verify against official source: {snippet[:350]}"
+                        if str(updated.at[idx, "Status"]) == "Not started":
+                            updated.at[idx, "Status"] = "In progress"
+                    else:
+                        updated.at[idx, "Notes"] = "No matching evidence phrase found automatically; inspect the full official source."
+                st.session_state[key] = updated
+                st.session_state.pop(editor_key, None)
+                st.rerun()
         edited = st.data_editor(
             st.session_state[key], key=editor_key, num_rows="dynamic", use_container_width=True, hide_index=True,
             column_config={

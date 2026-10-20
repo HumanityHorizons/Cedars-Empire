@@ -48,7 +48,7 @@ def _docx_bytes(title: str, frame: pd.DataFrame) -> bytes:
     normal = doc.styles["Normal"]
     normal.font.name = "Arial"; normal.font.size = Pt(10)
     normal.paragraph_format.line_spacing = 1.5
-    doc.add_heading(title, 0)
+    title_p = doc.add_heading(title, 0); title_p.paragraph_format.line_spacing = 1.5
     p = doc.add_paragraph(f"Generated: {date.today().isoformat()}")
     p.paragraph_format.line_spacing = 1.5
     table = doc.add_table(rows=1, cols=len(frame.columns)); table.style = "Table Grid"
@@ -234,7 +234,7 @@ def render_document_exports(title: str, text: str, key: str, record_event, user_
     doc = Document()
     sec = doc.sections[0]; sec.top_margin=Inches(0.8); sec.bottom_margin=Inches(0.8); sec.left_margin=Inches(0.9); sec.right_margin=Inches(0.9)
     normal=doc.styles["Normal"]; normal.font.name="Arial"; normal.font.size=Pt(10.5); normal.paragraph_format.line_spacing=1.5
-    doc.add_heading(title,0)
+    title_p=doc.add_heading(title,0); title_p.paragraph_format.line_spacing=1.5
     for raw in text.splitlines():
         line=raw.strip()
         if not line: doc.add_paragraph(""); continue

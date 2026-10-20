@@ -156,6 +156,7 @@ def render_action_grid(page: str, user_email: str, db_all, db_exec, record_event
         if st.download_button("Export grid PDF", _pdf_bytes(f"Humanity Horizons — {page} Action Grid", edited), f"{stem}.pdf", "application/pdf", key=key+"_pdf"):
             record_event(user_email, f"action_grid_download_pdf:{page}")
 
+@st.fragment(run_every="60s")
 def render_calendar(user_email: str, is_admin: bool, db_all, db_exec, record_event, full_page: bool = False) -> None:
     """Persistent event scheduler with in-app due/overdue alerts; external delivery is separate."""
     zone_options = ["Africa/Kampala", "UTC", "Africa/Nairobi", "Europe/London"]

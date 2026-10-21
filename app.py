@@ -216,6 +216,34 @@ def init_db() -> None:
             setting_key TEXT PRIMARY KEY, setting_value TEXT NOT NULL,
             updated_by TEXT NOT NULL, updated_at TEXT NOT NULL
         )""",
+        """CREATE TABLE IF NOT EXISTS engine_records (
+            id TEXT PRIMARY KEY, engine_name TEXT NOT NULL, record_type TEXT NOT NULL,
+            title TEXT NOT NULL, counterparty TEXT, amount TEXT, currency TEXT,
+            verification_status TEXT NOT NULL, evidence_ref TEXT, notes TEXT,
+            owner_email TEXT NOT NULL, created_at TEXT NOT NULL
+        )""",
+        """CREATE TABLE IF NOT EXISTS kyc_requests (
+            id TEXT PRIMARY KEY, user_email TEXT NOT NULL, legal_name TEXT NOT NULL,
+            country TEXT NOT NULL, verification_provider TEXT, provider_reference TEXT,
+            status TEXT NOT NULL, reviewer_email TEXT, review_note TEXT,
+            created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+        )""",
+        """CREATE TABLE IF NOT EXISTS withdrawal_requests (
+            id TEXT PRIMARY KEY, user_email TEXT NOT NULL, amount TEXT NOT NULL,
+            asset TEXT NOT NULL, network TEXT NOT NULL, destination_address TEXT NOT NULL,
+            status TEXT NOT NULL, tx_hash TEXT, admin_note TEXT,
+            created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+        )""",
+        """CREATE TABLE IF NOT EXISTS deposit_intents (
+            id TEXT PRIMARY KEY, user_email TEXT NOT NULL, asset TEXT NOT NULL,
+            network TEXT NOT NULL, amount TEXT, tx_hash TEXT, status TEXT NOT NULL,
+            created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+        )""",
+        """CREATE TABLE IF NOT EXISTS referral_records (
+            id TEXT PRIMARY KEY, referrer_email TEXT NOT NULL, referred_email TEXT,
+            referral_code TEXT NOT NULL, status TEXT NOT NULL, reward_amount TEXT,
+            reward_asset TEXT, evidence_ref TEXT, created_at TEXT NOT NULL
+        )""",
         """CREATE TABLE IF NOT EXISTS report_schedules (
             id TEXT PRIMARY KEY, owner_email TEXT NOT NULL, report_name TEXT NOT NULL,
             frequency TEXT NOT NULL, run_day INTEGER NOT NULL, recipient_email TEXT,

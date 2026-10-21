@@ -670,6 +670,14 @@ if page in BUSINESS_PAGES:
         st.warning("Deposits are disabled by default. Never send assets until an administrator independently verifies the destination, network and token contract and formally enables deposits.")
         cfg = {row["setting_key"]: row["setting_value"] for row in db_all("SELECT setting_key,setting_value FROM app_settings")}
         enabled = cfg.get("deposit_enabled") == "true" and cfg.get("deposit_destinations_verified") == "true"
+        asset_networks = {}
+        if cfg.get("tron_deposit_address"):
+            asset_networks.update({"TRX": "TRON mainnet", "USDT (TRC-20)": "TRON mainnet"})
+        if cfg.get("bnb_deposit_address"):
+            asset_networks.update({"BNB": "BNB Smart Chain mainnet", "USDT (BEP-20)": "BNB Smart Chain mainnet"})
+        tigers_network = cfg.get("tigers_network", "")
+        if cfg.get("tigers_token_contract") and tigers_network in ("TRON mainnet", "BNB Smart Chain mainnet") and ((tigers_network == "TRON mainnet" and cfg.get("tron_deposit_address")) or (tigers_network == "BNB Smart Chain mainnet" and cfg.get("bnb_deposit_address"))):
+            asset_networks["TIGERS"] = tigers_network
         st.write("**TIGERS token contract:** " + (cfg.get("tigers_token_contract") or "Not configured — contract not verified"))
         st.write("**TRON destination:** " + (cfg.get("tron_deposit_address") or "Not configured"))
         st.write("**BNB Smart Chain destination:** " + (cfg.get("bnb_deposit_address") or "Not configured"))
@@ -688,8 +696,10 @@ if page in BUSINESS_PAGES:
                         st.caption("QR generation is unavailable in this deployment; use the address above only after independent verification.")
         st.subheader("Record a deposit claim for reconciliation")
         with st.form("deposit_intent_form"):
-            asset = st.selectbox("Asset", ["TIGERS (contract must be verified)", "TRX", "USDT (TRC-20)", "BNB", "USDT (BEP-20)"])
-            network = st.selectbox("Network", ["TRON mainnet", "BNB Smart Chain mainnet"])
+            asset_choices = list(asset_networks) or ["No supported asset configured"]
+            asset = st.selectbox("Asset", asset_choices)
+            network = asset_networks.get(asset, "Not configured")
+            st.caption("Network is fixed to the configured asset/network pairing to reduce cross-chain deposit errors: " + network)
             amount = st.text_input("Amount claimed (optional)")
             tx_hash = st.text_input("Transaction hash")
             submit_deposit = st.form_submit_button("Submit deposit for review", disabled=not enabled)
@@ -922,6 +932,7 @@ if page in BUSINESS_PAGES:
                 tron_addr = st.text_input("TRON deposit address", value=settings_now.get("tron_deposit_address", ""))
                 bnb_addr = st.text_input("BNB Smart Chain deposit address", value=settings_now.get("bnb_deposit_address", ""))
                 tigers_contract = st.text_input("TIGERS token contract address", value=settings_now.get("tigers_token_contract", ""))
+                tigers_network = st.selectbox("TIGERS token network", ["Not configured", "TRON mainnet", "BNB Smart Chain mainnet"], index=["Not configured", "TRON mainnet", "BNB Smart Chain mainnet"].index(settings_now.get("tigers_network", "Not configured")) if settings_now.get("tigers_network", "Not configured") in ["Not configured", "TRON mainnet", "BNB Smart Chain mainnet"] else 0)
                 destinations_verified = st.checkbox("I independently verified the destinations and exact network/token contracts", value=settings_now.get("deposit_destinations_verified") == "true")
                 deposit_enabled = st.checkbox("Formally enable deposit instructions", value=settings_now.get("deposit_enabled") == "true")
                 save_destinations = st.form_submit_button("Save treasury destination controls")
@@ -933,7 +944,7 @@ if page in BUSINESS_PAGES:
                 elif deposit_enabled and (not destinations_verified or not (tron_addr.strip() or bnb_addr.strip())):
                     st.error("Cannot enable deposits without verified destinations and at least one configured address.")
                 else:
-                    for sk, sv in [("tron_deposit_address",tron_addr.strip()),("bnb_deposit_address",bnb_addr.strip()),("tigers_token_contract",tigers_contract.strip()),("deposit_destinations_verified","true" if destinations_verified else "false"),("deposit_enabled","true" if deposit_enabled else "false")]:
+                    for sk, sv in [("tron_deposit_address",tron_addr.strip()),("bnb_deposit_address",bnb_addr.strip()),("tigers_token_contract",tigers_contract.strip()),("tigers_network","" if tigers_network == "Not configured" else tigers_network),("deposit_destinations_verified","true" if destinations_verified else "false"),("deposit_enabled","true" if deposit_enabled else "false")]:
                         db_exec("INSERT INTO app_settings (setting_key,setting_value,updated_by,updated_at) VALUES (?,?,?,?) ON CONFLICT (setting_key) DO UPDATE SET setting_value=excluded.setting_value,updated_by=excluded.updated_by,updated_at=excluded.updated_at", (sk, sv, USER_EMAIL, now_iso()))
                     record_event(USER_EMAIL, "treasury_destination_settings_updated", "Deposits enabled=" + str(deposit_enabled))
                     st.success("Treasury settings saved. This control does not replace independent verification, legal review or custody controls.")

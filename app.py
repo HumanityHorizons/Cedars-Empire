@@ -732,12 +732,17 @@ if page in BUSINESS_PAGES:
                 st.success("KYC review request saved. This is not identity verification or approval.")
                 st.rerun()
         st.subheader("Request a withdrawal")
-        kyc_approved = bool(latest_kyc and latest_kyc["status"] == "Verified")
+        withdrawal_cfg = {row["setting_key"]: row["setting_value"] for row in db_all("SELECT setting_key,setting_value FROM app_settings")}
+        withdrawal_asset_networks = {"USDT (TRC-20)": "TRON mainnet", "TRX": "TRON mainnet", "USDT (BEP-20)": "BNB Smart Chain mainnet", "BNB": "BNB Smart Chain mainnet"}
+        if withdrawal_cfg.get("tigers_token_contract") and withdrawal_cfg.get("tigers_network") in ("TRON mainnet", "BNB Smart Chain mainnet"):
+            withdrawal_asset_networks["TIGERS"] = withdrawal_cfg["tigers_network"]
+        kyc_approved = bool(latest_kyc and latest_kyc["status"] == "Verified" and latest_kyc.get("verification_provider") and latest_kyc.get("provider_reference"))
         if not kyc_approved: st.info("Withdrawal submission is locked until KYC status is verified and eligibility checks are completed.")
         with st.form("withdrawal_request_form"):
             amount = st.text_input("Withdrawal amount")
-            asset = st.selectbox("Asset", ["USDT", "TRX", "BNB", "TIGERS (only if approved and configured)"])
-            network = st.selectbox("Network", ["TRON mainnet", "BNB Smart Chain mainnet"])
+            asset = st.selectbox("Asset", list(withdrawal_asset_networks))
+            network = withdrawal_asset_networks[asset]
+            st.caption("Network is fixed to the asset pairing: " + network)
             destination = st.text_input("Destination wallet address")
             acknowledge = st.checkbox("I checked the destination address and network; I understand requests can be rejected and no payout is guaranteed.")
             submit_withdrawal = st.form_submit_button("Submit withdrawal request", disabled=not kyc_approved)

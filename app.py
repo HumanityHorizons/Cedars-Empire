@@ -865,6 +865,8 @@ if page in BUSINESS_PAGES:
                 st.warning("Not ready: provide " + ", ".join(missing) + ".")
             else:
                 st.success("Checklist fields supplied. This is not legal review, client verification, or proof of payment.")
+        st.subheader("Client services operating records")
+        render_engine_dashboard("Client services & contracts")
     elif page == "Business Opportunity Pipeline":
         st.header("Business Opportunity Pipeline")
         st.write("Use the Scenario Lab to document a business idea, target buyer, delivery costs and demand evidence. A pipeline entry is not a customer, signed contract or revenue.")

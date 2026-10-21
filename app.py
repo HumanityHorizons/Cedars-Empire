@@ -707,6 +707,50 @@ if page in BUSINESS_PAGES:
             except Exception as exc: st.error("Withdrawal request not saved: " + str(exc))
         withdrawals = db_all("SELECT amount,asset,network,destination_address,status,tx_hash,admin_note,created_at,updated_at FROM withdrawal_requests WHERE user_email=? ORDER BY created_at DESC", (USER_EMAIL,))
         if withdrawals: st.dataframe(pd.DataFrame(withdrawals), use_container_width=True, hide_index=True)
+    elif page == "Staking & Compounding":
+        st.header("Staking & Compounding")
+        st.warning("No staking transaction is available in this version. Do not transfer assets to an unverified provider or interpret examples as projected or guaranteed returns.")
+        st.write("Before any provider is listed as approved, verify its legal identity, supported chain, contract address, audited code, terms, lock-up and unbonding rules, fees, custody model, slashing risk and independent security reviews.")
+        with st.form("staking_provider_review_form"):
+            provider = st.text_input("Provider name")
+            network = st.selectbox("Network", ["TRON", "BNB Smart Chain", "Other"])
+            contract = st.text_input("Contract address (reference only)")
+            terms_url = st.text_input("Official terms URL")
+            lockup = st.text_input("Lock-up / unbonding terms")
+            fees = st.text_input("Fees")
+            risks = st.text_area("Risk and independent audit evidence")
+            submit_provider = st.form_submit_button("Submit provider for due diligence")
+        if submit_provider:
+            if not provider.strip() or not terms_url.strip().startswith("https://") or not risks.strip():
+                st.error("Provider, HTTPS terms URL and risk/evidence notes are required.")
+            else:
+                db_exec("INSERT INTO engine_records (id,engine_name,record_type,title,counterparty,amount,currency,verification_status,evidence_ref,notes,owner_email,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", (str(uuid.uuid4()), "Staking & Compounding", "Provider due diligence", provider.strip(), provider.strip(), None, None, "Evidence submitted", terms_url.strip(), "Network: " + network + "; contract: " + contract.strip() + "; lock-up: " + lockup.strip() + "; fees: " + fees.strip() + "; risks: " + risks.strip(), USER_EMAIL, now_iso()))
+                record_event(USER_EMAIL, "staking_provider_due_diligence_submitted")
+                st.success("Provider submitted for due diligence; it is not approved or enabled.")
+                st.rerun()
+        stake_rows = db_all("SELECT title,counterparty,verification_status,evidence_ref,notes,created_at FROM engine_records WHERE engine_name=? ORDER BY created_at DESC", ("Staking & Compounding",))
+        if stake_rows: st.dataframe(pd.DataFrame(stake_rows), use_container_width=True, hide_index=True)
+        st.caption("No simulated APR, projected profit or compounding estimate is presented as earnings. Provider approval and transaction integration are separate release gates.")
+    elif page == "Referral Program":
+        st.header("Referral Program")
+        st.write("Share a referral link. Attribution is not a reward entitlement; any reward requires published terms, anti-fraud checks, a verified qualifying event and an approved payout process.")
+        referral_code = hashlib.sha256(USER_EMAIL.lower().encode("utf-8")).hexdigest()[:12].upper()
+        base_url = setting("PUBLIC_APP_URL", "https://project-x4vqe4f3kfpeugzai2oqed.streamlit.app/").rstrip("/")
+        referral_url = base_url + "/?ref=" + referral_code
+        st.text_input("Your referral link", value=referral_url, disabled=True)
+        st.caption("Configure PUBLIC_APP_URL if the production URL changes. Referral rewards are not enabled unless written terms and verification are approved.")
+        with st.form("referral_record_form"):
+            referred_email = st.text_input("Referred person email (only with their consent; optional)")
+            status = st.selectbox("Referral status", ["Link shared", "Signup claimed", "Qualifying action pending verification", "Verified qualifying action", "Rejected"])
+            evidence_ref = st.text_input("Evidence reference (optional)")
+            save_referral = st.form_submit_button("Record referral activity")
+        if save_referral:
+            db_exec("INSERT INTO referral_records (id,referrer_email,referred_email,referral_code,status,evidence_ref,created_at) VALUES (?,?,?,?,?,?,?)", (str(uuid.uuid4()), USER_EMAIL, referred_email.strip().lower() or None, referral_code, status, evidence_ref.strip() or None, now_iso()))
+            record_event(USER_EMAIL, "referral_activity_recorded", status)
+            st.success("Referral activity recorded. No reward has been accrued or paid.")
+            st.rerun()
+        own_refs = db_all("SELECT referral_code,referred_email,status,reward_amount,reward_asset,evidence_ref,created_at FROM referral_records WHERE referrer_email=? ORDER BY created_at DESC", (USER_EMAIL,))
+        if own_refs: st.dataframe(pd.DataFrame(own_refs), use_container_width=True, hide_index=True)
     elif page == "Business Dashboard":
         st.header("Business Dashboard")
         st.write("Operate service businesses, validate demand, track real contracts and reconcile verified receipts.")

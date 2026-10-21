@@ -647,7 +647,7 @@ with st.sidebar:
             st.session_state.pop(key, None)
         st.rerun()
     st.divider()
-    st.caption("CEDARS EMPIRE · Business Operations Platform")
+    st.caption("CEDARS EMPIRE · Seven Merged Grids Release 2.0")
     st.caption("AI: connected" if OPENAI_API_KEY else "AI: local structured mode (API key not configured)")
     st.caption("No funding, AI accuracy, compliance certification or payment settlement is guaranteed.")
 

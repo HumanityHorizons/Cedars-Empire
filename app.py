@@ -628,6 +628,43 @@ if page in BUSINESS_PAGES:
         if rows: st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
         else: st.info("No engine evidence records yet.")
         st.caption("Only reconciled receipts backed by source evidence should be counted as actual revenue. Planning estimates and pending invoices are not receipts.")
+    elif page == "Deposit QR & TIGERS":
+        st.header("Deposit QR & TIGERS")
+        st.warning("Deposits are disabled by default. Never send assets until an administrator independently verifies the destination, network and token contract and formally enables deposits.")
+        cfg = {row["setting_key"]: row["setting_value"] for row in db_all("SELECT setting_key,setting_value FROM app_settings")}
+        enabled = cfg.get("deposit_enabled") == "true" and cfg.get("deposit_destinations_verified") == "true"
+        st.write("**TIGERS token contract:** " + (cfg.get("tigers_token_contract") or "Not configured — contract not verified"))
+        st.write("**TRON destination:** " + (cfg.get("tron_deposit_address") or "Not configured"))
+        st.write("**BNB Smart Chain destination:** " + (cfg.get("bnb_deposit_address") or "Not configured"))
+        if not enabled:
+            st.error("DEPOSITS DISABLED — verification and formal enablement are incomplete. No deposit QR code is issued.")
+        else:
+            st.success("Destinations are marked enabled by an administrator. Independently verify the exact network and address in your wallet before sending.")
+            for label, address in [("TRON",cfg.get("tron_deposit_address","")),("BNB Smart Chain",cfg.get("bnb_deposit_address",""))]:
+                if address:
+                    st.markdown("**" + label + " address**")
+                    st.code(address)
+                    try:
+                        import qrcode
+                        st.image(qrcode.make(address).get_image(), caption=label + " address QR — confirm network and asset before use", width=220)
+                    except Exception:
+                        st.caption("QR generation is unavailable in this deployment; use the address above only after independent verification.")
+        st.subheader("Record a deposit claim for reconciliation")
+        with st.form("deposit_intent_form"):
+            asset = st.selectbox("Asset", ["TIGERS (contract must be verified)", "TRX", "USDT (TRC-20)", "BNB", "USDT (BEP-20)"])
+            network = st.selectbox("Network", ["TRON mainnet", "BNB Smart Chain mainnet"])
+            amount = st.text_input("Amount claimed (optional)")
+            tx_hash = st.text_input("Transaction hash")
+            submit_deposit = st.form_submit_button("Submit deposit for review", disabled=not enabled)
+        if submit_deposit:
+            if not tx_hash.strip(): st.error("A transaction hash is required for verification on the correct network.")
+            else:
+                db_exec("INSERT INTO deposit_intents (id,user_email,asset,network,amount,tx_hash,status,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?)", (str(uuid.uuid4()), USER_EMAIL, asset, network, amount.strip() or None, tx_hash.strip(), "Pending verification", now_iso(), now_iso()))
+                record_event(USER_EMAIL, "deposit_claim_submitted", network + " / " + asset)
+                st.success("Deposit claim queued for verification. This is not confirmation that funds arrived.")
+                st.rerun()
+        mine = db_all("SELECT asset,network,amount,tx_hash,status,created_at,updated_at FROM deposit_intents WHERE user_email=? ORDER BY created_at DESC", (USER_EMAIL,))
+        if mine: st.dataframe(pd.DataFrame(mine), use_container_width=True, hide_index=True)
     elif page == "Business Dashboard":
         st.header("Business Dashboard")
         st.write("Operate service businesses, validate demand, track real contracts and reconcile verified receipts.")

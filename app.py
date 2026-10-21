@@ -22,7 +22,7 @@ from docx import Document
 from hh_workspace_widgets import render_action_grid, render_calendar, render_document_exports
 
 # -----------------------------------------------------------------------------
-# Cedars Empire 360 — functional MVP / deployment-safe prototype
+# CEDARS EMPIRE — functional MVP / deployment-safe prototype
 # -----------------------------------------------------------------------------
 APP_DIR = Path(__file__).parent
 LOGO = APP_DIR / "assets" / "humanity_horizons_logo.jpg"
@@ -31,7 +31,7 @@ if not LOGO.exists():
 LOCAL_DB = Path(os.getenv("HH_DATA_DIR", tempfile.gettempdir())) / "humanity_horizons.db"
 PBKDF2_ITERATIONS = 310_000
 
-st.set_page_config(page_title="Cedars Empire 360", page_icon="🌍", layout="wide")
+st.set_page_config(page_title="CEDARS EMPIRE", page_icon="🌍", layout="wide")
 st.markdown("""
 <style>
 :root { color-scheme: light; }
@@ -395,7 +395,6 @@ if LOGO.exists():
 else:
     st.title("CEDARS EMPIRE")
 st.caption("People, Planet and Peace")
-st.title("Cedars Empire 360")
 st.write("An integrated Cedars Empire workspace for opportunity intelligence, proposals, career readiness, SDG programming, project delivery, accountability and partnerships.")
 st.info("Privacy-first prototype: anonymous visits are counted without collecting IP addresses or device fingerprints. Personal follow-up data is stored only when you create an account and opt in. No data is sold by this prototype; all sponsored content or fees must be clearly labelled.")
 

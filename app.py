@@ -360,6 +360,33 @@ def log_attendance(event_name: str, user_email: str | None = None, opted_in: boo
     db_exec("INSERT INTO attendance (id,session_id,event_name,user_email,followup_optin,created_at,details) VALUES (?,?,?,?,?,?,?)",
             (str(uuid.uuid4()), st.session_state.get("visitor_session", str(uuid.uuid4())), event_name,
              user_email if opted_in else None, 1 if opted_in else 0, now_iso(), details[:200]))
+def render_engine_dashboard(engine_name: str) -> None:
+    """Record evidence-backed operating activity for one business engine."""
+    st.write("Track counterparties, demand, delivery, costs and receipts. A status entered here is not independently verified by the platform.")
+    safe_key = re.sub(r"[^a-z0-9]+", "_", engine_name.lower()).strip("_")
+    with st.form("engine_dashboard_" + safe_key):
+        record_type = st.selectbox("Record type", ["Provider verification", "Customer demand", "Service delivery", "Operating cost", "Receipt / settlement", "Risk / incident"], key="engine_type_" + safe_key)
+        title = st.text_input("Record title / service reference", key="engine_title_" + safe_key)
+        counterparty = st.text_input("Provider / customer / counterparty", key="engine_party_" + safe_key)
+        amount = st.text_input("Amount (optional; supported by evidence)", key="engine_amount_" + safe_key)
+        currency = st.selectbox("Currency / asset", ["UGX", "USD", "EUR", "USDT", "TRX", "BNB", "Other"], key="engine_currency_" + safe_key)
+        status = st.selectbox("Evidence status", ["Unverified", "Evidence submitted", "Independently verified", "Rejected"], key="engine_status_" + safe_key)
+        evidence = st.text_input("Evidence reference (contract, invoice, receipt or transaction hash)", key="engine_evidence_" + safe_key)
+        notes = st.text_area("Demand evidence, delivery proof, costs, risks and reconciliation notes", key="engine_notes_" + safe_key)
+        save = st.form_submit_button("Save engine record")
+    if save:
+        if not title.strip():
+            st.error("A record title is required.")
+        else:
+            db_exec("INSERT INTO engine_records (id,engine_name,record_type,title,counterparty,amount,currency,verification_status,evidence_ref,notes,owner_email,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", (str(uuid.uuid4()), engine_name, record_type, title.strip(), counterparty.strip(), amount.strip() or None, currency, status, evidence.strip() or None, notes.strip(), USER_EMAIL, now_iso()))
+            record_event(USER_EMAIL, "real_money_engine_record_created", engine_name + ": " + record_type)
+            st.success("Record saved. User-entered evidence status does not itself prove verification or payment.")
+            st.rerun()
+    rows = db_all("SELECT record_type,title,counterparty,amount,currency,verification_status,evidence_ref,notes,owner_email,created_at FROM engine_records WHERE engine_name=? ORDER BY created_at DESC", (engine_name,))
+    st.subheader("Operating evidence register")
+    if rows: st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+    else: st.info("No operating records yet.")
+    st.caption("Only receipts reconciled against source evidence count as actual revenue. Estimates, leads and pending invoices are not receipts.")
 
 
 # Anonymous visit is counted once per browser session; no IP/device fingerprint is collected.
@@ -782,21 +809,17 @@ if page in BUSINESS_PAGES:
             st.warning("Validation status: NOT VERIFIED. Confirm real customers, supplier capacity, unit economics, legal requirements and written agreements before spending or promising service.")
     elif page == "Cleaning Grid":
         st.header("Cleaning Grid")
-        st.write("Potential service workflow: verify a customer request → confirm property scope and access → secure a vetted provider → agree price and terms → document completion → reconcile payment.")
-        st.warning("No cleaning jobs, providers, prices or earnings are live-verified by this page.")
+        render_engine_dashboard("Cleaning services")
     elif page == "Shelter & Accommodation Grid":
         st.header("Shelter & Accommodation Grid")
-        st.write("Potential matching workflow for accommodation providers and customers: verify provider identity and availability, property legitimacy, safety, booking terms and cancellation/refund rules before matching.")
-        st.warning("No beds, properties, bookings or nightly income are live-verified by this page.")
+        render_engine_dashboard("Shelter & accommodation")
     elif page == "Energy & Utilities Grid":
         st.header("Energy & Utilities Grid")
-        st.write("Potential service areas include energy-efficiency assessments, solar installation referrals, maintenance coordination and utility data services.")
-        st.warning("Do not treat energy credits, kWh trading, savings, or projected sales as revenue without verified counterparties, legal authority, metering and settlement evidence.")
+        render_engine_dashboard("Energy & utilities")
     elif page == "AI Training & Data Operations":
         st.header("AI Training & Data Operations")
-        st.write("Potential workstreams: data annotation, evaluation, transcription and quality review for verified buyers.")
-        st.write("Before accepting work, verify the buyer, written scope, rates, data rights, privacy/security requirements, participant consent, age eligibility and payment terms.")
-        st.warning("No buyer contracts, available tasks, participant earnings or payouts are verified here.")
+        st.write("Validate buyer identity, written scope, data rights, privacy/security requirements, participant consent, age eligibility and payment terms before work begins.")
+        render_engine_dashboard("AI training & data operations")
     elif page == "World Grid Marketplace":
         st.header("World Grid Marketplace")
         st.write("A planned marketplace for verified service providers, customer requests and written service agreements.")

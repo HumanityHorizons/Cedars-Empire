@@ -22,7 +22,7 @@ from docx import Document
 from hh_workspace_widgets import render_action_grid, render_calendar, render_document_exports
 
 # -----------------------------------------------------------------------------
-# Humanity Horizons 360 — functional MVP / deployment-safe prototype
+# Cedars Empire 360 — functional MVP / deployment-safe prototype
 # -----------------------------------------------------------------------------
 APP_DIR = Path(__file__).parent
 LOGO = APP_DIR / "assets" / "humanity_horizons_logo.jpg"
@@ -31,7 +31,7 @@ if not LOGO.exists():
 LOCAL_DB = Path(os.getenv("HH_DATA_DIR", tempfile.gettempdir())) / "humanity_horizons.db"
 PBKDF2_ITERATIONS = 310_000
 
-st.set_page_config(page_title="Humanity Horizons 360", page_icon="🌍", layout="wide")
+st.set_page_config(page_title="Cedars Empire 360", page_icon="🌍", layout="wide")
 st.markdown("""
 <style>
 :root { color-scheme: light; }
@@ -83,7 +83,7 @@ def setting(name: str, default: str = "") -> str:
 
 DATABASE_URL = setting("DATABASE_URL", "").strip()
 ADMIN_EMAILS = {e.strip().lower() for e in setting("ADMIN_EMAILS", "ogwal.bemmanuel@gmail.com").split(",") if e.strip()}
-# Public TRON receiving address requested for the Humanity Horizons treasury display.
+# Public TRON receiving address requested for the Cedars Empire treasury display.
 # This is a public wallet address, NOT a private key. The app does not execute transfers.
 TREASURY_ADDRESS = "TE26B7zQjMbahYAWcxEsSPC6aZEr2Hcz1u"
 OPENAI_API_KEY = setting("OPENAI_API_KEY", "").strip()
@@ -393,10 +393,10 @@ HH_STANDARDS_CHECKS = [
 if LOGO.exists():
     st.image(str(LOGO), width=310)
 else:
-    st.title("HUMANITY HORIZONS")
+    st.title("CEDARS EMPIRE")
 st.caption("People, Planet and Peace")
-st.title("Humanity Horizons 360")
-st.write("An integrated Humanity Horizons workspace for opportunity intelligence, proposals, career readiness, SDG programming, project delivery, accountability and partnerships.")
+st.title("Cedars Empire 360")
+st.write("An integrated Cedars Empire workspace for opportunity intelligence, proposals, career readiness, SDG programming, project delivery, accountability and partnerships.")
 st.info("Privacy-first prototype: anonymous visits are counted without collecting IP addresses or device fingerprints. Personal follow-up data is stored only when you create an account and opt in. No data is sold by this prototype; all sponsored content or fees must be clearly labelled.")
 
 
@@ -438,7 +438,7 @@ def signup_page() -> None:
                     st.success("Signed in. Loading your workspace…")
                     st.rerun()
     with signup:
-        st.subheader("Create your Humanity Horizons account")
+        st.subheader("Create your Cedars Empire account")
         st.write("A short B2B / purpose profile helps tailor tools and understand legitimate organizational use. It is not an advertising consent and does not authorize data resale.")
         with st.form("signup_form"):
             full_name = st.text_input("Full name")
@@ -448,9 +448,9 @@ def signup_page() -> None:
             account_type = st.selectbox("Account type", ["Individual / job seeker", "NGO / civil society organization", "Business / private sector", "Public institution", "Donor / funder", "Research / academic", "Other"])
             organization = st.text_input("Organization (optional for individuals)")
             sector = st.selectbox("Main sector", ["Select…", "Education", "Health", "Climate / environment", "Livelihoods / economic inclusion", "Gender / protection", "Governance / peacebuilding", "Humanitarian response", "Agriculture / food security", "Digital / technology", "Research / evaluation", "Multiple sectors", "Other"])
-            purpose = st.text_area("B2B / workspace purpose — how will you use Humanity Horizons?", placeholder="Example: identify grants, draft proposals and monitor a youth employment project.")
+            purpose = st.text_area("B2B / workspace purpose — how will you use Cedars Empire?", placeholder="Example: identify grants, draft proposals and monitor a youth employment project.")
             followup = st.checkbox("I opt in to follow-up emails and identifiable attendance records. Optional; I can opt out later.")
-            agree = st.checkbox("I agree to the Humanity Horizons platform terms and privacy notice. I understand that outputs are decision-support drafts and do not guarantee funding, employment or compliance outcomes.")
+            agree = st.checkbox("I agree to the Cedars Empire platform terms and privacy notice. I understand that outputs are decision-support drafts and do not guarantee funding, employment or compliance outcomes.")
             create = st.form_submit_button("Create account", type="primary")
         if create:
             errors = []
@@ -548,7 +548,7 @@ if page == "Dashboard":
     if tasks:
         st.dataframe(pd.DataFrame([{ "Task": t["title"], "Status": t["status"], "Priority": t["priority"], "Due": t["due_date"] or "—", "Last updated": t["updated_at"] } for t in tasks[:8]]), use_container_width=True, hide_index=True)
     st.subheader("Transparency and readiness")
-    st.info("Humanity Horizons independently owns and maintains this workspace and its proprietary readiness framework. Use the exact eligibility rules, evaluation criteria and reporting instructions in each opportunity or agreement when preparing an application.")
+    st.info("Cedars Empire independently owns and maintains this workspace and its proprietary readiness framework. Use the exact eligibility rules, evaluation criteria and reporting instructions in each opportunity or agreement when preparing an application.")
 
 # -----------------------------------------------------------------------------
 # Task management: persisted through configured database
@@ -670,7 +670,7 @@ elif page == "Proposal Studio":
     ai_proposal_optin = st.checkbox("If an AI API key is configured, I consent to sending these proposal inputs to that provider for drafting. Do not include sensitive beneficiary data.")
     if st.button("Generate structured drafting brief", type="primary"):
         source = st.session_state.get("source_text", "[No opportunity document uploaded in this session]")
-        brief = f"""HUMANITY HORIZONS — {dtype.upper()} DRAFTING BRIEF\n\nTitle: {title or '[INPUT REQUIRED]'}\nApplicant: {applicant or '[INPUT REQUIRED]'}\nFunder/programme: {donor or '[INPUT REQUIRED]'}\nBudget: {budget or '[Confirm if applicable]'}\n\nPROBLEM / MOTIVATION\n{problem or '[NEEDS APPLICANT INPUT]'}\n\nOBJECTIVES / EXPECTED RESULTS\n{objective or '[NEEDS APPLICANT INPUT]'}\n\nAPPROACH / ACTIVITIES\n{approach or '[NEEDS APPLICANT INPUT]'}\n\nVERIFIED EVIDENCE\n{evidence or '[NEEDS VERIFIED EVIDENCE]'}\n\nDONOR INSTRUCTIONS\n{instructions or '[Paste exact official instructions]'}\n\nSOURCE EXTRACT FOR HUMAN REVIEW\n{source[:12000]}\n\nDRAFTING CONTROLS\n- Do not invent statistics, experience, partners, credentials, citations or commitments.\n- Mark missing facts [NEEDS APPLICANT INPUT].\n- Mirror mandatory donor headings and evaluation criteria from the original call.\n- Align problem -> objectives -> activities -> outputs -> outcomes -> indicators -> budget.\n- Consider safeguarding, inclusion, gender, disability, climate/environmental risks and data protection where relevant.\n- Obtain technical, finance and authorized management review before submission.\n"""
+        brief = f"""CEDARS EMPIRE — {dtype.upper()} DRAFTING BRIEF\n\nTitle: {title or '[INPUT REQUIRED]'}\nApplicant: {applicant or '[INPUT REQUIRED]'}\nFunder/programme: {donor or '[INPUT REQUIRED]'}\nBudget: {budget or '[Confirm if applicable]'}\n\nPROBLEM / MOTIVATION\n{problem or '[NEEDS APPLICANT INPUT]'}\n\nOBJECTIVES / EXPECTED RESULTS\n{objective or '[NEEDS APPLICANT INPUT]'}\n\nAPPROACH / ACTIVITIES\n{approach or '[NEEDS APPLICANT INPUT]'}\n\nVERIFIED EVIDENCE\n{evidence or '[NEEDS VERIFIED EVIDENCE]'}\n\nDONOR INSTRUCTIONS\n{instructions or '[Paste exact official instructions]'}\n\nSOURCE EXTRACT FOR HUMAN REVIEW\n{source[:12000]}\n\nDRAFTING CONTROLS\n- Do not invent statistics, experience, partners, credentials, citations or commitments.\n- Mark missing facts [NEEDS APPLICANT INPUT].\n- Mirror mandatory donor headings and evaluation criteria from the original call.\n- Align problem -> objectives -> activities -> outputs -> outcomes -> indicators -> budget.\n- Consider safeguarding, inclusion, gender, disability, climate/environmental risks and data protection where relevant.\n- Obtain technical, finance and authorized management review before submission.\n"""
         if ai_proposal_optin and OPENAI_API_KEY:
             ai_prompt = f"""Prepare a grant/fellowship proposal working draft, not a final submission. Use only provided facts; do not invent statistics, track record, partners, beneficiaries, citations, budgets or commitments. Clearly mark missing elements [NEEDS APPLICANT INPUT]. Preserve the donor instructions and explain assumptions/risks. Document type: {dtype}. Title: {title}. Applicant: {applicant}. Donor: {donor}. Budget: {budget}. Problem: {problem}. Objectives: {objective}. Approach: {approach}. Verified evidence: {evidence}. Official instructions: {instructions}. Extract from uploaded source: {source[:10000]}. Structure around context/problem, rationale, target groups, theory of change, outcomes/outputs/activities, indicators, implementation, safeguarding/inclusion, risks, budget narrative, sustainability and M&E as appropriate. Output an editable draft with evidence gaps explicitly flagged."""
             ai_brief = run_optional_ai(ai_prompt)
@@ -694,7 +694,7 @@ elif page == "Proposal Studio":
 elif page == "CV / Resume Studio":
     st.header("CV / Resume Studio — future-skills aware")
     st.write("Build an ATS-readable CV/resume and skills development plan from your own verified experience. This is a structured drafting tool, not a connected AI model or a guarantee of employment.")
-    st.caption("The Humanity Horizons Future Workforce Readiness Matrix helps users assess and build practical skills in AI/data literacy, cybersecurity, technology, creative thinking, adaptability, lifelong learning, leadership, analytical thinking and environmental stewardship. These are development prompts, not a guarantee of employment.")
+    st.caption("The Cedars Empire Future Workforce Readiness Matrix helps users assess and build practical skills in AI/data literacy, cybersecurity, technology, creative thinking, adaptability, lifelong learning, leadership, analytical thinking and environmental stewardship. These are development prompts, not a guarantee of employment.")
     with st.form("cv_form"):
         cv_name = st.text_input("Full name", value=USER_NAME)
         target_role = st.text_input("Target role / vacancy title")
@@ -741,14 +741,14 @@ Return a polished CV with standard headings, then a separate 'Skills development
         if gaps:
             st.markdown("**Skills to evidence or consider developing**")
             st.write(", ".join(gaps))
-        st.info("Skill gap matching is based on the text you typed and is approximate. A missing keyword does not necessarily mean you lack the skill. Use the Humanity Horizons Future Workforce Readiness Matrix as a development guide, then validate the role-specific requirements in the actual vacancy.")
+        st.info("Skill gap matching is based on the text you typed and is approximate. A missing keyword does not necessarily mean you lack the skill. Use the Cedars Empire Future Workforce Readiness Matrix as a development guide, then validate the role-specific requirements in the actual vacancy.")
 
 # -----------------------------------------------------------------------------
 # SDG Navigator
 # -----------------------------------------------------------------------------
 elif page == "SDG Navigator":
     st.header("Sustainable Development Goals navigator")
-    st.write("Explore all 17 Sustainable Development Goals and five representative problem areas each goal helps address. Humanity Horizons uses this goal map as a planning taxonomy. The problem areas are issue prompts, not exhaustive target lists or a claim that one goal alone solves them.")
+    st.write("Explore all 17 Sustainable Development Goals and five representative problem areas each goal helps address. Cedars Empire uses this goal map as a planning taxonomy. The problem areas are issue prompts, not exhaustive target lists or a claim that one goal alone solves them.")
     choice = st.selectbox("Choose an SDG", SDGS, format_func=lambda x: f"SDG {x[0]} — {x[1]}")
     num, name, official, problems = choice
     st.subheader(f"SDG {num}: {name}")
@@ -773,13 +773,13 @@ elif page == "SDG Navigator":
             st.write(" · ".join(items))
     download_data = pd.DataFrame([{"SDG": n, "Name": nm, "Official statement": s, "Problem area 1": p[0], "Problem area 2": p[1], "Problem area 3": p[2], "Problem area 4": p[3], "Problem area 5": p[4]} for n, nm, s, p in SDGS])
     download_gate("SDG navigator library", download_data.to_csv(index=False), "humanity_horizons_sdg_problem_library.csv", "text/csv", "sdg_library")
-    st.caption("Humanity Horizons SDG Navigator — maintained as part of the Humanity Horizons planning framework.")
+    st.caption("Cedars Empire SDG Navigator — maintained as part of the Cedars Empire planning framework.")
 
 # -----------------------------------------------------------------------------
 # Noticeboard: member-submitted/imported listing queue; admin moderation required
 # -----------------------------------------------------------------------------
 elif page == "Noticeboard":
-    st.header("Humanity Horizons noticeboard")
+    st.header("Cedars Empire noticeboard")
     st.caption("Publish opportunities, events and clearly labelled sponsored adverts. Imported listings must retain the original source URL and be checked for expiration, licensing and accuracy.")
     published = db_all("SELECT * FROM noticeboard WHERE status=? ORDER BY created_at DESC", ("Published",))
     st.subheader("Published opportunities and adverts")
@@ -853,7 +853,7 @@ elif page == "Noticeboard":
 # MEAL & donor-readiness self-assessment
 # -----------------------------------------------------------------------------
 elif page == "HH Standards & Impact":
-    st.header("Humanity Horizons Standards & Impact Workspace")
+    st.header("Cedars Empire Standards & Impact Workspace")
     tabs = st.tabs(["Results framework", "Indicator data", "Risk register", "Funding readiness", "M&E report"])
     with tabs[0]:
         st.caption("Create an aligned result chain. Add indicators with definition, baseline, target, source, disaggregation and frequency.")
@@ -919,7 +919,7 @@ elif page == "HH Standards & Impact":
         st.dataframe(risk_df, use_container_width=True, hide_index=True)
         download_gate("risk register CSV", risk_df.to_csv(index=False), "humanity_horizons_risk_register.csv", "text/csv", "risk_export")
     with tabs[3]:
-        st.markdown("**Humanity Horizons Institutional Readiness & Impact Framework (HH-IRIF)**\n\nThis proprietary self-assessment organizes practical controls for governance, eligibility, results management, evaluation and learning, financial stewardship, procurement, safeguarding, fraud prevention, data protection, inclusion, environmental/social risk, feedback, partner management, records and sustainability. It is a planning and evidence-checking tool—not a legal opinion, external certification or guarantee. Use the requirements in the specific opportunity, contract and applicable law as the final checklist.")
+        st.markdown("**Cedars Empire Institutional Readiness & Impact Framework (HH-IRIF)**\n\nThis proprietary self-assessment organizes practical controls for governance, eligibility, results management, evaluation and learning, financial stewardship, procurement, safeguarding, fraud prevention, data protection, inclusion, environmental/social risk, feedback, partner management, records and sustainability. It is a planning and evidence-checking tool—not a legal opinion, external certification or guarantee. Use the requirements in the specific opportunity, contract and applicable law as the final checklist.")
         checked = []
         for i, (heading, desc) in enumerate(HH_STANDARDS_CHECKS):
             with st.expander(heading):
@@ -930,7 +930,7 @@ elif page == "HH Standards & Impact":
         st.metric("Control themes with evidence attested", f"{count}/{total}", f"{count/total:.0%}")
         if count != total: st.warning("Open items remain. A completed checklist is a self-attestation, not independent verification.")
         else: st.success("All control themes marked complete. An independent review is still recommended.")
-        st.markdown("**Framework owner:** Humanity Horizons.\n\n**Review areas:** results chain and indicators; learning and data quality; financial controls; procurement and conflicts of interest; safeguarding and safe complaints handling; prevention of exploitation and abuse; privacy and confidentiality; inclusion and accessibility; environmental and social risk; partner oversight; records, accountability and sustainability. Administrators should review and version this framework periodically against current institutional good practice and the exact requirements contained in each opportunity or agreement.")
+        st.markdown("**Framework owner:** Cedars Empire.\n\n**Review areas:** results chain and indicators; learning and data quality; financial controls; procurement and conflicts of interest; safeguarding and safe complaints handling; prevention of exploitation and abuse; privacy and confidentiality; inclusion and accessibility; environmental and social risk; partner oversight; records, accountability and sustainability. Administrators should review and version this framework periodically against current institutional good practice and the exact requirements contained in each opportunity or agreement.")
     with tabs[4]:
         org = st.text_input("Organization", key="report_org")
         project = st.text_input("Project", key="report_project")
@@ -956,7 +956,7 @@ elif page == "HH Standards & Impact":
                     except Exception: pct = "Progress not calculable"
                     metric_lines.append(f"- {row.get('Indicator','Unnamed indicator')}: target {row.get('Target')}; achieved {row.get('Achieved')}; progress {pct}; notes {row.get('Notes','')}")
                 else: metric_lines.append("- Data row: " + ", ".join(f"{k}={v}" for k,v in row.items()))
-            report = f"""HUMANITY HORIZONS — M&E REPORT (DRAFT)\nOrganization: {org}\nProject: {project}\nDonor: {donor}\nPeriod: {reporting_period}\nGenerated: {date.today().isoformat()}\n\n1. SUMMARY\n{summary or '[Add evidence-based summary]'}\n\n2. INDICATOR PERFORMANCE\n{chr(10).join(metric_lines) or '[No indicator data supplied — insert verified results]'}\n\n3. ACHIEVEMENTS\n{achievements or '[Add verified achievements and source references]'}\n\n4. CHALLENGES AND DEVIATIONS\n{challenges or '[Explain shortfalls, causes and adaptive action]'}\n\n5. CORRECTIVE ACTIONS AND LESSONS\n{actions or '[Action, owner and due date]'}\n\n6. NEXT PERIOD PRIORITIES\n{nextsteps or '[Planned activities and milestones]'}\n\n7. DATA QUALITY, SAFEGUARDING AND LIMITATIONS\nVerify source records, calculations, denominators and disaggregation. Document gaps and revisions. Do not place identifiable safeguarding reports in a general donor narrative; use authorized confidential channels.\n\nDRAFT ONLY: Human review required. The software does not independently verify supplied inputs.\n"""
+            report = f"""CEDARS EMPIRE — M&E REPORT (DRAFT)\nOrganization: {org}\nProject: {project}\nDonor: {donor}\nPeriod: {reporting_period}\nGenerated: {date.today().isoformat()}\n\n1. SUMMARY\n{summary or '[Add evidence-based summary]'}\n\n2. INDICATOR PERFORMANCE\n{chr(10).join(metric_lines) or '[No indicator data supplied — insert verified results]'}\n\n3. ACHIEVEMENTS\n{achievements or '[Add verified achievements and source references]'}\n\n4. CHALLENGES AND DEVIATIONS\n{challenges or '[Explain shortfalls, causes and adaptive action]'}\n\n5. CORRECTIVE ACTIONS AND LESSONS\n{actions or '[Action, owner and due date]'}\n\n6. NEXT PERIOD PRIORITIES\n{nextsteps or '[Planned activities and milestones]'}\n\n7. DATA QUALITY, SAFEGUARDING AND LIMITATIONS\nVerify source records, calculations, denominators and disaggregation. Document gaps and revisions. Do not place identifiable safeguarding reports in a general donor narrative; use authorized confidential channels.\n\nDRAFT ONLY: Human review required. The software does not independently verify supplied inputs.\n"""
             st.session_state["report_text"] = report
         if st.session_state.get("report_text"):
             st.text_area("M&E report draft", st.session_state["report_text"], height=420)
@@ -1031,7 +1031,7 @@ elif page == "Privacy and Data":
     st.subheader("What this prototype stores")
     st.markdown("- Account email, display name, password hash and B2B profile. The original password is not stored.\n- Your tasks and their status changes.\n- Opportunity uploads are processed by the running app; extracted content may remain in your current session, not a private long-term document vault.\n- Action audit events needed to record authenticated uploads/downloads and their declared purposes.\n- Anonymous session counts without IP addresses or device fingerprinting. Identifiable attendance is added only when you opt in.\n- Feedback and B2B requests you submit.\n- Noticeboard listings and their source links.")
     st.warning("For production, configure a managed database, TLS, secrets management, backups, role-based access, deletion/export workflows, a retention schedule, breach response, email verification, password reset, rate limiting and an approved privacy notice. Have counsel/local data-protection professionals review applicable Ugandan law and any other jurisdictions served.")
-    st.markdown("Review applicable local data-protection, cybersecurity, employment, safeguarding, financial and records-retention laws with qualified advisers in each jurisdiction where Humanity Horizons operates.")
+    st.markdown("Review applicable local data-protection, cybersecurity, employment, safeguarding, financial and records-retention laws with qualified advisers in each jurisdiction where Cedars Empire operates.")
     my_tasks = db_all("SELECT * FROM tasks WHERE user_email=? ORDER BY created_at", (USER_EMAIL,))
     mydf = pd.DataFrame([{ "Title": t["title"], "Description": t["description"], "Status": t["status"], "Priority": t["priority"], "Due": t["due_date"], "Created": t["created_at"] } for t in my_tasks])
     download_gate("my data export", mydf.to_csv(index=False), "my_humanity_horizons_tasks.csv", "text/csv", "my_data_export")
@@ -1247,7 +1247,7 @@ elif page == "Report Automation":
         idf = pd.DataFrame([{ "Project": x["project_name"], "Indicator": x["indicator_name"], "Type": x["indicator_type"], "Baseline": x["baseline"], "Target": x["target"], "Current value": x["current_value"], "Unit": x["unit"], "Disaggregation": x["disaggregation"], "Data source": x["data_source"], "Frequency": x["reporting_frequency"], "Period": x["reporting_period"], "Notes": x["notes"] } for x in indicators])
         st.dataframe(idf, use_container_width=True, hide_index=True)
         download_gate("indicator register", idf.to_csv(index=False), "humanity_horizons_indicator_register.csv", "text/csv", "indicator_register")
-        report = ["HUMANITY HORIZONS — INDICATOR / M&E WORKING REPORT", f"Generated: {now_iso()}", "", "IMPORTANT: Validate every value against source records before external submission.", ""]
+        report = ["CEDARS EMPIRE — INDICATOR / M&E WORKING REPORT", f"Generated: {now_iso()}", "", "IMPORTANT: Validate every value against source records before external submission.", ""]
         for row in indicators:
             report += [f"Project: {row['project_name']}", f"Indicator: {row['indicator_name']} ({row['indicator_type']})", f"Baseline: {row['baseline'] or 'Not recorded'} | Target: {row['target'] or 'Not recorded'} | Current: {row['current_value'] or 'Not recorded'} {row['unit'] or ''}", f"Period: {row['reporting_period'] or 'Not recorded'} | Frequency: {row['reporting_frequency']}", f"Data source: {row['data_source'] or 'Not recorded'}", f"Disaggregation: {row['disaggregation'] or 'Not recorded'}", f"Data-quality notes: {row['notes'] or 'None recorded'}", ""]
         report_text = "\n".join(report)
@@ -1290,4 +1290,4 @@ else:
     st.error("This administrator page is not available for the current account.")
 
 st.divider()
-st.caption("Humanity Horizons · People, Planet and Peace · Build 1.1. Humanity Horizons owns and maintains its proprietary standards and workforce-readiness framework. Verify source documents, application instructions, CV claims, indicators and legal requirements before relying on an output.")
+st.caption("Cedars Empire · People, Planet and Peace · Build 1.1. Cedars Empire owns and maintains its proprietary standards and workforce-readiness framework. Verify source documents, application instructions, CV claims, indicators and legal requirements before relying on an output.")

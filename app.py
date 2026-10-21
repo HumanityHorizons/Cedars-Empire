@@ -212,6 +212,10 @@ def init_db() -> None:
             currency TEXT, assumptions TEXT, next_step TEXT, created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL
         )""",
+        """CREATE TABLE IF NOT EXISTS app_settings (
+            setting_key TEXT PRIMARY KEY, setting_value TEXT NOT NULL,
+            updated_by TEXT NOT NULL, updated_at TEXT NOT NULL
+        )""",
         """CREATE TABLE IF NOT EXISTS report_schedules (
             id TEXT PRIMARY KEY, owner_email TEXT NOT NULL, report_name TEXT NOT NULL,
             frequency TEXT NOT NULL, run_day INTEGER NOT NULL, recipient_email TEXT,
@@ -537,6 +541,16 @@ BUSINESS_PAGES = {
     "Blockchain & Treasury", "Business Reports", "Executive Command Center"
 }
 if page in BUSINESS_PAGES:
+    # Internal 360-degree command oversight; keep public-facing branding clean and never print "360" in UI.
+    media_rows = db_all("SELECT setting_key,setting_value FROM app_settings WHERE setting_key IN (?,?)",
+                        ("site_logo", "page_image:" + page))
+    media = {row["setting_key"]: row["setting_value"] for row in media_rows}
+    if media.get("site_logo"):
+        try: st.image(io.BytesIO(__import__("base64").b64decode(media["site_logo"])), width=180)
+        except Exception: pass
+    if media.get("page_image:" + page):
+        try: st.image(io.BytesIO(__import__("base64").b64decode(media["page_image:" + page])), use_container_width=True)
+        except Exception: pass
     st.title("CEDARS EMPIRE")
     st.caption("AI Real Business Scenarios")
     st.info("Integrity rule: scenarios, leads, estimates and planned contracts are not revenue. Record income only after a verifiable payment is received and reconciled. No earnings or contract is guaranteed.")
@@ -628,6 +642,61 @@ if page in BUSINESS_PAGES:
         else:
             st.header("Executive Command Center")
             st.write("Admin-only oversight for business operations. Financial records must be evidence-backed; no simulated balance or revenue is shown.")
+            st.subheader("Branding and page media")
+            st.caption("Upload an official logo and optional image for each business page. Uploads are stored in the configured application database. For persistence across redeployments, configure DATABASE_URL to a durable database.")
+            current_settings = {row["setting_key"]: row["setting_value"] for row in db_all("SELECT setting_key,setting_value FROM app_settings")}
+            with st.form("cedars_media_uploads"):
+                logo_upload = st.file_uploader("Official Cedars Empire logo", type=["png","jpg","jpeg","webp"], key="ce_admin_logo_upload")
+                page_choice = st.selectbox("Page to update with a photo/banner", [p for p in pages if p not in ("Executive Command Center",)])
+                page_upload = st.file_uploader("Page photo / banner", type=["png","jpg","jpeg","webp"], key="ce_admin_page_upload")
+                remove_page_image = st.checkbox("Remove the selected page image")
+                media_submit = st.form_submit_button("Save media updates")
+            if media_submit:
+                saved = []
+                errors = []
+                if logo_upload is not None:
+                    raw = logo_upload.getvalue()
+                    if len(raw) > 4 * 1024 * 1024:
+                        errors.append("Logo exceeds 4 MB.")
+                    else:
+                        try:
+                            from PIL import Image
+                            Image.open(io.BytesIO(raw)).verify()
+                            import base64
+                            db_exec("INSERT INTO app_settings (setting_key,setting_value,updated_by,updated_at) VALUES (?,?,?,?) ON CONFLICT (setting_key) DO UPDATE SET setting_value=excluded.setting_value,updated_by=excluded.updated_by,updated_at=excluded.updated_at",
+                                    ("site_logo", base64.b64encode(raw).decode("ascii"), USER_EMAIL, now_iso()))
+                            saved.append("logo")
+                        except Exception:
+                            errors.append("Logo is not a valid supported image.")
+                key = "page_image:" + page_choice
+                if page_upload is not None:
+                    raw = page_upload.getvalue()
+                    if len(raw) > 4 * 1024 * 1024:
+                        errors.append("Page image exceeds 4 MB.")
+                    else:
+                        try:
+                            from PIL import Image
+                            Image.open(io.BytesIO(raw)).verify()
+                            import base64
+                            db_exec("INSERT INTO app_settings (setting_key,setting_value,updated_by,updated_at) VALUES (?,?,?,?) ON CONFLICT (setting_key) DO UPDATE SET setting_value=excluded.setting_value,updated_by=excluded.updated_by,updated_at=excluded.updated_at",
+                                    (key, base64.b64encode(raw).decode("ascii"), USER_EMAIL, now_iso()))
+                            saved.append("image for " + page_choice)
+                        except Exception:
+                            errors.append("Page image is not a valid supported image.")
+                if remove_page_image:
+                    db_exec("DELETE FROM app_settings WHERE setting_key=?", (key,))
+                    saved.append("removed image for " + page_choice)
+                if saved:
+                    record_event(USER_EMAIL, "admin_media_updated", ", ".join(saved))
+                    st.success("Saved: " + ", ".join(saved) + ". Navigate to the target page to preview.")
+                for err in errors: st.error(err)
+            st.subheader("Current media")
+            current_settings = {row["setting_key"]: row["setting_value"] for row in db_all("SELECT setting_key,setting_value FROM app_settings")}
+            if current_settings.get("site_logo"):
+                st.image(io.BytesIO(__import__("base64").b64decode(current_settings["site_logo"])), caption="Current site logo", width=220)
+            for setting_key, encoded in current_settings.items():
+                if setting_key.startswith("page_image:"):
+                    st.caption("Page image: " + setting_key.split(":",1)[1])
             st.subheader("Available integrity checks")
             st.write("- Verify contracts and supplier agreements")
             st.write("- Reconcile receipts against source transaction records")

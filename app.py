@@ -391,9 +391,6 @@ HH_STANDARDS_CHECKS = [
 # Page chrome and auth
 # -----------------------------------------------------------------------------
 st.title("CEDARS EMPIRE")
-st.caption("People, Planet and Peace")
-st.write("An integrated Cedars Empire workspace for opportunity intelligence, proposals, career readiness, SDG programming, project delivery, accountability and partnerships.")
-st.info("Privacy-first prototype: anonymous visits are counted without collecting IP addresses or device fingerprints. Personal follow-up data is stored only when you create an account and opt in. No data is sold by this prototype; all sponsored content or fees must be clearly labelled.")
 
 
 def set_login(user: dict[str, Any], login_purpose: str = "") -> None:
@@ -1286,4 +1283,4 @@ else:
     st.error("This administrator page is not available for the current account.")
 
 st.divider()
-st.caption("Cedars Empire · People, Planet and Peace · Build 1.1. Cedars Empire owns and maintains its proprietary standards and workforce-readiness framework. Verify source documents, application instructions, CV claims, indicators and legal requirements before relying on an output.")
+

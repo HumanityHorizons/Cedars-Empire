@@ -795,6 +795,29 @@ if page in BUSINESS_PAGES:
         else:
             st.header("Executive Command Center")
             st.write("Admin-only oversight for business operations. Financial records must be evidence-backed; no simulated balance or revenue is shown.")
+            st.subheader("Treasury destination controls")
+            st.warning("Only enable deposit instructions after independently verifying each address, token contract and network and recording the approval evidence.")
+            settings_now = {row["setting_key"]: row["setting_value"] for row in db_all("SELECT setting_key,setting_value FROM app_settings")}
+            with st.form("treasury_destination_settings"):
+                tron_addr = st.text_input("TRON deposit address", value=settings_now.get("tron_deposit_address", ""))
+                bnb_addr = st.text_input("BNB Smart Chain deposit address", value=settings_now.get("bnb_deposit_address", ""))
+                tigers_contract = st.text_input("TIGERS token contract address", value=settings_now.get("tigers_token_contract", ""))
+                destinations_verified = st.checkbox("I independently verified the destinations and exact network/token contracts", value=settings_now.get("deposit_destinations_verified") == "true")
+                deposit_enabled = st.checkbox("Formally enable deposit instructions", value=settings_now.get("deposit_enabled") == "true")
+                save_destinations = st.form_submit_button("Save treasury destination controls")
+            if save_destinations:
+                valid_tron = not tron_addr.strip() or (tron_addr.strip().startswith("T") and len(tron_addr.strip()) == 34)
+                valid_bnb = not bnb_addr.strip() or (re.fullmatch(r"0x[a-fA-F0-9]{40}", bnb_addr.strip()) is not None)
+                if not valid_tron or not valid_bnb:
+                    st.error("Address format check failed. Format checks do not prove ownership or legitimacy.")
+                elif deposit_enabled and (not destinations_verified or not (tron_addr.strip() or bnb_addr.strip())):
+                    st.error("Cannot enable deposits without verified destinations and at least one configured address.")
+                else:
+                    for sk, sv in [("tron_deposit_address",tron_addr.strip()),("bnb_deposit_address",bnb_addr.strip()),("tigers_token_contract",tigers_contract.strip()),("deposit_destinations_verified","true" if destinations_verified else "false"),("deposit_enabled","true" if deposit_enabled else "false")]:
+                        db_exec("INSERT INTO app_settings (setting_key,setting_value,updated_by,updated_at) VALUES (?,?,?,?) ON CONFLICT (setting_key) DO UPDATE SET setting_value=excluded.setting_value,updated_by=excluded.updated_by,updated_at=excluded.updated_at", (sk, sv, USER_EMAIL, now_iso()))
+                    record_event(USER_EMAIL, "treasury_destination_settings_updated", "Deposits enabled=" + str(deposit_enabled))
+                    st.success("Treasury settings saved. This control does not replace independent verification, legal review or custody controls.")
+                    st.rerun()
             st.subheader("Branding and page media")
             st.caption("Upload an official logo and optional image for each business page. Uploads are stored in the configured application database. For persistence across redeployments, configure DATABASE_URL to a durable database.")
             current_settings = {row["setting_key"]: row["setting_value"] for row in db_all("SELECT setting_key,setting_value FROM app_settings")}

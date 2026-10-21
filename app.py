@@ -665,6 +665,48 @@ if page in BUSINESS_PAGES:
                 st.rerun()
         mine = db_all("SELECT asset,network,amount,tx_hash,status,created_at,updated_at FROM deposit_intents WHERE user_email=? ORDER BY created_at DESC", (USER_EMAIL,))
         if mine: st.dataframe(pd.DataFrame(mine), use_container_width=True, hide_index=True)
+    elif page == "Withdrawals & Full KYC":
+        st.header("Withdrawals & Full KYC")
+        st.warning("Withdrawal requests are not automatic payouts. Do not enter government ID numbers or upload identity documents here until an approved secure verification provider and privacy process are configured.")
+        kyc_rows = db_all("SELECT id,legal_name,country,verification_provider,provider_reference,status,review_note,created_at,updated_at FROM kyc_requests WHERE user_email=? ORDER BY created_at DESC", (USER_EMAIL,))
+        latest_kyc = kyc_rows[0] if kyc_rows else None
+        st.metric("KYC status", latest_kyc["status"] if latest_kyc else "Not submitted")
+        with st.form("kyc_request_form"):
+            legal_name = st.text_input("Legal name (as required by the approved verifier)")
+            country = st.selectbox("Country of residence", ["Uganda","Kenya","Tanzania","Rwanda","Nigeria","Ghana","United States","United Kingdom","Other"])
+            provider = st.text_input("Approved KYC provider (leave blank if not appointed)")
+            provider_ref = st.text_input("Provider verification reference (never enter ID number)")
+            submit_kyc = st.form_submit_button("Submit KYC review request")
+        if submit_kyc:
+            if not legal_name.strip(): st.error("Legal name is required to open a review request.")
+            else:
+                db_exec("INSERT INTO kyc_requests (id,user_email,legal_name,country,verification_provider,provider_reference,status,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?)", (str(uuid.uuid4()), USER_EMAIL, legal_name.strip(), country, provider.strip() or None, provider_ref.strip() or None, "Pending review", now_iso(), now_iso()))
+                record_event(USER_EMAIL, "kyc_review_requested")
+                st.success("KYC review request saved. This is not identity verification or approval.")
+                st.rerun()
+        st.subheader("Request a withdrawal")
+        kyc_approved = bool(latest_kyc and latest_kyc["status"] == "Verified")
+        if not kyc_approved: st.info("Withdrawal submission is locked until KYC status is verified and eligibility checks are completed.")
+        with st.form("withdrawal_request_form"):
+            amount = st.text_input("Withdrawal amount")
+            asset = st.selectbox("Asset", ["USDT", "TRX", "BNB", "TIGERS (only if approved and configured)"])
+            network = st.selectbox("Network", ["TRON mainnet", "BNB Smart Chain mainnet"])
+            destination = st.text_input("Destination wallet address")
+            acknowledge = st.checkbox("I checked the destination address and network; I understand requests can be rejected and no payout is guaranteed.")
+            submit_withdrawal = st.form_submit_button("Submit withdrawal request", disabled=not kyc_approved)
+        if submit_withdrawal:
+            try:
+                from decimal import Decimal
+                amt = Decimal(amount.strip())
+                if amt <= 0: raise ValueError("Amount must be greater than zero.")
+                if not destination.strip() or not acknowledge: raise ValueError("Destination address and network confirmation are required.")
+                db_exec("INSERT INTO withdrawal_requests (id,user_email,amount,asset,network,destination_address,status,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?)", (str(uuid.uuid4()), USER_EMAIL, str(amt), asset, network, destination.strip(), "Pending eligibility and approval", now_iso(), now_iso()))
+                record_event(USER_EMAIL, "withdrawal_request_created", network + " / " + asset)
+                st.success("Withdrawal request saved. No transaction has been broadcast and no funds have been sent.")
+                st.rerun()
+            except Exception as exc: st.error("Withdrawal request not saved: " + str(exc))
+        withdrawals = db_all("SELECT amount,asset,network,destination_address,status,tx_hash,admin_note,created_at,updated_at FROM withdrawal_requests WHERE user_email=? ORDER BY created_at DESC", (USER_EMAIL,))
+        if withdrawals: st.dataframe(pd.DataFrame(withdrawals), use_container_width=True, hide_index=True)
     elif page == "Business Dashboard":
         st.header("Business Dashboard")
         st.write("Operate service businesses, validate demand, track real contracts and reconcile verified receipts.")

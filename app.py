@@ -522,6 +522,16 @@ def signup_page() -> None:
                 db_exec("INSERT INTO users (id,email,full_name,password_salt,password_hash,account_type,organization,sector,b2b_purpose,followup_optin,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
                         (str(uuid.uuid4()), email, full_name.strip(), salt, hashed, account_type, organization.strip(), sector, purpose.strip(), int(followup), now_iso()))
                 user = db_all("SELECT * FROM users WHERE email=?", (email,))[0]
+                # Attribute a referral only when the code matches an existing account.
+                try:
+                    referral_code = str(st.query_params.get("ref", "")).strip().upper()
+                    if referral_code and re.fullmatch(r"[A-F0-9]{12}", referral_code):
+                        candidates = db_all("SELECT email FROM users WHERE email<>?", (email,))
+                        referrer = next((row["email"] for row in candidates if hashlib.sha256(row["email"].lower().encode("utf-8")).hexdigest()[:12].upper() == referral_code), None)
+                        if referrer:
+                            db_exec("INSERT INTO referral_records (id,referrer_email,referred_email,referral_code,status,evidence_ref,created_at) VALUES (?,?,?,?,?,?,?)", (str(uuid.uuid4()), referrer, email, referral_code, "Signup claimed", "Account creation event", now_iso()))
+                except Exception:
+                    pass
                 set_login(user, purpose.strip())
                 record_event(email, "account_created", purpose.strip())
                 st.success("Account created. Your workspace is ready.")
@@ -822,8 +832,9 @@ if page in BUSINESS_PAGES:
         render_engine_dashboard("AI training & data operations")
     elif page == "World Grid Marketplace":
         st.header("World Grid Marketplace")
-        st.write("A planned marketplace for verified service providers, customer requests and written service agreements.")
-        st.write("Listings must distinguish verified providers from unverified leads; sponsored placements must be clearly labelled. No live marketplace transactions are connected on this page.")
+        st.write("A marketplace operations dashboard for provider checks, customer demand, delivery, costs and receipt reconciliation.")
+        st.caption("Listings remain unverified until supporting evidence is reviewed. No marketplace transaction or income is implied by a saved record.")
+        render_engine_dashboard("World Grid marketplace")
     elif page == "Client Services & Contracts":
         st.header("Client Services & Contracts")
         st.write("Potential paid services: document and workflow automation, data analysis, digital operations, reporting, training and custom business support.")

@@ -1039,6 +1039,49 @@ if page in BUSINESS_PAGES:
             st.header("Executive Command Center")
             st.write("Admin-only oversight for business operations. Financial records must be evidence-backed; no simulated balance or revenue is shown.")
 
+            # Grid terminal board: operational health is deliberately separate from revenue.
+            # No live health probes are configured yet, so never imply a grid is working or failed.
+            st.subheader("Grid Operations Terminal")
+            st.caption("Blinking yellow = Ready / health probe not connected. Green Working and blue Error will be used only after a real, defined operational check reports that state. These indicators are not payment or revenue evidence.")
+            grid_terminals = [
+                ("NeuroWave + Health", "Wellbeing education and workshops"),
+                ("EchoMap + Mobility", "Licensed audio and mobility services"),
+                ("BioLoop + Finance", "SME financial operations and data quality"),
+                ("DreamGrid + Education", "Courses and institutional learning"),
+                ("EmoFlux + Shelter", "Accommodation and property services"),
+                ("IdeaForge + Data", "Research, data cleaning and AI labeling"),
+                ("QuantumLeap + Energy", "Solar+ assessments and energy efficiency"),
+                ("Cleaning Grid", "Cleaning and property turnover"),
+                ("Shelter & Accommodation Grid", "Accommodation and shelter referrals"),
+                ("Energy & Utilities Grid", "Energy and utility services"),
+                ("AI Training & Data Operations", "Contracted data tasks and quality review"),
+                ("World Grid Marketplace", "Provider discovery and service listings"),
+                ("Client Services & Contracts", "Client scopes, delivery and agreements"),
+                ("Business Opportunity Pipeline", "Leads, eligibility and proposal tracking"),
+            ]
+            st.markdown("""
+            <style>
+            @keyframes cedars-ready-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .28; } }
+            .cedars-terminal-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin:8px 0 18px 0; }
+            .cedars-terminal { border:1px solid rgba(150,150,150,.38); border-radius:10px; padding:13px; background:rgba(120,120,120,.06); min-height:105px; }
+            .cedars-terminal-title { font-weight:650; margin-bottom:5px; }
+            .cedars-terminal-detail { font-size:13px; opacity:.82; min-height:34px; }
+            .cedars-terminal-status { font-size:12px; margin-top:9px; font-weight:650; }
+            .cedars-terminal-light { display:inline-block; width:10px; height:10px; border-radius:50%; background:#eab308; margin-right:7px; animation:cedars-ready-pulse 1.2s infinite; box-shadow:0 0 7px rgba(234,179,8,.45); }
+            </style>
+            """, unsafe_allow_html=True)
+            terminal_html = ['<div class="cedars-terminal-grid">']
+            for grid_name, grid_detail in grid_terminals:
+                safe_name = (grid_name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
+                safe_detail = (grid_detail.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
+                terminal_html.append(
+                    '<div class="cedars-terminal"><div class="cedars-terminal-title">' + safe_name +
+                    '</div><div class="cedars-terminal-detail">' + safe_detail +
+                    '</div><div class="cedars-terminal-status"><span class="cedars-terminal-light"></span>READY · probe not connected</div></div>'
+                )
+            terminal_html.append('</div>')
+            st.markdown("".join(terminal_html), unsafe_allow_html=True)
+
             # Money-flow lights are based only on admin-entered reconciled ledger records.
             # They are not live chain attestations; references and supporting evidence must be checked.
             money_rows = db_all(

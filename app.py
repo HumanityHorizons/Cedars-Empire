@@ -88,6 +88,8 @@ ADMIN_EMAILS = {e.strip().lower() for e in setting("ADMIN_EMAILS", "ogwal.bemman
 TREASURY_ADDRESS = "TE26B7zQjMbahYAWcxEsSPC6aZEr2Hcz1u"
 OPENAI_API_KEY = setting("OPENAI_API_KEY", "").strip()
 OPENAI_MODEL = setting("OPENAI_MODEL", "gpt-5-mini").strip() or "gpt-5-mini"
+TRONSCAN_API_KEY = setting("TRONSCAN_API_KEY", "").strip()
+ETHERSCAN_API_KEY = setting("ETHERSCAN_API_KEY", "").strip()
 
 
 def now_iso() -> str:
@@ -293,6 +295,46 @@ def record_event(user_email: str | None, event_name: str, purpose: str | None = 
         db_exec("INSERT INTO audit_events (id,user_email,event_name,declared_purpose,created_at) VALUES (?,?,?,?,?)",
                 (str(uuid.uuid4()), user_email, event_name, purpose, now_iso()))
 
+
+
+def verify_chain_transaction(chain: str, tx_hash: str) -> dict[str, Any]:
+    """Read-only transaction lookup. A returned payload still requires destination/token reconciliation."""
+    from urllib.parse import urlencode
+    from urllib.request import Request, urlopen
+    if not re.fullmatch(r"(0x)?[a-fA-F0-9]{64}", tx_hash.strip()):
+        raise ValueError("Transaction hash format is not recognized.")
+    if chain == "TRON mainnet":
+        if not TRONSCAN_API_KEY:
+            raise RuntimeError("Set TRONSCAN_API_KEY in Streamlit secrets to enable TRON read-only lookup.")
+        url = "https://apilist.tronscanapi.com/api/transaction-info?" + urlencode({"hash": tx_hash.strip()})
+        req = Request(url, headers={"TRON-PRO-API-KEY": TRONSCAN_API_KEY, "Accept": "application/json", "User-Agent": "CedarsEmpire-readonly-check/1.0"})
+        with urlopen(req, timeout=12) as response:
+            data = json.loads(response.read().decode("utf-8"))
+        if not data or data.get("hash", "").lower() != tx_hash.strip().lower():
+            return {"lookup": "No matching transaction returned", "chain": chain, "confirmed": False}
+        transfers = data.get("trc20TransferInfo") or data.get("transfersAllList") or []
+        return {"lookup": "TRONSCAN API response", "chain": chain, "hash": data.get("hash"), "confirmed": data.get("confirmed"), "revert": data.get("revert"), "contract_result": data.get("contractRet"), "block": data.get("block"), "timestamp_ms": data.get("timestamp"), "from": data.get("ownerAddress"), "to": data.get("toAddress"), "token_transfers": transfers[:20]}
+    if chain == "BNB Smart Chain mainnet":
+        if not ETHERSCAN_API_KEY:
+            raise RuntimeError("Set ETHERSCAN_API_KEY in Streamlit secrets to enable BNB Smart Chain read-only lookup.")
+        base = "https://api.etherscan.io/v2/api?"
+        params = {"chainid": "56", "module": "proxy", "action": "eth_getTransactionReceipt", "txhash": tx_hash.strip() if tx_hash.startswith("0x") else "0x" + tx_hash.strip(), "apikey": ETHERSCAN_API_KEY}
+        with urlopen(Request(base + urlencode(params), headers={"Accept": "application/json", "User-Agent": "CedarsEmpire-readonly-check/1.0"}), timeout=12) as response:
+            receipt = json.loads(response.read().decode("utf-8"))
+        result = receipt.get("result")
+        if not result:
+            return {"lookup": "No receipt returned (possibly pending, unknown, or API unavailable)", "chain": chain, "hash": tx_hash.strip()}
+        transfer_params = {"chainid": "56", "module": "account", "action": "tokentx", "txhash": tx_hash.strip() if tx_hash.startswith("0x") else "0x" + tx_hash.strip(), "apikey": ETHERSCAN_API_KEY}
+        transfers = []
+        try:
+            with urlopen(Request(base + urlencode(transfer_params), headers={"Accept": "application/json", "User-Agent": "CedarsEmpire-readonly-check/1.0"}), timeout=12) as response:
+                transfer_response = json.loads(response.read().decode("utf-8"))
+            if isinstance(transfer_response.get("result"), list):
+                transfers = transfer_response["result"][:20]
+        except Exception:
+            transfers = []
+        return {"lookup": "Etherscan API V2 response", "chain": chain, "hash": result.get("transactionHash"), "receipt_status": result.get("status"), "block_number": result.get("blockNumber"), "to_contract_or_address": result.get("to"), "gas_used": result.get("gasUsed"), "token_transfers": transfers}
+    raise ValueError("Unsupported chain.")
 
 def pw_hash(password: str, salt_hex: str | None = None) -> tuple[str, str]:
     salt = bytes.fromhex(salt_hex) if salt_hex else secrets.token_bytes(16)
@@ -874,7 +916,7 @@ if page in BUSINESS_PAGES:
     elif page == "Blockchain & Treasury":
         st.header("Blockchain & Treasury")
         st.write("Keep independently checked on-chain evidence separate from the internal accounting ledger and user-submitted claims.")
-        st.warning("No automated chain API verifier is connected in this deployment. Explorer links help an authorized reviewer inspect public records; opening a link or saving a review does not itself verify a transaction.")
+        st.warning("Read-only explorer API lookup is available when the relevant API key is configured. Results are evidence for review, not proof of a Cedars Empire deposit until the correct destination, token contract, amount and confirmations are reconciled.")
         chain = st.selectbox("Network for transaction lookup", ["TRON mainnet", "BNB Smart Chain mainnet"])
         tx_hash = st.text_input("Transaction hash / transaction ID")
         if tx_hash.strip():
@@ -886,6 +928,14 @@ if page in BUSINESS_PAGES:
                 st.markdown("[Open transaction on TRONSCAN](https://tronscan.org/#/transaction/" + tx + ")")
             else:
                 st.markdown("[Open transaction on BscScan](https://bscscan.com/tx/" + (tx if tx.startswith("0x") else "0x" + tx) + ")")
+            if st.button("Run read-only API lookup", key="run_chain_api_lookup"):
+                try:
+                    chain_result = verify_chain_transaction(chain, tx)
+                    st.subheader("Read-only chain API result")
+                    st.json(chain_result)
+                    st.caption("Check destination, token contract, decimals, amount, success status and confirmations before recording or reconciling a receipt.")
+                except Exception as exc:
+                    st.error("Chain lookup unavailable: " + str(exc))
         st.subheader("What a reviewer must verify")
         st.markdown("- Correct chain and transaction success status\n- Exact destination wallet\n- Correct token contract and token standard (for token transfers)\n- Amount and decimals\n- Block confirmations and timestamp\n- No duplicate transaction hash in the internal ledger")
         st.subheader("Internal ledger versus on-chain evidence")

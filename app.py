@@ -86,6 +86,7 @@ ADMIN_EMAILS = {e.strip().lower() for e in setting("ADMIN_EMAILS", "ogwal.bemman
 # Public TRON receiving address requested for the Cedars Empire treasury display.
 # This is a public wallet address, NOT a private key. The app does not execute transfers.
 TREASURY_ADDRESS = "TE26B7zQjMbahYAWcxEsSPC6aZEr2Hcz1u"
+BNB_TREASURY_ADDRESS = "0x0d4c2B95e8FB7Be3DB9953bAcEf3A4Be643bA77B"
 OPENAI_API_KEY = setting("OPENAI_API_KEY", "").strip()
 OPENAI_MODEL = setting("OPENAI_MODEL", "gpt-5-mini").strip() or "gpt-5-mini"
 TRONSCAN_API_KEY = setting("TRONSCAN_API_KEY", "").strip()
@@ -611,36 +612,38 @@ with st.sidebar:
     st.markdown(f"**Signed in as:** {USER_NAME}")
     st.caption(USER_EMAIL)
     if IS_ADMIN: st.success("Administrator workspace")
-    # Business-first workspace. NGO programme/HR/MEAL pages are not exposed in this navigation.
-    pages = [
-        "Investor Landing",
-        "Business Dashboard",
-        "Real Money Engines",
-        "NeuroWave + Health",
-        "EchoMap + Mobility",
-        "BioLoop + Finance",
-        "DreamGrid + Education",
-        "EmoFlux + Shelter",
-        "IdeaForge + Data",
-        "QuantumLeap + Energy",
-        "AI Business Scenario Lab",
-        "Cleaning Grid",
-        "Shelter & Accommodation Grid",
-        "Energy & Utilities Grid",
-        "AI Training & Data Operations",
-        "World Grid Marketplace",
-        "Client Services & Contracts",
-        "Business Opportunity Pipeline",
-        "Blockchain & Treasury",
-        "Deposit QR & TIGERS",
-        "Withdrawals & Full KYC",
-        "Staking & Compounding",
-        "Referral Program",
-        "Business Reports",
+    # Five user-facing workspaces. Admin controls are grouped into no more than nine areas.
+    user_pages = [
+        "Dashboard",
+        "Grid Marketplace",
+        "Work & Contracts",
+        "Payments & Treasury",
+        "Account",
     ]
-    if IS_ADMIN:
-        pages.append("Executive Command Center")
-    page = st.radio("Navigate", pages, label_visibility="collapsed")
+    admin_pages = [
+        "Executive Command Center",
+        "Real Money Engines",
+        "Grid Marketplace",
+        "Work & Contracts",
+        "Payments & Treasury",
+        "Blockchain & Treasury",
+        "Deposits & Withdrawals",
+        "Reports & Referrals",
+        "AI Operations",
+    ]
+    pages = admin_pages if IS_ADMIN else user_pages
+    selected_page = st.radio("Navigate", pages, label_visibility="collapsed")
+    page_routes = {
+        "Dashboard": "Business Dashboard",
+        "Grid Marketplace": "World Grid Marketplace",
+        "Work & Contracts": "Client Services & Contracts",
+        "Payments & Treasury": "Blockchain & Treasury",
+        "Account": "Business Dashboard",
+        "Deposits & Withdrawals": "Deposit QR & TIGERS",
+        "Reports & Referrals": "Business Reports",
+        "AI Operations": "AI Business Scenario Lab",
+    }
+    page = page_routes.get(selected_page, selected_page)
     if st.button("Sign out"):
         record_event(USER_EMAIL, "sign_out")
         for key in ["user_email", "full_name", "account_type", "followup_optin", "last_login"]:
@@ -659,7 +662,8 @@ BUSINESS_PAGES = {
     "AI Training & Data Operations", "World Grid Marketplace", "Client Services & Contracts",
     "Business Opportunity Pipeline", "Blockchain & Treasury", "Deposit QR & TIGERS",
     "Withdrawals & Full KYC", "Staking & Compounding", "Referral Program",
-    "Business Reports", "Executive Command Center"
+    "Business Reports", "Executive Command Center", "Grid Marketplace", "Work & Contracts",
+    "Payments & Treasury", "Deposits & Withdrawals", "Reports & Referrals", "AI Operations"
 }
 if page in BUSINESS_PAGES:
     # Internal 360-degree command oversight; keep public-facing branding clean and never print "360" in UI.
@@ -1735,8 +1739,10 @@ elif page == "Admin Console" and IS_ADMIN:
     with admin_tabs[3]:
         st.subheader("Treasury reference and verified ledger")
         st.write("This is an administrative finance area. It does not perform blockchain transactions or automate withdrawals. Treasury details are shown only to configured administrators in the app UI.")
-        st.write(f"**Configured TRON treasury address:** `{TREASURY_ADDRESS or 'Not configured — set TRON_TREASURY_ADDRESS in Streamlit secrets'}`")
-        st.write("**Network/asset intended:** TRON mainnet · USDT (TRC-20) / TRX. Do not enter private keys or seed phrases here.")
+        st.write(f"**TRON treasury (TRON mainnet):** `{TREASURY_ADDRESS}`")
+        st.write("**Network/asset intended:** TRON mainnet · USDT (TRC-20) / TRX.")
+        st.write(f"**BNB Smart Chain treasury:** `{BNB_TREASURY_ADDRESS}`")
+        st.write("**Network/asset intended:** BNB Smart Chain mainnet · verify the official USDT token contract and network before sending. Do not enter private keys or seed phrases here.")
         st.info("Automatic withdrawals require a reviewed custody/signing model, key management, transaction simulation, address/network checks, limits, approvals, reconciliation, monitoring, tax/accounting controls and applicable legal review. No funds are moved by this prototype.")
         with st.form("ledger_form"):
             entry_type = st.selectbox("Entry type", ["Verified income received", "Verified expense", "Refund", "Adjustment"])

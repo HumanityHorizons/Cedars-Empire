@@ -390,10 +390,7 @@ HH_STANDARDS_CHECKS = [
 # -----------------------------------------------------------------------------
 # Page chrome and auth
 # -----------------------------------------------------------------------------
-if LOGO.exists():
-    st.image(str(LOGO), width=310)
-else:
-    st.title("CEDARS EMPIRE")
+st.title("CEDARS EMPIRE")
 st.caption("People, Planet and Peace")
 st.write("An integrated Cedars Empire workspace for opportunity intelligence, proposals, career readiness, SDG programming, project delivery, accountability and partnerships.")
 st.info("Privacy-first prototype: anonymous visits are counted without collecting IP addresses or device fingerprints. Personal follow-up data is stored only when you create an account and opt in. No data is sold by this prototype; all sponsored content or fees must be clearly labelled.")

@@ -500,15 +500,22 @@ with st.sidebar:
     st.markdown(f"**Signed in as:** {USER_NAME}")
     st.caption(USER_EMAIL)
     if IS_ADMIN: st.success("Administrator workspace")
+    # Business-first workspace. NGO programme/HR/MEAL pages are not exposed in this navigation.
     pages = [
-        "Dashboard", "My Tasks", "Opportunity Analysis", "Proposal Studio", "CV / Resume Studio",
-        "SDG Navigator", "Noticeboard", "HH Standards & Impact", "Donor Feedback",
-        "B2B Collaboration", "HR & Volunteers", "Revenue & Sustainability",
-        "Report Automation", "Calendar & Events", "Privacy and Data", "Admin Console"
+        "Business Dashboard",
+        "AI Business Scenario Lab",
+        "Cleaning Grid",
+        "Shelter & Accommodation Grid",
+        "Energy & Utilities Grid",
+        "AI Training & Data Operations",
+        "World Grid Marketplace",
+        "Client Services & Contracts",
+        "Business Opportunity Pipeline",
+        "Blockchain & Treasury",
+        "Business Reports",
     ]
-    if not IS_ADMIN:
-        pages.remove("Admin Console")
-        pages.remove("Report Automation")
+    if IS_ADMIN:
+        pages.append("Executive Command Center")
     page = st.radio("Navigate", pages, label_visibility="collapsed")
     if st.button("Sign out"):
         record_event(USER_EMAIL, "sign_out")
@@ -520,6 +527,115 @@ with st.sidebar:
     st.caption("AI: connected" if OPENAI_API_KEY else "AI: local structured mode (API key not configured)")
     st.caption("No funding, AI accuracy, compliance certification or payment settlement is guaranteed.")
 
+# Cedars Empire: real-business scenario workspace.
+# NGO operations pages remain in the codebase but are intentionally inaccessible from this business-only navigation.
+BUSINESS_PAGES = {
+    "Business Dashboard", "AI Business Scenario Lab", "Cleaning Grid",
+    "Shelter & Accommodation Grid", "Energy & Utilities Grid",
+    "AI Training & Data Operations", "World Grid Marketplace",
+    "Client Services & Contracts", "Business Opportunity Pipeline",
+    "Blockchain & Treasury", "Business Reports", "Executive Command Center"
+}
+if page in BUSINESS_PAGES:
+    st.title("CEDARS EMPIRE")
+    st.caption("AI Real Business Scenarios")
+    st.info("Integrity rule: scenarios, leads, estimates and planned contracts are not revenue. Record income only after a verifiable payment is received and reconciled. No earnings or contract is guaranteed.")
+    if page == "Business Dashboard":
+        st.header("Business Dashboard")
+        st.write("Operate service businesses, validate demand, track real contracts and reconcile verified receipts.")
+        cols = st.columns(3)
+        cols[0].metric("Verified revenue", "Not connected")
+        cols[1].metric("Active contracts", "Not connected")
+        cols[2].metric("Treasury balance", "Not connected")
+        st.caption("Live financial figures are intentionally withheld until connected to verified transaction records.")
+        st.subheader("Business grids")
+        st.write("Cleaning services · Accommodation matching · Energy and utilities · AI training/data operations · Marketplace · Client services")
+    elif page == "AI Business Scenario Lab":
+        st.header("AI Business Scenario Lab")
+        st.write("Build a testable operating plan. Estimates are planning inputs only; they are not evidence of market demand or income.")
+        with st.form("business_scenario_form"):
+            scenario_name = st.text_input("Scenario / service name")
+            customer = st.text_input("Target customer and location")
+            problem = st.text_area("Customer problem and proposed service")
+            price = st.text_input("Proposed price and currency (optional)")
+            cost = st.text_input("Expected delivery costs (optional)")
+            proof = st.text_area("Evidence of demand, provider agreement, permits and key risks")
+            submitted = st.form_submit_button("Review scenario")
+        if submitted:
+            st.subheader("Scenario review")
+            st.write("**Service:** " + (scenario_name.strip() or "Not provided"))
+            st.write("**Customer:** " + (customer.strip() or "Not provided"))
+            st.write("**Problem / solution:** " + (problem.strip() or "Not provided"))
+            st.write("**Price / costs:** " + (price.strip() or "Not provided") + " / " + (cost.strip() or "Not provided"))
+            st.write("**Evidence and risks:** " + (proof.strip() or "No evidence supplied"))
+            st.warning("Validation status: NOT VERIFIED. Confirm real customers, supplier capacity, unit economics, legal requirements and written agreements before spending or promising service.")
+    elif page == "Cleaning Grid":
+        st.header("Cleaning Grid")
+        st.write("Potential service workflow: verify a customer request → confirm property scope and access → secure a vetted provider → agree price and terms → document completion → reconcile payment.")
+        st.warning("No cleaning jobs, providers, prices or earnings are live-verified by this page.")
+    elif page == "Shelter & Accommodation Grid":
+        st.header("Shelter & Accommodation Grid")
+        st.write("Potential matching workflow for accommodation providers and customers: verify provider identity and availability, property legitimacy, safety, booking terms and cancellation/refund rules before matching.")
+        st.warning("No beds, properties, bookings or nightly income are live-verified by this page.")
+    elif page == "Energy & Utilities Grid":
+        st.header("Energy & Utilities Grid")
+        st.write("Potential service areas include energy-efficiency assessments, solar installation referrals, maintenance coordination and utility data services.")
+        st.warning("Do not treat energy credits, kWh trading, savings, or projected sales as revenue without verified counterparties, legal authority, metering and settlement evidence.")
+    elif page == "AI Training & Data Operations":
+        st.header("AI Training & Data Operations")
+        st.write("Potential workstreams: data annotation, evaluation, transcription and quality review for verified buyers.")
+        st.write("Before accepting work, verify the buyer, written scope, rates, data rights, privacy/security requirements, participant consent, age eligibility and payment terms.")
+        st.warning("No buyer contracts, available tasks, participant earnings or payouts are verified here.")
+    elif page == "World Grid Marketplace":
+        st.header("World Grid Marketplace")
+        st.write("A planned marketplace for verified service providers, customer requests and written service agreements.")
+        st.write("Listings must distinguish verified providers from unverified leads; sponsored placements must be clearly labelled. No live marketplace transactions are connected on this page.")
+    elif page == "Client Services & Contracts":
+        st.header("Client Services & Contracts")
+        st.write("Potential paid services: document and workflow automation, data analysis, digital operations, reporting, training and custom business support.")
+        with st.form("client_contract_checklist"):
+            client = st.text_input("Client / organisation")
+            service = st.text_input("Service and deliverables")
+            amount = st.text_input("Agreed amount and currency")
+            terms = st.text_area("Written agreement, milestones, acceptance criteria and payment evidence")
+            contract_submitted = st.form_submit_button("Check contract readiness")
+        if contract_submitted:
+            missing = [label for label,value in [("Client",client),("Service",service),("Amount",amount),("Written terms",terms)] if not value.strip()]
+            if missing:
+                st.warning("Not ready: provide " + ", ".join(missing) + ".")
+            else:
+                st.success("Checklist fields supplied. This is not legal review, client verification, or proof of payment.")
+    elif page == "Business Opportunity Pipeline":
+        st.header("Business Opportunity Pipeline")
+        st.write("Use the Scenario Lab to document a business idea, target buyer, delivery costs and demand evidence. A pipeline entry is not a customer, signed contract or revenue.")
+        st.write("Recommended stages: Idea → Demand evidence → Buyer verified → Written terms → Pilot delivered → Invoice issued → Payment reconciled.")
+    elif page == "Blockchain & Treasury":
+        st.header("Blockchain & Treasury")
+        st.write("Treasury balances and transfers must come from confirmed chain records and token/network-specific verification.")
+        st.warning("No live chain verifier is connected to this view. Do not treat wallet addresses, QR codes, screenshots or user-entered amounts as proof of ownership, deposits, balances or settlement.")
+        if IS_ADMIN:
+            st.subheader("Admin-only treasury verification")
+            st.write("Before recording a receipt, verify transaction hash, chain, token contract, destination address, confirmations, amount and reconciliation status.")
+        else:
+            st.write("Treasury controls are restricted to administrators.")
+    elif page == "Business Reports":
+        st.header("Business Reports")
+        st.write("Reports should separate verified receipts, verified expenses, pending invoices, refunds, operating costs and unverified pipeline estimates.")
+        st.warning("Automated reports and scheduled delivery are not active unless a persistent scheduler and delivery credentials are configured.")
+    elif page == "Executive Command Center":
+        if not IS_ADMIN:
+            st.error("Administrator access required.")
+        else:
+            st.header("Executive Command Center")
+            st.write("Admin-only oversight for business operations. Financial records must be evidence-backed; no simulated balance or revenue is shown.")
+            st.subheader("Available integrity checks")
+            st.write("- Verify contracts and supplier agreements")
+            st.write("- Reconcile receipts against source transaction records")
+            st.write("- Separate pipeline estimates from realized income")
+            st.write("- Review failed or pending integrations")
+    st.stop()
+
+# Legacy NGO operations handlers are intentionally unreachable from the business-only navigation.
 # Shared working grids and calendar controls are available throughout the authenticated workspace.
 render_action_grid(page, USER_EMAIL, db_all, db_exec, record_event)
 if page != "Calendar & Events":

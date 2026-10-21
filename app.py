@@ -370,7 +370,7 @@ def render_engine_dashboard(engine_name: str) -> None:
         counterparty = st.text_input("Provider / customer / counterparty", key="engine_party_" + safe_key)
         amount = st.text_input("Amount (optional; supported by evidence)", key="engine_amount_" + safe_key)
         currency = st.selectbox("Currency / asset", ["UGX", "USD", "EUR", "USDT", "TRX", "BNB", "Other"], key="engine_currency_" + safe_key)
-        status = st.selectbox("Evidence status", ["Unverified", "Evidence submitted", "Independently verified", "Rejected"], key="engine_status_" + safe_key)
+        status = st.selectbox("Self-declared evidence status", ["Unverified", "Evidence submitted", "Pending administrator review", "Rejected"], key="engine_status_" + safe_key)
         evidence = st.text_input("Evidence reference (contract, invoice, receipt or transaction hash)", key="engine_evidence_" + safe_key)
         notes = st.text_area("Demand evidence, delivery proof, costs, risks and reconciliation notes", key="engine_notes_" + safe_key)
         save = st.form_submit_button("Save engine record")
@@ -648,7 +648,7 @@ if page in BUSINESS_PAGES:
             counterparty = st.text_input("Provider / customer / counterparty")
             amount = st.text_input("Amount (optional; exact amount supported by evidence)")
             currency = st.selectbox("Currency / asset", ["UGX", "USD", "EUR", "USDT", "TRX", "BNB", "Other"])
-            verification_status = st.selectbox("Evidence status", ["Unverified", "Evidence submitted", "Independently verified", "Rejected"])
+            verification_status = st.selectbox("Self-declared evidence status", ["Unverified", "Evidence submitted", "Pending administrator review", "Rejected"])
             evidence_ref = st.text_input("Evidence reference (contract, invoice, receipt or transaction hash)")
             notes = st.text_area("Scope, delivery proof, costs, risks and reconciliation notes")
             save_engine = st.form_submit_button("Save engine record")
@@ -956,6 +956,22 @@ if page in BUSINESS_PAGES:
                     record_event(USER_EMAIL, "treasury_destination_settings_updated", "Deposits enabled=" + str(deposit_enabled))
                     st.success("Treasury settings saved. This control does not replace independent verification, legal review or custody controls.")
                     st.rerun()
+            st.subheader("Business engine evidence review")
+            engine_queue = db_all("SELECT id,engine_name,record_type,title,counterparty,amount,currency,verification_status,evidence_ref,notes,owner_email,created_at FROM engine_records WHERE engine_name<>? ORDER BY created_at DESC LIMIT 500", ("Staking & Compounding",))
+            if engine_queue:
+                st.dataframe(pd.DataFrame(engine_queue), use_container_width=True, hide_index=True)
+                for item in engine_queue:
+                    with st.container(border=True):
+                        st.write(f"{item['engine_name']} · {item['record_type']} · {item['title']} · {item['verification_status']}")
+                        st.caption("Owner: " + item["owner_email"] + " | Evidence: " + (item["evidence_ref"] or "not supplied"))
+                        review_status = st.selectbox("Administrator evidence decision", ["Unverified","Evidence submitted","Pending administrator review","Admin reviewed — verified","Rejected"], key="engine_review_" + item["id"])
+                        if st.button("Save evidence decision", key="save_engine_review_" + item["id"]):
+                            db_exec("UPDATE engine_records SET verification_status=? WHERE id=?", (review_status, item["id"]))
+                            record_event(USER_EMAIL, "business_evidence_reviewed", item["id"] + " -> " + review_status)
+                            st.rerun()
+            else:
+                st.info("No business engine records awaiting review.")
+            st.caption("Use the verified status only after checking the source evidence. This review status remains an internal record and is not an on-chain API attestation.")
             st.subheader("Deposit reconciliation queue")
             deposit_queue = db_all("SELECT id,user_email,asset,network,amount,tx_hash,status,created_at FROM deposit_intents ORDER BY created_at DESC")
             if deposit_queue:

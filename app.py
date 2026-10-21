@@ -612,14 +612,8 @@ with st.sidebar:
     st.markdown(f"**Signed in as:** {USER_NAME}")
     st.caption(USER_EMAIL)
     if IS_ADMIN: st.success("Administrator workspace")
-    # Five user-facing workspaces. Admin controls are grouped into no more than nine areas.
-    user_pages = [
-        "Dashboard",
-        "Grid Marketplace",
-        "Work & Contracts",
-        "Payments & Treasury",
-        "Account",
-    ]
+    # User money-flow navigation; registration/login remain on the authentication screen.
+    user_pages = ["Deposit", "Earn", "Withdraw", "Refer", "Account"]
     admin_pages = [
         "Executive Command Center",
         "Real Money Engines",
@@ -635,10 +629,14 @@ with st.sidebar:
     selected_page = st.radio("Navigate", pages, label_visibility="collapsed")
     page_routes = {
         "Dashboard": "Business Dashboard",
+        "Deposit": "Deposit QR & TIGERS",
+        "Earn": "Real Money Engines",
+        "Withdraw": "Withdrawals & Full KYC",
+        "Refer": "Referral Program",
+        "Account": "Business Dashboard",
         "Grid Marketplace": "World Grid Marketplace",
         "Work & Contracts": "Client Services & Contracts",
         "Payments & Treasury": "Blockchain & Treasury",
-        "Account": "Business Dashboard",
         "Deposits & Withdrawals": "Deposit QR & TIGERS",
         "Reports & Referrals": "Business Reports",
         "AI Operations": "AI Business Scenario Lab",
@@ -1040,6 +1038,37 @@ if page in BUSINESS_PAGES:
         else:
             st.header("Executive Command Center")
             st.write("Admin-only oversight for business operations. Financial records must be evidence-backed; no simulated balance or revenue is shown.")
+
+            # Money-flow lights are based only on admin-entered reconciled ledger records.
+            # They are not live chain attestations; references and supporting evidence must be checked.
+            money_rows = db_all(
+                "SELECT entry_type,amount,currency,source,reference,notes,created_at FROM treasury_ledger ORDER BY created_at DESC"
+            )
+            incoming_rows = [r for r in money_rows if r["entry_type"] == "Verified income received" and (r.get("reference") or "").strip() and (r.get("notes") or "").strip()]
+            outgoing_rows = [r for r in money_rows if r["entry_type"] == "Verified payment sent" and (r.get("reference") or "").strip() and (r.get("notes") or "").strip()]
+            st.subheader("Real-money flow indicators")
+            money_cols = st.columns(2)
+            with money_cols[0]:
+                st.markdown("### 🟢 Real Money In" if incoming_rows else "### 🟡 Real Money In")
+                st.metric("Evidence-complete incoming entries", len(incoming_rows))
+                if incoming_rows:
+                    by_currency = {}
+                    for row in incoming_rows:
+                        by_currency[row["currency"]] = by_currency.get(row["currency"], 0) + float(row["amount"])
+                    st.write("Amounts by currency: " + " · ".join(f"{currency} {amount:,.8g}" for currency, amount in sorted(by_currency.items())))
+                else:
+                    st.caption("Ready — no evidence-complete incoming receipt is recorded.")
+            with money_cols[1]:
+                st.markdown("### 🟢 Real Money Out" if outgoing_rows else "### 🟡 Real Money Out")
+                st.metric("Evidence-complete outgoing entries", len(outgoing_rows))
+                if outgoing_rows:
+                    by_currency = {}
+                    for row in outgoing_rows:
+                        by_currency[row["currency"]] = by_currency.get(row["currency"], 0) + float(row["amount"])
+                    st.write("Amounts by currency: " + " · ".join(f"{currency} {amount:,.8g}" for currency, amount in sorted(by_currency.items())))
+                else:
+                    st.caption("Ready — no evidence-complete outgoing payment is recorded.")
+            st.caption("These lights reflect internal ledger entries with a transaction/reference and reconciliation note. They do not independently verify blockchain settlement; use Blockchain & Treasury to inspect and reconcile the source transaction.")
             st.subheader("Treasury destination controls")
             st.warning("Only enable deposit instructions after independently verifying each address, token contract and network and recording the approval evidence.")
             settings_now = {row["setting_key"]: row["setting_value"] for row in db_all("SELECT setting_key,setting_value FROM app_settings")}
@@ -1745,7 +1774,7 @@ elif page == "Admin Console" and IS_ADMIN:
         st.write("**Network/asset intended:** BNB Smart Chain mainnet · verify the official USDT token contract and network before sending. Do not enter private keys or seed phrases here.")
         st.info("Automatic withdrawals require a reviewed custody/signing model, key management, transaction simulation, address/network checks, limits, approvals, reconciliation, monitoring, tax/accounting controls and applicable legal review. No funds are moved by this prototype.")
         with st.form("ledger_form"):
-            entry_type = st.selectbox("Entry type", ["Verified income received", "Verified expense", "Refund", "Adjustment"])
+            entry_type = st.selectbox("Entry type", ["Verified income received", "Verified payment sent", "Verified expense", "Refund", "Adjustment"])
             amount = st.text_input("Amount (decimal as received; do not include a currency symbol)")
             currency = st.selectbox("Currency", ["UGX", "USD", "EUR", "USDT", "TRX", "Other"])
             source = st.text_input("Source / purpose / payer")
@@ -1758,6 +1787,8 @@ elif page == "Admin Console" and IS_ADMIN:
                 amt = Decimal(amount.strip())
                 if amt < 0: raise ValueError("Amount must be non-negative; use entry type for the direction.")
                 if not source.strip(): raise ValueError("Source / purpose is required.")
+                if entry_type in ("Verified income received", "Verified payment sent") and (not tx_ref.strip() or not notes.strip()):
+                    raise ValueError("For incoming receipts and outgoing payments, provide the transaction reference and reconciliation/evidence note.")
                 db_exec("INSERT INTO treasury_ledger (id,entry_type,amount,currency,source,reference,notes,entered_by,created_at) VALUES (?,?,?,?,?,?,?,?,?)",
                         (str(uuid.uuid4()), entry_type, str(amt), currency, source.strip(), tx_ref.strip(), notes.strip(), USER_EMAIL, now_iso()))
                 record_event(USER_EMAIL, "treasury_ledger_entry_created")

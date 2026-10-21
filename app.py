@@ -822,13 +822,55 @@ if page in BUSINESS_PAGES:
         st.write("Recommended stages: Idea → Demand evidence → Buyer verified → Written terms → Pilot delivered → Invoice issued → Payment reconciled.")
     elif page == "Blockchain & Treasury":
         st.header("Blockchain & Treasury")
-        st.write("Treasury balances and transfers must come from confirmed chain records and token/network-specific verification.")
-        st.warning("No live chain verifier is connected to this view. Do not treat wallet addresses, QR codes, screenshots or user-entered amounts as proof of ownership, deposits, balances or settlement.")
+        st.write("Keep independently checked on-chain evidence separate from the internal accounting ledger and user-submitted claims.")
+        st.warning("No automated chain API verifier is connected in this deployment. Explorer links help an authorized reviewer inspect public records; opening a link or saving a review does not itself verify a transaction.")
+        chain = st.selectbox("Network for transaction lookup", ["TRON mainnet", "BNB Smart Chain mainnet"])
+        tx_hash = st.text_input("Transaction hash / transaction ID")
+        if tx_hash.strip():
+            tx = tx_hash.strip()
+            valid_hash = bool(re.fullmatch(r"(0x)?[a-fA-F0-9]{64}", tx))
+            if not valid_hash:
+                st.error("Transaction hash format is not recognized. Check the correct network and copy the transaction hash, not a wallet address.")
+            elif chain == "TRON mainnet":
+                st.markdown("[Open transaction on TRONSCAN](https://tronscan.org/#/transaction/" + tx + ")")
+            else:
+                st.markdown("[Open transaction on BscScan](https://bscscan.com/tx/" + (tx if tx.startswith("0x") else "0x" + tx) + ")")
+        st.subheader("What a reviewer must verify")
+        st.markdown("- Correct chain and transaction success status\n- Exact destination wallet\n- Correct token contract and token standard (for token transfers)\n- Amount and decimals\n- Block confirmations and timestamp\n- No duplicate transaction hash in the internal ledger")
+        st.subheader("Internal ledger versus on-chain evidence")
+        st.write("Internal ledger entries are accounting records. They are not proof of an on-chain transfer. Explorer-checked entries should include the explorer URL, transaction hash, chain, destination, token contract, amount, confirmations and reviewer.")
         if IS_ADMIN:
-            st.subheader("Admin-only treasury verification")
-            st.write("Before recording a receipt, verify transaction hash, chain, token contract, destination address, confirmations, amount and reconciliation status.")
+            st.subheader("Administrator chain-review record")
+            with st.form("chain_review_record_form"):
+                review_chain = st.selectbox("Reviewed network", ["TRON mainnet", "BNB Smart Chain mainnet"])
+                review_hash = st.text_input("Reviewed transaction hash")
+                review_asset = st.text_input("Asset and token contract (if token transfer)")
+                review_destination = st.text_input("Destination address")
+                review_amount = st.text_input("Observed amount and unit")
+                review_confirmations = st.text_input("Observed confirmations / block height")
+                review_status = st.selectbox("Review status", ["Unreviewed", "Explorer inspected — pending confirmations", "Explorer inspected — successful", "Rejected / failed", "Needs further verification"])
+                review_url = st.text_input("Explorer URL (evidence)")
+                review_notes = st.text_area("Reviewer notes / reconciliation reference")
+                save_review = st.form_submit_button("Save internal chain-review record")
+            if save_review:
+                expected_prefix = "https://tronscan.org/" if review_chain == "TRON mainnet" else "https://bscscan.com/"
+                if not re.fullmatch(r"(0x)?[a-fA-F0-9]{64}", review_hash.strip()):
+                    st.error("Enter a transaction hash in the expected format.")
+                elif not review_url.strip().startswith(expected_prefix):
+                    st.error("Use the matching official explorer URL for the selected network.")
+                elif not review_destination.strip() or not review_amount.strip():
+                    st.error("Destination and observed amount are required.")
+                else:
+                    db_exec("INSERT INTO engine_records (id,engine_name,record_type,title,counterparty,amount,currency,verification_status,evidence_ref,notes,owner_email,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", (str(uuid.uuid4()), "Blockchain & Treasury", "Chain review", review_hash.strip(), review_destination.strip(), review_amount.strip(), review_asset.strip() or "Not specified", review_status, review_url.strip(), "Network: " + review_chain + "; confirmations/block: " + review_confirmations.strip() + "; " + review_notes.strip(), USER_EMAIL, now_iso()))
+                    record_event(USER_EMAIL, "blockchain_review_record_created", review_chain + " / " + review_status)
+                    st.success("Internal review record saved. It is not a direct API verification or blockchain transaction.")
+                    st.rerun()
         else:
-            st.write("Treasury controls are restricted to administrators.")
+            st.info("Only administrators can create internal chain-review records.")
+        chain_reviews = db_all("SELECT title AS transaction_hash,counterparty AS destination,amount,currency AS asset,verification_status AS review_status,evidence_ref AS explorer_url,notes,created_at FROM engine_records WHERE engine_name=? ORDER BY created_at DESC", ("Blockchain & Treasury",))
+        if chain_reviews:
+            st.subheader("Recorded chain reviews — internal records")
+            st.dataframe(pd.DataFrame(chain_reviews), use_container_width=True, hide_index=True)
     elif page == "Business Reports":
         st.header("Business Reports")
         st.write("Reports should separate verified receipts, verified expenses, pending invoices, refunds, operating costs and unverified pipeline estimates.")

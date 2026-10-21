@@ -616,6 +616,13 @@ with st.sidebar:
         "Investor Landing",
         "Business Dashboard",
         "Real Money Engines",
+        "NeuroWave + Health",
+        "EchoMap + Mobility",
+        "BioLoop + Finance",
+        "DreamGrid + Education",
+        "EmoFlux + Shelter",
+        "IdeaForge + Data",
+        "QuantumLeap + Energy",
         "AI Business Scenario Lab",
         "Cleaning Grid",
         "Shelter & Accommodation Grid",
@@ -640,14 +647,14 @@ with st.sidebar:
             st.session_state.pop(key, None)
         st.rerun()
     st.divider()
-    st.caption("Platform release: 1.1 upgrade package")
+    st.caption("CEDARS EMPIRE · Business Operations Platform")
     st.caption("AI: connected" if OPENAI_API_KEY else "AI: local structured mode (API key not configured)")
     st.caption("No funding, AI accuracy, compliance certification or payment settlement is guaranteed.")
 
 # Cedars Empire: real-business scenario workspace.
 # NGO operations pages remain in the codebase but are intentionally inaccessible from this business-only navigation.
 BUSINESS_PAGES = {
-    "Investor Landing", "Business Dashboard", "Real Money Engines", "AI Business Scenario Lab",
+    "Investor Landing", "Business Dashboard", "Real Money Engines", "NeuroWave + Health", "EchoMap + Mobility", "BioLoop + Finance", "DreamGrid + Education", "EmoFlux + Shelter", "IdeaForge + Data", "QuantumLeap + Energy", "AI Business Scenario Lab",
     "Cleaning Grid", "Shelter & Accommodation Grid", "Energy & Utilities Grid",
     "AI Training & Data Operations", "World Grid Marketplace", "Client Services & Contracts",
     "Business Opportunity Pipeline", "Blockchain & Treasury", "Deposit QR & TIGERS",
@@ -668,7 +675,26 @@ if page in BUSINESS_PAGES:
     st.title("CEDARS EMPIRE")
     st.caption("AI Real Business Scenarios")
     st.info("Integrity rule: scenarios, leads, estimates and planned contracts are not revenue. Record income only after a verifiable payment is received and reconciled. No earnings or contract is guaranteed.")
-    if page == "Investor Landing":
+    MERGED_GRID_CATALOG = {
+        "NeuroWave + Health": {"service":"Workplace wellbeing education and opt-in, non-clinical wellbeing workshops", "buyer":"Employers, universities and wellbeing providers", "revenue":"Fixed-fee workshops or organization subscriptions", "proof":"Written client scope, qualified facilitator, participant consent, safeguarding plan and delivery sign-off", "guardrail":"Do not diagnose, claim clinical outcomes, collect mental-health histories for resale or sell identifiable/sensitive health data."},
+        "EchoMap + Mobility": {"service":"Licensed soundscape design and accessible audio experiences for journeys and venues", "buyer":"Transport operators, hotels, tourism operators and mobility apps", "revenue":"Licensed content packages, integration fees or business subscriptions", "proof":"Rights-cleared audio assets, accessibility testing, signed license and usage report", "guardrail":"Do not sell individual location histories. Collect only necessary, consented, aggregated usage metrics."},
+        "BioLoop + Finance": {"service":"SME bookkeeping hygiene, cash-flow dashboards and financial data-quality support", "buyer":"Small businesses, accountants and business-support organizations", "revenue":"Monthly service retainers or fixed-fee financial operations projects", "proof":"Client authorization, written scope, reconciled source records and approved deliverables", "guardrail":"No sale of personal financial data, no unlicensed investment advice, no guaranteed savings or returns."},
+        "DreamGrid + Education": {"service":"Sleep-science literacy, learning journals and education workshops", "buyer":"Schools, universities, adult-learning providers and publishers", "revenue":"Institutional workshop fees, course licenses or subscriptions", "proof":"Evidence-based curriculum, instructor approval, participant consent and completion records", "guardrail":"No medical claims or claims that lucid dreaming treats illness; protect learner and sleep-related data."},
+        "EmoFlux + Shelter": {"service":"Resident experience surveys and comfort-improvement recommendations for accommodation operators", "buyer":"Hotels, hostels, property managers and supported-living operators", "revenue":"Property assessment fees or recurring service contracts", "proof":"Property permission, voluntary survey process, documented recommendations and client acceptance", "guardrail":"Do not infer or sell residents emotional states, identify vulnerable occupants or make clinical claims."},
+        "IdeaForge + Data": {"service":"Human-reviewed research synthesis, data cleaning and innovation sprint facilitation", "buyer":"SMEs, research teams, NGOs and product teams", "revenue":"Fixed-price research packages, workshops or monthly retainers", "proof":"Written deliverables, source register, data rights, quality review and client acceptance", "guardrail":"Use lawfully obtained data; do not resell client-confidential information or claim AI output is verified without review."},
+        "QuantumLeap + Energy": {"service":"Energy-bill analysis, efficiency opportunity reports and qualified contractor referrals", "buyer":"SMEs, property operators, schools and facility managers", "revenue":"Assessment fees, contracted monitoring or disclosed referral fees", "proof":"Authorized bills or meter data, documented methodology, qualified partners and measured before/after results", "guardrail":"No probability-based earnings claims, fake kWh trading, unverified energy credits or guaranteed savings."}
+    }
+    if page in MERGED_GRID_CATALOG:
+        grid = MERGED_GRID_CATALOG[page]
+        st.header(page)
+        st.subheader(grid["service"])
+        st.write("**Target paying customers:** " + grid["buyer"])
+        st.write("**Commercial model:** " + grid["revenue"])
+        st.write("**Evidence required before calling revenue real:** " + grid["proof"])
+        st.warning("Integrity boundary: " + grid["guardrail"])
+        st.caption("No customer, contract, provider, revenue, payout or performance result is presumed to exist. Record actual activity below and submit evidence for review.")
+        render_engine_dashboard(page)
+    elif page == "Investor Landing":
         st.header("CEDARS EMPIRE")
         st.subheader("Investment-grade operating discipline for real AI and real-world services")
         st.write("Explore business engines, verified counterparties, service delivery, costs and reconciled receipts. This workspace is an operating platform—not a public investment offer and not a promise of returns.")
@@ -676,6 +702,8 @@ if page in BUSINESS_PAGES:
         tiles[0].metric("Verified receipts", "Evidence required")
         tiles[1].metric("Verified on-chain activity", "Not connected")
         tiles[2].metric("Staking", "Not enabled")
+        st.subheader("Seven merged business grids")
+        st.markdown("- **NeuroWave + Health:** organization-funded, non-clinical wellbeing education.\n- **EchoMap + Mobility:** licensed audio and accessible soundscape services.\n- **BioLoop + Finance:** SME financial operations and data-quality support.\n- **DreamGrid + Education:** sleep-science literacy and education products.\n- **EmoFlux + Shelter:** property comfort assessments using voluntary feedback.\n- **IdeaForge + Data:** research synthesis, data cleaning and innovation services.\n- **QuantumLeap + Energy:** evidence-based energy-bill analysis and efficiency services.")
         st.subheader("Operating system")
         st.markdown("- **Real Money Engines:** provider and buyer verification, demand evidence, delivery, costs and receipts.\n- **Treasury:** chain-specific verification separated from internal ledger entries.\n- **Deposits and withdrawals:** disabled until destination, network, compliance and approval controls are verified.\n- **KYC and referrals:** clear status tracking; no automatic payouts or unearned referral rewards.")
         st.info("No investment product, deposit destination, staking provider, payout rail, customer contract or revenue figure is represented as verified unless supporting evidence is recorded and checked.")

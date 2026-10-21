@@ -862,6 +862,49 @@ if page in BUSINESS_PAGES:
                     record_event(USER_EMAIL, "treasury_destination_settings_updated", "Deposits enabled=" + str(deposit_enabled))
                     st.success("Treasury settings saved. This control does not replace independent verification, legal review or custody controls.")
                     st.rerun()
+            st.subheader("Deposit reconciliation queue")
+            deposit_queue = db_all("SELECT id,user_email,asset,network,amount,tx_hash,status,created_at FROM deposit_intents ORDER BY created_at DESC")
+            if deposit_queue:
+                st.dataframe(pd.DataFrame(deposit_queue), use_container_width=True, hide_index=True)
+                for item in deposit_queue:
+                    with st.container(border=True):
+                        st.write(f"{item['user_email']} · {item['amount'] or 'Amount pending'} {item['asset']} · {item['network']} · {item['status']}")
+                        dep_status = st.selectbox("Deposit review status", ["Pending verification","Explorer checked — pending confirmations","Confirmed on-chain","Rejected","Needs more information"], key="dep_status_" + item["id"])
+                        if st.button("Save deposit review", key="save_dep_" + item["id"]):
+                            db_exec("UPDATE deposit_intents SET status=?,updated_at=? WHERE id=?", (dep_status, now_iso(), item["id"]))
+                            record_event(USER_EMAIL, "deposit_claim_status_updated", item["id"] + " -> " + dep_status)
+                            st.rerun()
+                st.caption("The status is an internal review record. Mark a transaction confirmed only after checking the correct chain explorer, token contract, destination, amount and confirmations.")
+            else:
+                st.info("No deposit claims awaiting review.")
+            st.subheader("KYC and withdrawal review queues")
+            kyc_queue = db_all("SELECT id,user_email,legal_name,country,verification_provider,provider_reference,status,created_at FROM kyc_requests ORDER BY created_at DESC")
+            for item in kyc_queue:
+                with st.container(border=True):
+                    st.write(item["user_email"] + " · " + item["legal_name"] + " · " + item["country"] + " · " + item["status"])
+                    kyc_options = ["Pending review","Verification required","Verified","Rejected"]
+                    new_kyc_status = st.selectbox("KYC review status", kyc_options, index=kyc_options.index(item["status"]) if item["status"] in kyc_options else 0, key="admin_kyc_" + item["id"])
+                    kyc_note = st.text_input("KYC evidence / reviewer note", key="admin_kyc_note_" + item["id"])
+                    if st.button("Save KYC review", key="save_admin_kyc_" + item["id"]):
+                        db_exec("UPDATE kyc_requests SET status=?,reviewer_email=?,review_note=?,updated_at=? WHERE id=?", (new_kyc_status, USER_EMAIL, kyc_note.strip(), now_iso(), item["id"]))
+                        record_event(USER_EMAIL, "kyc_status_updated", item["id"] + " -> " + new_kyc_status)
+                        st.rerun()
+            withdrawal_queue = db_all("SELECT id,user_email,amount,asset,network,destination_address,status,tx_hash,admin_note,created_at FROM withdrawal_requests ORDER BY created_at DESC")
+            for item in withdrawal_queue:
+                with st.container(border=True):
+                    st.write(f"{item['user_email']} · {item['amount']} {item['asset']} · {item['network']} · {item['status']}")
+                    st.caption("Destination: " + item["destination_address"])
+                    wopts = ["Pending eligibility and approval","Approved for manual processing","Rejected","Broadcast — hash required","Confirmed on-chain","Failed","Cancelled"]
+                    wstatus = st.selectbox("Withdrawal status", wopts, key="admin_w_status_" + item["id"])
+                    whash = st.text_input("Transaction hash", value=item["tx_hash"] or "", key="admin_w_hash_" + item["id"])
+                    wnote = st.text_input("Withdrawal review note", value=item["admin_note"] or "", key="admin_w_note_" + item["id"])
+                    if st.button("Save withdrawal review", key="save_admin_w_" + item["id"]):
+                        if wstatus in ["Broadcast — hash required","Confirmed on-chain"] and not whash.strip():
+                            st.error("A transaction hash is required before marking a withdrawal broadcast or confirmed.")
+                        else:
+                            db_exec("UPDATE withdrawal_requests SET status=?,tx_hash=?,admin_note=?,updated_at=? WHERE id=?", (wstatus, whash.strip() or None, wnote.strip(), now_iso(), item["id"]))
+                            record_event(USER_EMAIL, "withdrawal_status_updated", item["id"] + " -> " + wstatus)
+                            st.rerun()
             st.subheader("Branding and page media")
             st.caption("Upload an official logo and optional image for each business page. Uploads are stored in the configured application database. For persistence across redeployments, configure DATABASE_URL to a durable database.")
             current_settings = {row["setting_key"]: row["setting_value"] for row in db_all("SELECT setting_key,setting_value FROM app_settings")}

@@ -506,7 +506,9 @@ with st.sidebar:
     if IS_ADMIN: st.success("Administrator workspace")
     # Business-first workspace. NGO programme/HR/MEAL pages are not exposed in this navigation.
     pages = [
+        "Investor Landing",
         "Business Dashboard",
+        "Real Money Engines",
         "AI Business Scenario Lab",
         "Cleaning Grid",
         "Shelter & Accommodation Grid",
@@ -516,6 +518,10 @@ with st.sidebar:
         "Client Services & Contracts",
         "Business Opportunity Pipeline",
         "Blockchain & Treasury",
+        "Deposit QR & TIGERS",
+        "Withdrawals & Full KYC",
+        "Staking & Compounding",
+        "Referral Program",
         "Business Reports",
     ]
     if IS_ADMIN:
@@ -534,11 +540,12 @@ with st.sidebar:
 # Cedars Empire: real-business scenario workspace.
 # NGO operations pages remain in the codebase but are intentionally inaccessible from this business-only navigation.
 BUSINESS_PAGES = {
-    "Business Dashboard", "AI Business Scenario Lab", "Cleaning Grid",
-    "Shelter & Accommodation Grid", "Energy & Utilities Grid",
-    "AI Training & Data Operations", "World Grid Marketplace",
-    "Client Services & Contracts", "Business Opportunity Pipeline",
-    "Blockchain & Treasury", "Business Reports", "Executive Command Center"
+    "Investor Landing", "Business Dashboard", "Real Money Engines", "AI Business Scenario Lab",
+    "Cleaning Grid", "Shelter & Accommodation Grid", "Energy & Utilities Grid",
+    "AI Training & Data Operations", "World Grid Marketplace", "Client Services & Contracts",
+    "Business Opportunity Pipeline", "Blockchain & Treasury", "Deposit QR & TIGERS",
+    "Withdrawals & Full KYC", "Staking & Compounding", "Referral Program",
+    "Business Reports", "Executive Command Center"
 }
 if page in BUSINESS_PAGES:
     # Internal 360-degree command oversight; keep public-facing branding clean and never print "360" in UI.

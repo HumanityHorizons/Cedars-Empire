@@ -589,7 +589,46 @@ if page in BUSINESS_PAGES:
     st.title("CEDARS EMPIRE")
     st.caption("AI Real Business Scenarios")
     st.info("Integrity rule: scenarios, leads, estimates and planned contracts are not revenue. Record income only after a verifiable payment is received and reconciled. No earnings or contract is guaranteed.")
-    if page == "Business Dashboard":
+    if page == "Investor Landing":
+        st.header("CEDARS EMPIRE")
+        st.subheader("Investment-grade operating discipline for real AI and real-world services")
+        st.write("Explore business engines, verified counterparties, service delivery, costs and reconciled receipts. This workspace is an operating platform—not a public investment offer and not a promise of returns.")
+        tiles = st.columns(3)
+        tiles[0].metric("Verified receipts", "Evidence required")
+        tiles[1].metric("Verified on-chain activity", "Not connected")
+        tiles[2].metric("Staking", "Not enabled")
+        st.subheader("Operating system")
+        st.markdown("- **Real Money Engines:** provider and buyer verification, demand evidence, delivery, costs and receipts.\n- **Treasury:** chain-specific verification separated from internal ledger entries.\n- **Deposits and withdrawals:** disabled until destination, network, compliance and approval controls are verified.\n- **KYC and referrals:** clear status tracking; no automatic payouts or unearned referral rewards.")
+        st.info("No investment product, deposit destination, staking provider, payout rail, customer contract or revenue figure is represented as verified unless supporting evidence is recorded and checked.")
+    elif page == "Real Money Engines":
+        st.header("Real Money Engines")
+        st.write("Each engine should have a verified provider, evidence of customer demand, agreed service terms, delivery proof, itemized costs and reconciled receipts.")
+        engines = ["Cleaning services", "Shelter & accommodation", "Energy & utilities", "AI training & data operations", "World Grid marketplace", "Client services & contracts"]
+        chosen_engine = st.selectbox("Choose an engine", engines)
+        with st.form("engine_record_form"):
+            record_type = st.selectbox("Record type", ["Provider verification", "Customer demand", "Service delivery", "Operating cost", "Receipt / settlement", "Risk / incident"])
+            title = st.text_input("Record title / service reference")
+            counterparty = st.text_input("Provider / customer / counterparty")
+            amount = st.text_input("Amount (optional; exact amount supported by evidence)")
+            currency = st.selectbox("Currency / asset", ["UGX", "USD", "EUR", "USDT", "TRX", "BNB", "Other"])
+            verification_status = st.selectbox("Evidence status", ["Unverified", "Evidence submitted", "Independently verified", "Rejected"])
+            evidence_ref = st.text_input("Evidence reference (contract, invoice, receipt or transaction hash)")
+            notes = st.text_area("Scope, delivery proof, costs, risks and reconciliation notes")
+            save_engine = st.form_submit_button("Save engine record")
+        if save_engine:
+            if not title.strip():
+                st.error("A record title is required.")
+            else:
+                db_exec("INSERT INTO engine_records (id,engine_name,record_type,title,counterparty,amount,currency,verification_status,evidence_ref,notes,owner_email,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", (str(uuid.uuid4()), chosen_engine, record_type, title.strip(), counterparty.strip(), amount.strip() or None, currency, verification_status, evidence_ref.strip() or None, notes.strip(), USER_EMAIL, now_iso()))
+                record_event(USER_EMAIL, "real_money_engine_record_created", chosen_engine + ": " + record_type)
+                st.success("Record saved. Its status is user-entered and does not itself prove independent verification or payment.")
+                st.rerun()
+        rows = db_all("SELECT engine_name,record_type,title,counterparty,amount,currency,verification_status,evidence_ref,notes,owner_email,created_at FROM engine_records WHERE engine_name=? ORDER BY created_at DESC", (chosen_engine,))
+        st.subheader("Engine evidence register")
+        if rows: st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+        else: st.info("No engine evidence records yet.")
+        st.caption("Only reconciled receipts backed by source evidence should be counted as actual revenue. Planning estimates and pending invoices are not receipts.")
+    elif page == "Business Dashboard":
         st.header("Business Dashboard")
         st.write("Operate service businesses, validate demand, track real contracts and reconcile verified receipts.")
         cols = st.columns(3)

@@ -304,7 +304,7 @@ class PaymentModuleTests(unittest.TestCase):
     def test_streamlit_routes_are_integrated_and_legacy_paid_path_is_disabled(self):
         source = Path("app.py").read_text(encoding="utf-8")
         self.assertIn('TREASURY_ADDRESS = "TE26B7zQjMbahYAWcxEsSPC6aZEr2Hcz1u"', source)
-        self.assertIn('BSC_TREASURY_ADDRESS = "0x0d4c2B95e8FB7Be3DB9953bAcEf3A4Be643bA77B"', source)
+        self.assertIn('BNB_TREASURY_ADDRESS = "0x0d4c2B95e8FB7Be3DB9953bAcEf3A4Be643bA77B"', source)
         for route in (
             'elif page == "Deposit & Packages":',
             'elif page == "Withdraw / Cash Out":',

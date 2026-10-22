@@ -22,6 +22,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt pytest
       - name: Compile live application
-        run: python -m py_compile app.py hh_workspace_widgets.py
+        run: python -m py_compile app.py hh_workspace_widgets.py cedars_treasury_model.py
       - name: Verify action grids and exports
         run: pytest -q tests/test_live_workspace_widgets.py
+      - name: Verify treasury model formulas and workbook export
+        run: pytest -q tests/test_cedars_treasury_model.py

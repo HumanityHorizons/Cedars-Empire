@@ -616,6 +616,7 @@ with st.sidebar:
     user_pages = ["Deposit", "Earn", "Withdraw", "Refer", "Account"]
     admin_pages = [
         "Executive Command Center",
+        "Treasury Management",
         "Real Money Engines",
         "Grid Marketplace",
         "Work & Contracts",
@@ -660,7 +661,7 @@ BUSINESS_PAGES = {
     "AI Training & Data Operations", "World Grid Marketplace", "Client Services & Contracts",
     "Business Opportunity Pipeline", "Blockchain & Treasury", "Deposit QR & TIGERS",
     "Withdrawals & Full KYC", "Staking & Compounding", "Referral Program",
-    "Business Reports", "Executive Command Center", "Grid Marketplace", "Work & Contracts",
+    "Business Reports", "Executive Command Center", "Treasury Management", "Grid Marketplace", "Work & Contracts",
     "Payments & Treasury", "Deposits & Withdrawals", "Reports & Referrals", "AI Operations"
 }
 if page in BUSINESS_PAGES:
@@ -1255,6 +1256,12 @@ if page in BUSINESS_PAGES:
             st.write("- Reconcile receipts against source transaction records")
             st.write("- Separate pipeline estimates from realized income")
             st.write("- Review failed or pending integrations")
+    elif page == "Treasury Management":
+        if not IS_ADMIN:
+            st.error("Administrator access required.")
+        else:
+            from cedars_treasury_model import render_treasury_management
+            render_treasury_management(db_all, db_exec, record_event, USER_EMAIL, bool(DATABASE_URL))
     st.stop()
 
 # Legacy NGO operations handlers are intentionally unreachable from the business-only navigation.

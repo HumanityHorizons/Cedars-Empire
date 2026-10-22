@@ -216,6 +216,32 @@ class PaymentModuleTests(unittest.TestCase):
         self.assertEqual(row["last_attempted_txid"], txid)
         self.assertEqual(row["status"], "Needs review")
 
+    def test_unreviewed_sender_wallet_cannot_be_credited(self):
+        email = "unreviewed@test.invalid"
+        network = "BSC-BEP20"
+        treasury = "0x0d4c2B95e8FB7Be3DB9953bAcEf3A4Be643bA77B"
+        sender = "0x3333333333333333333333333333333333333333"
+        now = lambda: "2026-10-22T00:00:00+00:00"
+        intent = p._create_intent(
+            email, Decimal("1"), network, treasury, sender, "Test deposit",
+            self.db_exec, self.db_all, True, now, True,
+            p.DEPOSIT_CONSENT_VERSION, p.DEPOSIT_CONSENT_TEXT,
+        )
+        with patch.object(p, "verify_transfer") as chain_check:
+            with self.assertRaisesRegex(p.PaymentError, "ownership must be independently verified"):
+                p._verify_deposit(
+                    intent, "0x" + "a" * 64, self.db_all, self.db_exec,
+                    self.db_connect, True,
+                    "TE26B7zQjMbahYAWcxEsSPC6aZEr2Hcz1u", treasury,
+                    p.DEFAULT_BSC_PEG_USDT_CONTRACT, "https://unit.test.invalid", "", now,
+                )
+            chain_check.assert_not_called()
+        balance_rows = self.db_all(
+            "SELECT available_balance FROM hh_wallet_accounts WHERE user_email=? AND network=?",
+            (email, network),
+        )
+        self.assertEqual(balance_rows, [])
+
     def test_deposit_credit_helper_rejects_unverified_result(self):
         with self.assertRaises(p.PaymentError):
             p._credit_deposit(lambda: self.fail("database should not be opened"),

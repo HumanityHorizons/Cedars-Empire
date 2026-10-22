@@ -381,8 +381,15 @@ def render_treasury_management(db_all, db_exec, record_event, user_email: str, d
             except Exception: active_days=False
             if active_days: active.append(item)
         capital=sum((dec(item["investment"]) for item in active),Decimal(0))
-        pool=st.number_input("Manually confirmed available pool (planning units; single currency)",min_value=0.0,value=0.0,step=1.0,key="cedars_dist_pool")
-        approved=st.checkbox("Explicitly preview under the model approval flag (still never executes a payment)",key="cedars_dist_approved")
+        pool=st.number_input("Manually confirmed available pool for workbook preview (planning units; single currency)",min_value=0.0,value=float(dec(settings.get("distribution_pool","0"))),step=1.0,key="cedars_dist_pool")
+        approved=st.checkbox("Save approval flag for workbook preview only (still never authorizes a payment)",value=settings.get("distribution_approval","Not approved")=="Approved",key="cedars_dist_approved")
+        if st.button("Save workbook preview inputs",key="cedars_dist_save_preview"):
+            save_settings(db_exec,record_event,user_email,{
+                "distribution_pool":str(dec(pool)),
+                "distribution_approval":"Approved" if approved else "Not approved",
+            })
+            st.success("Pool and approval flag saved for the downloadable model preview only.")
+            st.rerun()
         rows=[]
         for item in active:
             inv=dec(item["investment"])

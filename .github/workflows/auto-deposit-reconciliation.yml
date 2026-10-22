@@ -1,0 +1,47 @@
+name: Live app automatic incoming-deposit reconciliation
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cedars-automatic-deposit-reconciliation
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      TRONGRID_API_KEY: ${{ secrets.TRONGRID_API_KEY }}
+      BSC_RPC_URL: ${{ secrets.BSC_RPC_URL }}
+      BSC_USDT_CONTRACT: ${{ secrets.BSC_USDT_CONTRACT }}
+      HH_ENABLE_BSC_PEGGED_USDT: ${{ vars.HH_ENABLE_BSC_PEGGED_USDT || 'false' }}
+    steps:
+      - name: Explain missing durable database secret
+        if: env.DATABASE_URL == ''
+        run: |
+          echo "::error::Automatic deposit reconciliation cannot run. Add the GitHub Actions secret DATABASE_URL pointing to the same managed PostgreSQL database as the live Streamlit app."
+          exit 2
+      - name: Check out live repository
+        if: env.DATABASE_URL != ''
+        uses: actions/checkout@v4
+      - name: Set up Python
+        if: env.DATABASE_URL != ''
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install reconciliation dependencies
+        if: env.DATABASE_URL != ''
+        run: python -m pip install "requests>=2.32,<3.0" "psycopg[binary]>=3.2,<4.0" "qrcode[pil]>=7.4,<9.0"
+      - name: Compile reconciler
+        if: env.DATABASE_URL != ''
+        run: python -m py_compile auto_deposit_reconciler.py hh_real_payments.py
+      - name: Scan confirmed incoming transfers and reconcile deposits
+        if: env.DATABASE_URL != ''
+        run: python auto_deposit_reconciler.py

@@ -178,9 +178,9 @@ def _wb_bytes(settings: dict, investors: list[dict], revenue: list[dict], ledger
     for c, bal in sorted(by_currency.items()):
         s.append([c,float(bal),None,None,None,None,"Admin-entered ledger net only; not independently live-verified."])
         r=s.max_row
-        s.cell(r,3,f'=B{r}*\\'01_Settings\\'!$B$7')
-        s.cell(r,4,f'=B{r}*\\'01_Settings\\'!$B$8')
-        s.cell(r,5,f'=B{r}*\\'01_Settings\\'!$B$9')
+        s.cell(r,3,f"=B{r}*'01_Settings'!$B$7")
+        s.cell(r,4,f"=B{r}*'01_Settings'!$B$8")
+        s.cell(r,5,f"=B{r}*'01_Settings'!$B$9")
         s.cell(r,6,f'=MAX(0,B{r}-E{r})')
     # Distribution calculator
     s=wb["06_Daily_Distributions"]; format_sheet(s,"DAILY DISTRIBUTION PREVIEW",note,["Investor ID","Package","Investment","Status","Weight","Gross Target","Pool Share","Capped Distribution Preview"])
@@ -190,9 +190,9 @@ def _wb_bytes(settings: dict, investors: list[dict], revenue: list[dict], ledger
         investment=dec(inv.get("investment"))
         s.append([inv.get("investor_id"),inv.get("package"),float(investment),inv.get("status"),None,None,None,None])
         s.cell(r,5,f'=IF(AND(D{r}="Active",SUM(C$4:C$503)>0),C{r}/SUM(C$4:C$503),0)')
-        s.cell(r,6,f'=IF(D{r}="Active",C{r}*\\'01_Settings\\'!$B$5,0)')
+        s.cell(r,6,f'=IF(D{r}="Active",C{r}*\'01_Settings\'!$B$5,0)')
         s.cell(r,7,0)
-        s.cell(r,8,f'=IF(\\'01_Settings\\'!$B$14="Approved",MIN(F{r},G{r}),0)')
+        s.cell(r,8,f'=IF(\'01_Settings\'!$B$14="Approved",MIN(F{r},G{r}),0)')
     # Customer staking (illustrative, no accrual booked)
     s=wb["07_Staking"]; format_sheet(s,"CUSTOMER STAKING ACCRUAL PREVIEW",note,["Investor ID","Investment","Status","Opt-In","Annual Rate","Daily Accrual","Monthly Accrual","Caution"])
     for r, inv in enumerate(investors,4):
@@ -219,9 +219,9 @@ def _wb_bytes(settings: dict, investors: list[dict], revenue: list[dict], ledger
     for key,label in [("stress_opening","Opening Treasury"),("stress_grid_revenue","Grid Revenue"),("stress_p2p_fees","P2P Fees"),("stress_withdrawal_fees","Withdrawal Fees"),("stress_compounding","Scenario Compounding"),("stress_staking","Scenario Staking"),("stress_other_income","Other Income"),("stress_distributions","Distributions"),("stress_withdrawals","Withdrawals"),("stress_operations","Operations")]:
         s.append([label,float(dec(stress.get(key))),"User-entered scenario value; not an actual or guaranteed flow."])
     s.append(["New Deposits",0,"Fixed to zero for the scenario."])
-    s.append(["Total Cash-In","=SUM(B5:B10)+B4","Illustrative only."])
+    s.append(["Total Cash-In","=SUM(B5:B10)","Illustrative only; opening balance is not cash-in."])
     s.append(["Total Cash-Out","=SUM(B11:B13)","Illustrative only."])
-    s.append(["Net Scenario Result","=B16-B17","Illustrative only."])
+    s.append(["Net Scenario Result","=B15-B16","Illustrative only."])
     # Dashboard
     s=wb["13_Dashboard"]; format_sheet(s,"CEDARS EMPIRE TREASURY DASHBOARD",note,["Metric","Value","Status / Caveat"])
     dashboard=[

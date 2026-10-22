@@ -895,7 +895,7 @@ USER_NAME = st.session_state.full_name
 IS_ADMIN = USER_EMAIL.lower() in ADMIN_EMAILS
 
 # Page lists are kept in the application layer; navigation is rendered in the main page area.
-business_user_pages = ["Dashboard", "Deposit", "Earn", "Withdraw", "Refer", "Account"]
+business_user_pages = ["Dashboard", "Deposit", "Withdraw", "Refer", "Account"]
 business_admin_pages = [
     "Dashboard", "Executive Command Center", "Treasury Management", "Real Money Engines",
     "Grid Marketplace", "Work & Contracts", "Payments & Treasury",

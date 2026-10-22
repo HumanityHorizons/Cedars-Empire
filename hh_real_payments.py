@@ -341,9 +341,14 @@ def _verify_deposit(intent, txid, db_all, db_exec, db_connect, durable, tron_tre
         raise PaymentError("This request lacks a valid recorded sender wallet. Create a new deposit request before paying.")
     # A public wallet address and TXID are not proof of control. Require a manual ownership review
     # before either this interactive verifier or the scheduled reconciler can credit an account.
-    wallet_rows=db_all(
-        "SELECT user_email,status FROM hh_verified_sender_wallets WHERE network=? AND address=?",
-        (row["network"],sender))
+    if row["network"] == "BSC-BEP20":
+        wallet_rows=db_all(
+            "SELECT user_email,status FROM hh_verified_sender_wallets WHERE network=? AND lower(address)=lower(?)",
+            (row["network"],sender))
+    else:
+        wallet_rows=db_all(
+            "SELECT user_email,status FROM hh_verified_sender_wallets WHERE network=? AND address=?",
+            (row["network"],sender))
     if not any(str(w.get("user_email","")).strip().lower()==str(row["user_email"]).strip().lower()
                and w.get("status")=="Verified" for w in wallet_rows):
         raise PaymentError("Sending-wallet ownership must be independently verified by an administrator before any deposit credit. No balance changed.")

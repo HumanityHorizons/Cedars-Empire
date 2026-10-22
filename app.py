@@ -646,7 +646,7 @@ with st.sidebar:
         "Work & Contracts",
         "Payments & Treasury",
         "Blockchain & Treasury",
-        "Deposits & Withdrawals",
+        "Payment Operations",
         "Reports & Referrals",
         "AI Operations",
     ]

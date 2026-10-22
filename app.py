@@ -72,7 +72,33 @@ st.markdown("""
 [data-testid="stMain"] h1,[data-testid="stMain"] h2,[data-testid="stMain"] h3,[data-testid="stMain"] h4 { color:var(--ce-navy) !important; letter-spacing:-.01em; }
 [data-testid="stMain"] p,[data-testid="stMain"] li,[data-testid="stMain"] label,[data-testid="stMain"] [data-testid="stMarkdownContainer"],[data-testid="stMain"] [data-testid="stCaptionContainer"] { color:var(--ce-text) !important; }
 [data-testid="stSidebar"],[data-testid="stSidebarCollapsedControl"] { display:none !important; }
-[data-testid="stMetric"] { background:var(--ce-card) !important; border:1px solid var(--ce-border) !important; border-radius:8px !important; padding:12px 14px !important; box-shadow:none !important; }
+[data-testid="stMetric"] { background:transparent !important; border:0 !important; border-radius:0 !important; padding:4px 0 !important; box-shadow:none !important; }
+.ce-dashboard-hero { background:linear-gradient(115deg,#0A2540 0%,#123D60 70%,#1B4D70 100%); color:#fff; border-radius:18px; padding:28px 30px 20px; margin:0 0 24px; border-bottom:4px solid #D6A84F; box-shadow:0 12px 30px rgba(10,37,64,.13); }
+.ce-eyebrow { color:#E7C77D !important; font-size:11px; font-weight:800; letter-spacing:2px; margin-bottom:10px; }
+.ce-hero-title { color:#fff !important; font-size:30px; line-height:1.2; font-weight:800; letter-spacing:-.6px; }
+.ce-hero-subtitle { color:#E5EDF5 !important; margin-top:8px; font-size:14px; }
+.ce-hero-strip { display:flex; flex-wrap:wrap; gap:9px 22px; margin-top:22px; padding-top:14px; border-top:1px solid rgba(255,255,255,.18); color:#DDE8F1 !important; font-size:10px; font-weight:700; letter-spacing:1px; }
+.ce-section-label { color:#526579 !important; font-size:11px; font-weight:800; letter-spacing:1.4px; margin:18px 0 10px; }
+.ce-stat-card { background:#fff; border:1px solid #D9E0E7; border-top:3px solid #D6A84F; border-radius:12px; padding:10px 14px 5px; min-height:100px; box-shadow:0 4px 14px rgba(10,37,64,.045); }
+.ce-stat-kicker { color:#526579 !important; font-size:10px; font-weight:800; letter-spacing:1px; margin-bottom:6px; }
+.ce-stat-card [data-testid="stMetricValue"] { color:#0A2540 !important; font-size:30px !important; font-weight:800 !important; }
+.ce-action-card,.ce-grid-card,.ce-business-metric,.ce-workflow-card,.ce-empty-state { background:#fff; border:1px solid #D9E0E7; border-radius:12px; padding:16px; box-shadow:0 4px 14px rgba(10,37,64,.04); min-height:104px; }
+.ce-action-card { border-top:3px solid #0A2540; margin-bottom:8px; }
+.ce-action-title,.ce-grid-title { color:#0A2540 !important; font-size:14px; font-weight:800; margin-bottom:7px; }
+.ce-action-copy,.ce-grid-copy,.ce-business-detail { color:#526579 !important; font-size:12px; line-height:1.5; }
+.ce-workflow-card { padding:6px 16px; }
+.ce-step { display:flex; align-items:center; gap:12px; padding:13px 0; border-bottom:1px solid #E8EDF2; }
+.ce-step:last-child { border-bottom:0; }
+.ce-step span { display:flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:9px; background:#F7EBD0; color:#0A2540; font-size:11px; font-weight:800; flex-shrink:0; }
+.ce-step b { display:block; color:#0A2540; font-size:13px; }
+.ce-step small { display:block; color:#526579; font-size:11px; margin-top:3px; }
+.ce-empty-state { text-align:center; padding:30px 16px; color:#526579; }
+.ce-empty-icon { margin:0 auto 10px; display:flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:50%; background:#E8F5EE; color:#16794B; font-size:22px; }
+.ce-grid-card { min-height:116px; margin-bottom:10px; border-top:3px solid #D6A84F; }
+.ce-grid-number { color:#A86400; font-size:11px; font-weight:900; letter-spacing:1px; margin-bottom:9px; }
+.ce-business-metric { min-height:126px; border-left:4px solid #D6A84F; }
+.ce-business-value { color:#0A2540 !important; font-size:22px; font-weight:800; margin:10px 0 6px; }
+@media(max-width:768px) { .ce-dashboard-hero { padding:22px 18px 16px; border-radius:13px; } .ce-hero-title { font-size:24px; } .ce-stat-card { min-height:84px; padding:9px; } .ce-stat-card [data-testid="stMetricValue"] { font-size:24px !important; } .ce-action-card,.ce-grid-card { padding:12px; } }
 [data-testid="stDataFrame"],[data-testid="stTable"],[data-testid="stForm"] { border:1px solid var(--ce-border) !important; border-radius:8px !important; background:var(--ce-card) !important; }
 [data-testid="stForm"] { padding:1rem !important; }
 [data-testid="stTextInput"] input,[data-testid="stNumberInput"] input,[data-testid="stTextArea"] textarea,[data-testid="stDateInput"] input,[data-testid="stTimeInput"] input,[data-baseweb="select"] > div { border-radius:6px !important; border-color:#C7D0DA !important; }
@@ -1208,15 +1234,44 @@ if page in BUSINESS_PAGES:
         own_refs = db_all("SELECT referral_code,referred_email,status,reward_amount,reward_asset,evidence_ref,created_at FROM referral_records WHERE referrer_email=? ORDER BY created_at DESC", (USER_EMAIL,))
         if own_refs: render_bank_table(pd.DataFrame(own_refs), use_container_width=True, hide_index=True)
     elif page == "Business Dashboard":
-        st.header("Business Dashboard")
-        st.write("Operate service businesses, validate demand, track real contracts and reconcile verified receipts.")
+        st.markdown("""
+        <div class="ce-dashboard-hero ce-business-hero">
+          <div class="ce-eyebrow">REAL MONEY BUSINESS</div>
+          <div class="ce-hero-title">Business Command Overview</div>
+          <div class="ce-hero-subtitle">Monitor service grids, customer activity, contract readiness and reconciled receipts.</div>
+          <div class="ce-hero-strip"><span>GLOBAL OPERATIONS</span><span>CONTROLLED PAYMENTS</span><span>VERIFIED RECORDS</span></div>
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown('<div class="ce-section-label">FINANCIAL CONTROL</div>', unsafe_allow_html=True)
         cols = st.columns(3)
-        cols[0].metric("Verified revenue", "Not connected")
-        cols[1].metric("Active contracts", "Not connected")
-        cols[2].metric("Treasury balance", "Not connected")
-        st.caption("Live financial figures are intentionally withheld until connected to verified transaction records.")
-        st.subheader("Business grids")
-        st.write("Cleaning services · Accommodation matching · Energy and utilities · AI training/data operations · Marketplace · Client services")
+        for col, label, value, detail in [
+            (cols[0], "VERIFIED REVENUE", "Not connected", "Requires reconciled receipt records"),
+            (cols[1], "ACTIVE CONTRACTS", "Not connected", "Requires contract records"),
+            (cols[2], "TREASURY BALANCE", "Not connected", "Requires verified wallet and ledger data"),
+        ]:
+            with col:
+                st.markdown(f'<div class="ce-business-metric"><div class="ce-stat-kicker">{label}</div><div class="ce-business-value">{value}</div><div class="ce-business-detail">{detail}</div></div>', unsafe_allow_html=True)
+        st.caption("No financial values are estimated or fabricated. Connect and verify the underlying records before displaying live totals.")
+        st.markdown('<div class="ce-section-label">SERVICE GRID PORTFOLIO</div>', unsafe_allow_html=True)
+        grid_cols = st.columns(3)
+        grid_items = [
+            ("01", "Cleaning Services", "Jobs · providers · delivery evidence", "Cleaning Grid"),
+            ("02", "Shelter & Accommodation", "Rooms · beds · availability checks", "Shelter & Accommodation Grid"),
+            ("03", "Energy & Utilities", "Solar · energy services · usage records", "Energy & Utilities Grid"),
+            ("04", "AI Training & Data", "Scoped work · quality checks · approvals", "AI Training & Data Operations"),
+            ("05", "World Grid Marketplace", "Listings · demand · provider verification", "World Grid Marketplace"),
+            ("06", "Client Services & Contracts", "Buyers · deliverables · written terms", "Client Services & Contracts"),
+        ]
+        for col, item in zip(grid_cols * 2, grid_items):
+            with col:
+                st.markdown(f'<div class="ce-grid-card"><div class="ce-grid-number">{item[0]}</div><div class="ce-grid-title">{item[1]}</div><div class="ce-grid-copy">{item[2]}</div></div>', unsafe_allow_html=True)
+                if st.button("Open grid", key="ce_business_grid_" + item[3], use_container_width=True):
+                    if item[3] in pages:
+                        st.session_state["ce_header_menu"] = item[3]
+                        st.rerun()
+                    else:
+                        st.info("This grid is available through the Real Money Business navigation.")
+
     elif page == "AI Business Scenario Lab":
         st.header("AI Business Scenario Lab")
         st.write("Build a testable operating plan. Estimates are planning inputs only; they are not evidence of market demand or income.")
@@ -1631,19 +1686,71 @@ if page != "Calendar & Events":
 # Dashboard
 # -----------------------------------------------------------------------------
 if page == "Dashboard":
-    st.header(f"Welcome, {USER_NAME.split()[0]}")
     tasks = db_all("SELECT * FROM tasks WHERE user_email=? ORDER BY updated_at DESC", (USER_EMAIL,))
-    total = len(tasks); in_progress = sum(1 for t in tasks if t["status"] == "In progress")
+    total = len(tasks)
+    in_progress = sum(1 for t in tasks if t["status"] == "In progress")
     completed = sum(1 for t in tasks if t["status"] == "Executed / completed")
+    published = len(db_all("SELECT id FROM noticeboard WHERE status=?", ("Published",)))
+    st.markdown("""
+    <div class="ce-dashboard-hero">
+      <div class="ce-eyebrow">PERSONAL WORKSPACE</div>
+      <div class="ce-hero-title">Welcome back</div>
+      <div class="ce-hero-subtitle">Your work, opportunities and delivery progress in one place.</div>
+      <div class="ce-hero-strip"><span>CEDARS EMPIRE</span><span>WORKSPACE OVERVIEW</span><span>LIVE RECORDS ONLY</span></div>
+    </div>
+    """, unsafe_allow_html=True)
+    st.markdown('<div class="ce-section-label">YOUR ACTIVITY</div>', unsafe_allow_html=True)
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("My tasks", total); col2.metric("In progress", in_progress); col3.metric("Executed", completed); col4.metric("Published opportunities", len(db_all("SELECT id FROM noticeboard WHERE status=?", ("Published",))))
-    st.subheader("Continue your work")
-    st.write("Your workspace is designed to keep proposal development, tasks, CV improvement, SDG alignment, feedback and delivery evidence in one place.")
-    st.markdown("**Suggested workflow:** Review an opportunity → check eligibility → create a task → draft a proposal → build results indicators → track delivery → report evidence and feedback.")
-    if tasks:
-        render_bank_table(pd.DataFrame([{ "Task": t["title"], "Status": t["status"], "Priority": t["priority"], "Due": t["due_date"] or "—", "Last updated": t["updated_at"] } for t in tasks[:8]]), use_container_width=True, hide_index=True)
-    st.subheader("Transparency and readiness")
-    st.info("Cedars Empire independently owns and maintains this workspace and its proprietary readiness framework. Use the exact eligibility rules, evaluation criteria and reporting instructions in each opportunity or agreement when preparing an application.")
+    with col1:
+        st.markdown('<div class="ce-stat-card"><div class="ce-stat-kicker">TASKS</div>', unsafe_allow_html=True)
+        st.metric("Total tasks", total, label_visibility="collapsed")
+        st.markdown('</div>', unsafe_allow_html=True)
+    with col2:
+        st.markdown('<div class="ce-stat-card"><div class="ce-stat-kicker">IN PROGRESS</div>', unsafe_allow_html=True)
+        st.metric("In progress", in_progress, label_visibility="collapsed")
+        st.markdown('</div>', unsafe_allow_html=True)
+    with col3:
+        st.markdown('<div class="ce-stat-card"><div class="ce-stat-kicker">COMPLETED</div>', unsafe_allow_html=True)
+        st.metric("Completed", completed, label_visibility="collapsed")
+        st.markdown('</div>', unsafe_allow_html=True)
+    with col4:
+        st.markdown('<div class="ce-stat-card"><div class="ce-stat-kicker">OPPORTUNITIES</div>', unsafe_allow_html=True)
+        st.metric("Published opportunities", published, label_visibility="collapsed")
+        st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('<div class="ce-section-label">QUICK ACCESS</div>', unsafe_allow_html=True)
+    quick = st.columns(4)
+    quick_items = [
+        ("Find opportunities", "Opportunity Analysis", "Review eligibility and requirements"),
+        ("Build a proposal", "Proposal Studio", "Draft and check a funding application"),
+        ("Manage tasks", "My Tasks", "Update work and due dates"),
+        ("Impact and SDGs", "SDG Navigator", "Connect activities to impact goals"),
+    ]
+    for col, item in zip(quick, quick_items):
+        with col:
+            st.markdown(f'<div class="ce-action-card"><div class="ce-action-title">{item[0]}</div><div class="ce-action-copy">{item[2]}</div></div>', unsafe_allow_html=True)
+            if st.button("Open", key="ce_quick_" + item[1], use_container_width=True):
+                if item[1] in pages:
+                    st.session_state["ce_header_menu"] = item[1]
+                    st.rerun()
+                else:
+                    st.info("Switch to NGO Operations in the top menu to open this page.")
+    left, right = st.columns([1.5, 1])
+    with left:
+        st.markdown('<div class="ce-section-label">RECENT TASKS</div>', unsafe_allow_html=True)
+        if tasks:
+            render_bank_table(pd.DataFrame([{"Task": t["title"], "Status": t["status"], "Priority": t["priority"], "Due": t["due_date"] or "—", "Updated": t["updated_at"]} for t in tasks[:6]]), use_container_width=True, hide_index=True)
+        else:
+            st.markdown('<div class="ce-empty-state"><div class="ce-empty-icon">✓</div><b>No tasks yet</b><div>Create your first task to start tracking delivery.</div></div>', unsafe_allow_html=True)
+            if st.button("Create your first task", key="ce_create_first_task", type="primary"):
+                if "My Tasks" in pages:
+                    st.session_state["ce_header_menu"] = "My Tasks"
+                    st.rerun()
+                else:
+                    st.info("Switch to NGO Operations to manage tasks.")
+    with right:
+        st.markdown('<div class="ce-section-label">WORKFLOW</div>', unsafe_allow_html=True)
+        st.markdown('<div class="ce-workflow-card"><div class="ce-step"><span>01</span><div><b>Discover</b><small>Review an opportunity</small></div></div><div class="ce-step"><span>02</span><div><b>Prepare</b><small>Check requirements and draft</small></div></div><div class="ce-step"><span>03</span><div><b>Deliver</b><small>Track tasks and evidence</small></div></div><div class="ce-step"><span>04</span><div><b>Report</b><small>Measure results and learning</small></div></div></div>', unsafe_allow_html=True)
+
 
 # -----------------------------------------------------------------------------
 # Task management: persisted through configured database

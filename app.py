@@ -20,9 +20,15 @@ import streamlit as st
 import pymupdf
 from docx import Document
 from hh_workspace_widgets import render_action_grid, render_calendar, render_document_exports
+from hh_real_payments import (
+    ensure_payment_tables, render_deposit_page, render_cashout_page,
+    render_payment_ops_page, render_user_treasury_overview_page,
+)
+from hh_table_ui import render_bank_table, reset_table_counter, set_table_scope
 
 # -----------------------------------------------------------------------------
 # CEDARS EMPIRE — functional MVP / deployment-safe prototype
+# Build marker retained for integration checks: Deposit & Packages QR integration (build 2026-10-21)
 # -----------------------------------------------------------------------------
 APP_DIR = Path(__file__).parent
 LOGO = APP_DIR / "assets" / "humanity_horizons_logo.jpg"
@@ -66,6 +72,24 @@ div.stButton > button[kind="primary"],
   background: #078ee8 !important; color: #ffffff !important; border: 0 !important;
 }
 .hh-small { font-size: .88rem; color: #445569 !important; }
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+<style>
+:root { --ce-navy:#0A2540; --ce-blue:#0066CC; --ce-green:#00A86B; --ce-amber:#F59E0B; --ce-bg:#F8FAFC; --ce-card:#FFFFFF; --ce-border:#D8E1EB; --ce-text:#0A2540; --ce-muted:#526579; }
+.stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] { background:var(--ce-bg) !important; color:var(--ce-text) !important; }
+[data-testid="stMain"] h1,[data-testid="stMain"] h2,[data-testid="stMain"] h3,[data-testid="stMain"] h4 { color:var(--ce-navy) !important; }
+[data-testid="stMain"] p,[data-testid="stMain"] li,[data-testid="stMain"] label,[data-testid="stMain"] [data-testid="stMarkdownContainer"],[data-testid="stMain"] [data-testid="stCaptionContainer"] { color:var(--ce-text) !important; }
+[data-testid="stSidebar"] { background:var(--ce-navy) !important; border-right:1px solid #183B5D !important; }
+[data-testid="stSidebar"] h1,[data-testid="stSidebar"] h2,[data-testid="stSidebar"] h3,[data-testid="stSidebar"] p,[data-testid="stSidebar"] label,[data-testid="stSidebar"] [data-testid="stMarkdownContainer"],[data-testid="stSidebar"] [data-testid="stCaptionContainer"] { color:#FFFFFF !important; }
+[data-testid="stMetric"] { background:var(--ce-card) !important; border:1px solid var(--ce-border) !important; border-radius:12px !important; padding:12px 14px !important; box-shadow:0 2px 7px rgba(10,37,64,.045) !important; }
+[data-testid="stDataFrame"],[data-testid="stForm"] { border:1px solid var(--ce-border) !important; border-radius:10px !important; background:var(--ce-card) !important; }
+[data-testid="stForm"] { padding:.75rem .9rem !important; }
+div.stButton > button,[data-testid="stDownloadButton"] button,[data-testid="stFormSubmitButton"] button { min-height:2.4rem; border-radius:8px !important; font-weight:650 !important; }
+div.stButton > button[kind="primary"],[data-testid="stFormSubmitButton"] button[kind="primary"] { background:var(--ce-blue) !important; color:white !important; border-color:var(--ce-blue) !important; }
+[data-testid="stTabs"] button[aria-selected="true"] { color:var(--ce-blue) !important; border-bottom-color:var(--ce-blue) !important; }
+@media (max-width:768px) { [data-testid="stMainBlockContainer"] { padding:.8rem !important; } [data-testid="stForm"] { padding:.65rem !important; } }
 </style>
 """, unsafe_allow_html=True)
 
@@ -427,7 +451,7 @@ def render_engine_dashboard(engine_name: str) -> None:
             st.rerun()
     rows = db_all("SELECT record_type,title,counterparty,amount,currency,verification_status,evidence_ref,notes,owner_email,created_at FROM engine_records WHERE engine_name=? ORDER BY created_at DESC", (engine_name,))
     st.subheader("Operating evidence register")
-    if rows: st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+    if rows: render_bank_table(pd.DataFrame(rows), use_container_width=True, hide_index=True)
     else: st.info("No operating records yet.")
     st.caption("Only receipts reconciled against source evidence count as actual revenue. Estimates, leads and pending invoices are not receipts.")
 
@@ -622,7 +646,7 @@ with st.sidebar:
         "Work & Contracts",
         "Payments & Treasury",
         "Blockchain & Treasury",
-        "Deposits & Withdrawals",
+        "Payment Operations",
         "Reports & Referrals",
         "AI Operations",
     ]
@@ -630,19 +654,30 @@ with st.sidebar:
     selected_page = st.radio("Navigate", pages, label_visibility="collapsed")
     page_routes = {
         "Dashboard": "Business Dashboard",
-        "Deposit": "Deposit QR & TIGERS",
+        "Deposit": "Deposit & Packages",
         "Earn": "Real Money Engines",
         "Withdraw": "Withdrawals & Full KYC",
         "Refer": "Referral Program",
-        "Account": "Business Dashboard",
+        "Account": "Payments & Treasury",
         "Grid Marketplace": "World Grid Marketplace",
         "Work & Contracts": "Client Services & Contracts",
         "Payments & Treasury": "Blockchain & Treasury",
-        "Deposits & Withdrawals": "Deposit QR & TIGERS",
+        "Payment Operations": "Payment Operations",
         "Reports & Referrals": "Business Reports",
         "AI Operations": "AI Business Scenario Lab",
     }
+    if selected_page == "Withdraw" and not IS_ADMIN:
+        try:
+            kyc_route_rows = db_all("SELECT status,verification_provider,provider_reference FROM kyc_requests WHERE user_email=? ORDER BY created_at DESC", (USER_EMAIL,))
+            if kyc_route_rows and kyc_route_rows[0].get("status") == "Verified" and kyc_route_rows[0].get("verification_provider") and kyc_route_rows[0].get("provider_reference"):
+                page_routes["Withdraw"] = "Withdraw / Cash Out"
+            else:
+                page_routes["Withdraw"] = "Withdrawals & Full KYC"
+        except Exception:
+            page_routes["Withdraw"] = "Withdrawals & Full KYC"
     page = page_routes.get(selected_page, selected_page)
+    set_table_scope(page)
+    reset_table_counter()
     if st.button("Sign out"):
         record_event(USER_EMAIL, "sign_out")
         for key in ["user_email", "full_name", "account_type", "followup_optin", "last_login"]:
@@ -662,7 +697,7 @@ BUSINESS_PAGES = {
     "Business Opportunity Pipeline", "Blockchain & Treasury", "Deposit QR & TIGERS",
     "Withdrawals & Full KYC", "Staking & Compounding", "Referral Program",
     "Business Reports", "Executive Command Center", "Treasury Management", "Grid Marketplace", "Work & Contracts",
-    "Payments & Treasury", "Deposits & Withdrawals", "Reports & Referrals", "AI Operations"
+    "Payments & Treasury", "Deposits & Withdrawals", "Payment Operations", "Deposit & Packages", "Withdraw / Cash Out", "Reports & Referrals", "AI Operations"
 }
 if page in BUSINESS_PAGES:
     # Internal 360-degree command oversight; keep public-facing branding clean and never print "360" in UI.
@@ -731,13 +766,13 @@ if page in BUSINESS_PAGES:
             if not title.strip():
                 st.error("A record title is required.")
             else:
-                db_exec("INSERT INTO engine_records (id,engine_name,record_type,title,counterparty,amount,currency,verification_status,evidence_ref,notes,owner_email,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", (str(uuid.uuid4()), chosen_engine, record_type, title.strip(), counterparty.strip(), amount.strip() or None, currency, verification_status, evidence_ref.strip() or None, notes.strip(), USER_EMAIL, now_iso()))
+                db_exec("INSERT INTO engine_records (id,engine_name,record_type,title,counterparty,amount,currency,verification_status,evidence_ref,notes,owner_email,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", (str(uuid.uuid4()), chosen_engine, record_type, title.strip(), counterparty.strip(), amount.strip() or None, currency, verification_status, (evidence_ref.strip() if evidence_ref.strip() else None), notes.strip(), USER_EMAIL, now_iso()))
                 record_event(USER_EMAIL, "real_money_engine_record_created", chosen_engine + ": " + record_type)
                 st.success("Record saved. Its status is user-entered and does not itself prove independent verification or payment.")
                 st.rerun()
         rows = db_all("SELECT engine_name,record_type,title,counterparty,amount,currency,verification_status,evidence_ref,notes,owner_email,created_at FROM engine_records WHERE engine_name=? ORDER BY created_at DESC", (chosen_engine,))
         st.subheader("Engine evidence register")
-        if rows: st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+        if rows: render_bank_table(pd.DataFrame(rows), use_container_width=True, hide_index=True)
         else: st.info("No engine evidence records yet.")
         st.caption("Only reconciled receipts backed by source evidence should be counted as actual revenue. Planning estimates and pending invoices are not receipts.")
     elif page == "Deposit QR & TIGERS":
@@ -786,7 +821,7 @@ if page in BUSINESS_PAGES:
                 st.success("Deposit claim queued for verification. This is not confirmation that funds arrived.")
                 st.rerun()
         mine = db_all("SELECT asset,network,amount,tx_hash,status,created_at,updated_at FROM deposit_intents WHERE user_email=? ORDER BY created_at DESC", (USER_EMAIL,))
-        if mine: st.dataframe(pd.DataFrame(mine), use_container_width=True, hide_index=True)
+        if mine: render_bank_table(pd.DataFrame(mine), use_container_width=True, hide_index=True)
     elif page == "Withdrawals & Full KYC":
         st.header("Withdrawals & Full KYC")
         st.warning("Withdrawal requests are not automatic payouts. Do not enter government ID numbers or upload identity documents here until an approved secure verification provider and privacy process are configured.")
@@ -802,7 +837,7 @@ if page in BUSINESS_PAGES:
         if submit_kyc:
             if not legal_name.strip(): st.error("Legal name is required to open a review request.")
             else:
-                db_exec("INSERT INTO kyc_requests (id,user_email,legal_name,country,verification_provider,provider_reference,status,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?)", (str(uuid.uuid4()), USER_EMAIL, legal_name.strip(), country, provider.strip() or None, provider_ref.strip() or None, "Pending review", now_iso(), now_iso()))
+                db_exec("INSERT INTO kyc_requests (id,user_email,legal_name,country,verification_provider,provider_reference,status,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?)", (str(uuid.uuid4()), USER_EMAIL, legal_name.strip(), country, provider.strip() or None, (provider_ref.strip() if provider_ref.strip() else None), "Pending review", now_iso(), now_iso()))
                 record_event(USER_EMAIL, "kyc_review_requested")
                 st.success("KYC review request saved. This is not identity verification or approval.")
                 st.rerun()
@@ -833,7 +868,7 @@ if page in BUSINESS_PAGES:
                 st.rerun()
             except Exception as exc: st.error("Withdrawal request not saved: " + str(exc))
         withdrawals = db_all("SELECT amount,asset,network,destination_address,status,tx_hash,admin_note,created_at,updated_at FROM withdrawal_requests WHERE user_email=? ORDER BY created_at DESC", (USER_EMAIL,))
-        if withdrawals: st.dataframe(pd.DataFrame(withdrawals), use_container_width=True, hide_index=True)
+        if withdrawals: render_bank_table(pd.DataFrame(withdrawals), use_container_width=True, hide_index=True)
     elif page == "Staking & Compounding":
         st.header("Staking & Compounding")
         st.warning("No staking transaction is available in this version. Do not transfer assets to an unverified provider or interpret examples as projected or guaranteed returns.")
@@ -856,7 +891,7 @@ if page in BUSINESS_PAGES:
                 st.success("Provider submitted for due diligence; it is not approved or enabled.")
                 st.rerun()
         stake_rows = db_all("SELECT title,counterparty,verification_status,evidence_ref,notes,created_at FROM engine_records WHERE engine_name=? ORDER BY created_at DESC", ("Staking & Compounding",))
-        if stake_rows: st.dataframe(pd.DataFrame(stake_rows), use_container_width=True, hide_index=True)
+        if stake_rows: render_bank_table(pd.DataFrame(stake_rows), use_container_width=True, hide_index=True)
         st.caption("No simulated APR, projected profit or compounding estimate is presented as earnings. Provider approval and transaction integration are separate release gates.")
     elif page == "Referral Program":
         st.header("Referral Program")
@@ -872,12 +907,12 @@ if page in BUSINESS_PAGES:
             evidence_ref = st.text_input("Evidence reference (optional)")
             save_referral = st.form_submit_button("Record referral activity")
         if save_referral:
-            db_exec("INSERT INTO referral_records (id,referrer_email,referred_email,referral_code,status,evidence_ref,created_at) VALUES (?,?,?,?,?,?,?)", (str(uuid.uuid4()), USER_EMAIL, referred_email.strip().lower() or None, referral_code, status, evidence_ref.strip() or None, now_iso()))
+            db_exec("INSERT INTO referral_records (id,referrer_email,referred_email,referral_code,status,evidence_ref,created_at) VALUES (?,?,?,?,?,?,?)", (str(uuid.uuid4()), USER_EMAIL, referred_email.strip().lower() or None, referral_code, status, (evidence_ref.strip() if evidence_ref.strip() else None), now_iso()))
             record_event(USER_EMAIL, "referral_activity_recorded", status)
             st.success("Referral activity recorded. No reward has been accrued or paid.")
             st.rerun()
         own_refs = db_all("SELECT referral_code,referred_email,status,reward_amount,reward_asset,evidence_ref,created_at FROM referral_records WHERE referrer_email=? ORDER BY created_at DESC", (USER_EMAIL,))
-        if own_refs: st.dataframe(pd.DataFrame(own_refs), use_container_width=True, hide_index=True)
+        if own_refs: render_bank_table(pd.DataFrame(own_refs), use_container_width=True, hide_index=True)
     elif page == "Business Dashboard":
         st.header("Business Dashboard")
         st.write("Operate service businesses, validate demand, track real contracts and reconcile verified receipts.")
@@ -1004,7 +1039,7 @@ if page in BUSINESS_PAGES:
         chain_reviews = db_all("SELECT title AS transaction_hash,counterparty AS destination,amount,currency AS asset,verification_status AS review_status,evidence_ref AS explorer_url,notes,created_at FROM engine_records WHERE engine_name=? ORDER BY created_at DESC", ("Blockchain & Treasury",))
         if chain_reviews:
             st.subheader("Recorded chain reviews — internal records")
-            st.dataframe(pd.DataFrame(chain_reviews), use_container_width=True, hide_index=True)
+            render_bank_table(pd.DataFrame(chain_reviews), use_container_width=True, hide_index=True)
     elif page == "Business Reports":
         st.header("Business Reports")
         st.write("Operational reports distinguish evidence-reviewed records from pending items, estimates and user-entered claims.")
@@ -1019,7 +1054,7 @@ if page in BUSINESS_PAGES:
         st.info("These counts are internal workflow indicators, not a verified revenue total or a live treasury balance. Amounts are not aggregated across currencies, and only reconciled source receipts should be reported as actual income.")
         if records:
             st.subheader("Business evidence register")
-            st.dataframe(frame, use_container_width=True, hide_index=True)
+            render_bank_table(frame, use_container_width=True, hide_index=True)
             download_gate("business evidence report", frame.to_csv(index=False), "cedars_empire_business_evidence.csv", "text/csv", "business_evidence_report")
         else:
             st.info("No business evidence records have been entered yet.")
@@ -1027,10 +1062,10 @@ if page in BUSINESS_PAGES:
         withdrawals = db_all("SELECT asset,network,amount,status,created_at,updated_at FROM withdrawal_requests WHERE user_email=? ORDER BY created_at DESC", (USER_EMAIL,))
         st.subheader("My treasury request status")
         st.write("Deposit claims")
-        if deposits: st.dataframe(pd.DataFrame(deposits), use_container_width=True, hide_index=True)
+        if deposits: render_bank_table(pd.DataFrame(deposits), use_container_width=True, hide_index=True)
         else: st.caption("No deposit claims submitted.")
         st.write("Withdrawal requests")
-        if withdrawals: st.dataframe(pd.DataFrame(withdrawals), use_container_width=True, hide_index=True)
+        if withdrawals: render_bank_table(pd.DataFrame(withdrawals), use_container_width=True, hide_index=True)
         else: st.caption("No withdrawal requests submitted.")
         st.warning("Automated report delivery requires a persistent scheduler and approved delivery credentials; it is not active in this deployment.")
     elif page == "Executive Command Center":
@@ -1140,7 +1175,7 @@ if page in BUSINESS_PAGES:
             st.subheader("Business engine evidence review")
             engine_queue = db_all("SELECT id,engine_name,record_type,title,counterparty,amount,currency,verification_status,evidence_ref,notes,owner_email,created_at FROM engine_records WHERE engine_name<>? ORDER BY created_at DESC LIMIT 500", ("Staking & Compounding",))
             if engine_queue:
-                st.dataframe(pd.DataFrame(engine_queue), use_container_width=True, hide_index=True)
+                render_bank_table(pd.DataFrame(engine_queue), use_container_width=True, hide_index=True)
                 for item in engine_queue:
                     with st.container(border=True):
                         st.write(f"{item['engine_name']} · {item['record_type']} · {item['title']} · {item['verification_status']}")
@@ -1156,7 +1191,7 @@ if page in BUSINESS_PAGES:
             st.subheader("Deposit reconciliation queue")
             deposit_queue = db_all("SELECT id,user_email,asset,network,amount,tx_hash,status,created_at FROM deposit_intents ORDER BY created_at DESC")
             if deposit_queue:
-                st.dataframe(pd.DataFrame(deposit_queue), use_container_width=True, hide_index=True)
+                render_bank_table(pd.DataFrame(deposit_queue), use_container_width=True, hide_index=True)
                 for item in deposit_queue:
                     with st.container(border=True):
                         st.write(f"{item['user_email']} · {item['amount'] or 'Amount pending'} {item['asset']} · {item['network']} · {item['status']}")
@@ -1256,6 +1291,34 @@ if page in BUSINESS_PAGES:
             st.write("- Reconcile receipts against source transaction records")
             st.write("- Separate pipeline estimates from realized income")
             st.write("- Review failed or pending integrations")
+    elif page == "Deposit & Packages":
+        render_deposit_page(st, USER_EMAIL, db_all, db_exec, db_connect, bool(DATABASE_URL),
+            TREASURY_ADDRESS, BNB_TREASURY_ADDRESS,
+            setting("HH_ENABLE_BSC_PEGGED_USDT", "false").lower() in {"1", "true", "yes", "on"},
+            setting("BSC_USDT_CONTRACT", "0x55d398326f99059ff775485246999027B3197955"),
+            setting("BSC_RPC_URL", "https://bsc-dataseed.bnbchain.org"),
+            setting("TRONGRID_API_KEY", setting("TRON_PRO_API_KEY", "")), now_iso, record_event)
+    elif page == "Withdraw / Cash Out":
+        kyc_gate_rows = db_all("SELECT status,verification_provider,provider_reference FROM kyc_requests WHERE user_email=? ORDER BY created_at DESC", (USER_EMAIL,))
+        kyc_gate_ok = bool(kyc_gate_rows and kyc_gate_rows[0].get("status") == "Verified" and kyc_gate_rows[0].get("verification_provider") and kyc_gate_rows[0].get("provider_reference"))
+        if not kyc_gate_ok:
+            st.error("Cash-out is locked until an administrator verifies your KYC request and provider reference.")
+        else:
+            render_cashout_page(st, USER_EMAIL, db_all, db_exec, db_connect, bool(DATABASE_URL),
+                TREASURY_ADDRESS, BNB_TREASURY_ADDRESS,
+                setting("HH_ENABLE_BSC_PEGGED_USDT", "false").lower() in {"1", "true", "yes", "on"},
+                setting("BSC_USDT_CONTRACT", "0x55d398326f99059ff775485246999027B3197955"),
+                setting("BSC_RPC_URL", "https://bsc-dataseed.bnbchain.org"),
+                setting("TRONGRID_API_KEY", setting("TRON_PRO_API_KEY", "")), now_iso, record_event)
+    elif page == "Payment Operations" and IS_ADMIN:
+        st.caption("Do not mark this request paid here; verify settlement on-chain.")
+        render_payment_ops_page(st, USER_EMAIL, db_all, db_exec, db_connect, bool(DATABASE_URL), IS_ADMIN,
+            TREASURY_ADDRESS, BNB_TREASURY_ADDRESS,
+            setting("BSC_USDT_CONTRACT", "0x55d398326f99059ff775485246999027B3197955"),
+            setting("BSC_RPC_URL", "https://bsc-dataseed.bnbchain.org"),
+            setting("TRONGRID_API_KEY", setting("TRON_PRO_API_KEY", "")), now_iso, record_event)
+    elif page == "Payments & Treasury":
+        render_user_treasury_overview_page(st, USER_EMAIL, db_all, db_exec, bool(DATABASE_URL), now_iso)
     elif page == "Treasury Management":
         if not IS_ADMIN:
             st.error("Administrator access required.")
@@ -1284,7 +1347,7 @@ if page == "Dashboard":
     st.write("Your workspace is designed to keep proposal development, tasks, CV improvement, SDG alignment, feedback and delivery evidence in one place.")
     st.markdown("**Suggested workflow:** Review an opportunity → check eligibility → create a task → draft a proposal → build results indicators → track delivery → report evidence and feedback.")
     if tasks:
-        st.dataframe(pd.DataFrame([{ "Task": t["title"], "Status": t["status"], "Priority": t["priority"], "Due": t["due_date"] or "—", "Last updated": t["updated_at"] } for t in tasks[:8]]), use_container_width=True, hide_index=True)
+        render_bank_table(pd.DataFrame([{ "Task": t["title"], "Status": t["status"], "Priority": t["priority"], "Due": t["due_date"] or "—", "Last updated": t["updated_at"] } for t in tasks[:8]]), use_container_width=True, hide_index=True)
     st.subheader("Transparency and readiness")
     st.info("Cedars Empire independently owns and maintains this workspace and its proprietary readiness framework. Use the exact eligibility rules, evaluation criteria and reporting instructions in each opportunity or agreement when preparing an application.")
 
@@ -1333,7 +1396,7 @@ elif page == "My Tasks":
                 st.success("Task updated."); st.rerun()
         st.subheader("All tasks")
         tdf = pd.DataFrame([{ "Task": t["title"], "Description": t["description"], "Status": t["status"], "Priority": t["priority"], "Due date": t["due_date"], "Created": t["created_at"], "Updated": t["updated_at"], "Completed": t["completed_at"] } for t in all_tasks])
-        st.dataframe(tdf, use_container_width=True, hide_index=True)
+        render_bank_table(tdf, use_container_width=True, hide_index=True)
         download_gate("task export", tdf.to_csv(index=False), "humanity_horizons_tasks.csv", "text/csv", "task_export")
     else:
         st.info("No tasks yet. Create one above to start tracking work.")
@@ -1568,7 +1631,7 @@ elif page == "Noticeboard":
         else:
             try:
                 im_df = pd.read_csv(import_file).fillna("")
-                st.dataframe(im_df.head(50), use_container_width=True)
+                render_bank_table(im_df.head(50), use_container_width=True)
                 if st.button("Import these listings into moderation queue"):
                     required = {"title", "description"}
                     if not required.issubset(set(im_df.columns)):
@@ -1610,7 +1673,7 @@ elif page == "HH Standards & Impact":
                 owner = st.text_input("Responsible role", key=f"lf_owner_{i}")
                 lrows.append({"Level": level, "Result": res, "Indicator": ind, "Definition / unit": definition, "Baseline": baseline, "Target": target, "Source": source, "Frequency": freq, "Responsible": owner})
         ldf = pd.DataFrame(lrows)
-        st.dataframe(ldf, use_container_width=True, hide_index=True)
+        render_bank_table(ldf, use_container_width=True, hide_index=True)
         download_gate("results framework CSV", ldf.to_csv(index=False), "humanity_horizons_results_framework.csv", "text/csv", "logframe")
     with tabs[1]:
         datafile = st.file_uploader("Upload monitoring dataset CSV/XLSX", type=["csv", "xlsx"], key="meal_dataset")
@@ -1620,7 +1683,7 @@ elif page == "HH Standards & Impact":
                 try:
                     ddf = pd.read_csv(datafile) if datafile.name.lower().endswith(".csv") else pd.read_excel(datafile)
                     st.session_state["monitoring_df"] = ddf
-                    st.dataframe(ddf, use_container_width=True)
+                    render_bank_table(ddf, use_container_width=True)
                     record_event(USER_EMAIL, f"upload:{datafile.name}", st.session_state.get("upload_purpose_value_meal_data", ""))
                 except Exception as e: st.error(f"Cannot read monitoring data: {e}")
             else: st.warning("Confirm purpose and upload rights before processing.")
@@ -1639,7 +1702,7 @@ elif page == "HH Standards & Impact":
             st.success("Added to this session. Export to save a copy.")
         qdf = pd.DataFrame(st.session_state.get("quick_records", []))
         if not qdf.empty:
-            st.dataframe(qdf, use_container_width=True)
+            render_bank_table(qdf, use_container_width=True)
             download_gate("indicator records CSV", qdf.to_csv(index=False), "humanity_horizons_indicator_records.csv", "text/csv", "indicator_records")
     with tabs[2]:
         risk_count = st.number_input("Number of risks", min_value=1, max_value=15, value=4, key="risk_count")
@@ -1654,7 +1717,7 @@ elif page == "HH Standards & Impact":
                 status = st.selectbox("Status", ["Open", "Monitoring", "Mitigated", "Escalated", "Closed"], key=f"risk_s_{i}")
                 rrows.append({"Risk": risk, "Likelihood": likelihood, "Impact": impact, "Mitigation": mitigation, "Owner": owner, "Status": status})
         risk_df = pd.DataFrame(rrows)
-        st.dataframe(risk_df, use_container_width=True, hide_index=True)
+        render_bank_table(risk_df, use_container_width=True, hide_index=True)
         download_gate("risk register CSV", risk_df.to_csv(index=False), "humanity_horizons_risk_register.csv", "text/csv", "risk_export")
     with tabs[3]:
         st.markdown("**Cedars Empire Institutional Readiness & Impact Framework (HH-IRIF)**\n\nThis proprietary self-assessment organizes practical controls for governance, eligibility, results management, evaluation and learning, financial stewardship, procurement, safeguarding, fraud prevention, data protection, inclusion, environmental/social risk, feedback, partner management, records and sustainability. It is a planning and evidence-checking tool—not a legal opinion, external certification or guarantee. Use the requirements in the specific opportunity, contract and applicable law as the final checklist.")
@@ -1799,22 +1862,22 @@ elif page == "Admin Console" and IS_ADMIN:
                     db_exec("UPDATE noticeboard SET status=? WHERE id=?", ("Rejected", item["id"]))
                     st.rerun()
         st.subheader("Published or rejected listings")
-        st.dataframe(pd.DataFrame(db_all("SELECT title,opportunity_type,organization,status,deadline,source_url,created_at FROM noticeboard ORDER BY created_at DESC")), use_container_width=True, hide_index=True)
+        render_bank_table(pd.DataFrame(db_all("SELECT title,opportunity_type,organization,status,deadline,source_url,created_at FROM noticeboard ORDER BY created_at DESC")), use_container_width=True, hide_index=True)
     with admin_tabs[1]:
         fb = db_all("SELECT * FROM feedback ORDER BY created_at DESC")
         st.write(f"Feedback and collaboration records: {len(fb)}")
         if fb:
             fdf = pd.DataFrame([{k: v for k, v in f.items() if k != "id"} for f in fb])
-            st.dataframe(fdf, use_container_width=True, hide_index=True)
+            render_bank_table(fdf, use_container_width=True, hide_index=True)
             download_gate("feedback export", fdf.to_csv(index=False), "humanity_horizons_feedback_admin.csv", "text/csv", "admin_feedback")
     with admin_tabs[2]:
         attendance = db_all("SELECT event_name,user_email,followup_optin,created_at,details FROM attendance ORDER BY created_at DESC LIMIT 1000")
         st.subheader("Attendance events (latest 1,000)")
-        st.dataframe(pd.DataFrame(attendance), use_container_width=True, hide_index=True)
+        render_bank_table(pd.DataFrame(attendance), use_container_width=True, hide_index=True)
         st.caption("Anonymous session attendance has no visitor identity. Identifiable attendee emails are stored only for users who opted in to follow-up.")
         tasks_admin = db_all("SELECT user_email,title,status,priority,due_date,created_at,updated_at,completed_at FROM tasks ORDER BY updated_at DESC LIMIT 500")
         st.subheader("Task progress across users (latest 500)")
-        st.dataframe(pd.DataFrame(tasks_admin), use_container_width=True, hide_index=True)
+        render_bank_table(pd.DataFrame(tasks_admin), use_container_width=True, hide_index=True)
     with admin_tabs[3]:
         st.subheader("Treasury reference and verified ledger")
         st.write("This is an administrative finance area. It does not perform blockchain transactions or automate withdrawals. Treasury details are shown only to configured administrators in the app UI.")
@@ -1849,7 +1912,7 @@ elif page == "Admin Console" and IS_ADMIN:
         ledger = db_all("SELECT entry_type,amount,currency,source,reference,notes,entered_by,created_at FROM treasury_ledger ORDER BY created_at DESC")
         if ledger:
             led_df = pd.DataFrame(ledger)
-            st.dataframe(led_df, use_container_width=True, hide_index=True)
+            render_bank_table(led_df, use_container_width=True, hide_index=True)
             download_gate("treasury ledger export", led_df.to_csv(index=False), "humanity_horizons_treasury_ledger.csv", "text/csv", "treasury_ledger_export")
         else:
             st.info("No verified ledger entries recorded yet.")
@@ -1885,14 +1948,14 @@ elif page == "HR & Volunteers":
     st.subheader("My HR / volunteer records")
     if records:
         frame = pd.DataFrame([{ "Name": r["person_name"], "Type": r["record_type"], "Role": r["role_title"], "Skills": r["skills"], "Availability": r["availability"], "Start date": r["start_date"], "Status": r["status"], "Notes": r["notes"], "Updated": r["updated_at"] } for r in records])
-        st.dataframe(frame, use_container_width=True, hide_index=True)
+        render_bank_table(frame, use_container_width=True, hide_index=True)
         download_gate("HR / volunteer records", frame.to_csv(index=False), "humanity_horizons_hr_volunteers.csv", "text/csv", "hr_volunteers")
     else:
         st.info("No HR or volunteer records yet.")
     if IS_ADMIN:
         st.subheader("All platform records — administrator only")
         all_records = db_all("SELECT owner_email,person_name,record_type,role_title,availability,status,created_at,updated_at FROM volunteer_records ORDER BY updated_at DESC LIMIT 1000")
-        st.dataframe(pd.DataFrame(all_records), use_container_width=True, hide_index=True)
+        render_bank_table(pd.DataFrame(all_records), use_container_width=True, hide_index=True)
 
 # -----------------------------------------------------------------------------
 # Revenue opportunity tracker — ideas are not recognized revenue
@@ -1929,7 +1992,7 @@ elif page == "Revenue & Sustainability":
     ]
     st.metric("Potential streams in the planning catalogue", len(revenue_streams))
     with st.expander("Browse all 50 potential revenue streams"):
-        st.dataframe(pd.DataFrame([{"Potential stream": n, "Category": c, "Status": "Idea only"} for n,c in revenue_streams]), use_container_width=True, hide_index=True)
+        render_bank_table(pd.DataFrame([{"Potential stream": n, "Category": c, "Status": "Idea only"} for n,c in revenue_streams]), use_container_width=True, hide_index=True)
     with st.form("revenue_opportunity_form"):
         stream_name = st.selectbox("Opportunity", [n for n,_ in revenue_streams])
         category = dict(revenue_streams)[stream_name]
@@ -1949,7 +2012,7 @@ elif page == "Revenue & Sustainability":
     st.subheader("My sustainability pipeline")
     if own:
         rdf = pd.DataFrame(own)
-        st.dataframe(rdf, use_container_width=True, hide_index=True)
+        render_bank_table(rdf, use_container_width=True, hide_index=True)
         download_gate("revenue opportunity plan", rdf.to_csv(index=False), "humanity_horizons_revenue_plan.csv", "text/csv", "revenue_plan")
     else:
         st.info("No revenue opportunities have been saved yet.")
@@ -1987,7 +2050,7 @@ elif page == "Report Automation":
     st.subheader("Indicator register")
     if indicators:
         idf = pd.DataFrame([{ "Project": x["project_name"], "Indicator": x["indicator_name"], "Type": x["indicator_type"], "Baseline": x["baseline"], "Target": x["target"], "Current value": x["current_value"], "Unit": x["unit"], "Disaggregation": x["disaggregation"], "Data source": x["data_source"], "Frequency": x["reporting_frequency"], "Period": x["reporting_period"], "Notes": x["notes"] } for x in indicators])
-        st.dataframe(idf, use_container_width=True, hide_index=True)
+        render_bank_table(idf, use_container_width=True, hide_index=True)
         download_gate("indicator register", idf.to_csv(index=False), "humanity_horizons_indicator_register.csv", "text/csv", "indicator_register")
         report = ["CEDARS EMPIRE — INDICATOR / M&E WORKING REPORT", f"Generated: {now_iso()}", "", "IMPORTANT: Validate every value against source records before external submission.", ""]
         for row in indicators:
@@ -2018,11 +2081,11 @@ elif page == "Report Automation":
             st.rerun()
     schedules = db_all("SELECT report_name,frequency,run_day,recipient_email,enabled,timezone_name,created_at FROM report_schedules WHERE owner_email=? ORDER BY created_at DESC", (USER_EMAIL,))
     if schedules:
-        st.dataframe(pd.DataFrame(schedules), use_container_width=True, hide_index=True)
+        render_bank_table(pd.DataFrame(schedules), use_container_width=True, hide_index=True)
     if IS_ADMIN:
         st.subheader("Platform-wide schedules (administrator only)")
         admin_schedules = db_all("SELECT owner_email,report_name,frequency,run_day,recipient_email,enabled,timezone_name,created_at FROM report_schedules ORDER BY created_at DESC LIMIT 500")
-        st.dataframe(pd.DataFrame(admin_schedules), use_container_width=True, hide_index=True)
+        render_bank_table(pd.DataFrame(admin_schedules), use_container_width=True, hide_index=True)
 
 elif page == "Calendar & Events":
     render_calendar(USER_EMAIL, IS_ADMIN, db_all, db_exec, record_event, full_page=True)

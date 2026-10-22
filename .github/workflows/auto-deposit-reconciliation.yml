@@ -1,10 +1,9 @@
-```yaml
 name: Live app automatic incoming-deposit reconciliation
 
-on:
+"on":
+  workflow_dispatch:
   schedule:
     - cron: "*/5 * * * *"
-  workflow_dispatch:
 
 permissions:
   contents: read
@@ -17,7 +16,6 @@ jobs:
   reconcile:
     runs-on: ubuntu-latest
     timeout-minutes: 12
-
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       TRONGRID_API_KEY: ${{ secrets.TRONGRID_API_KEY }}
@@ -27,23 +25,23 @@ jobs:
 
     steps:
       - name: Explain missing durable database secret
-        if: env.DATABASE_URL == ''
+        if: ${{ env.DATABASE_URL == '' }}
         run: |
           echo "::error::Automatic deposit reconciliation cannot run. Add the GitHub Actions secret DATABASE_URL pointing to the same managed PostgreSQL database as the live Streamlit app."
           exit 2
 
       - name: Check out live repository
-        if: env.DATABASE_URL != ''
+        if: ${{ env.DATABASE_URL != '' }}
         uses: actions/checkout@v4
 
       - name: Set up Python
-        if: env.DATABASE_URL != ''
+        if: ${{ env.DATABASE_URL != '' }}
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Install reconciliation dependencies
-        if: env.DATABASE_URL != ''
+        if: ${{ env.DATABASE_URL != '' }}
         run: |
           python -m pip install \
             "requests>=2.32,<3.0" \
@@ -53,13 +51,12 @@ jobs:
             "openpyxl>=3.1,<4.0"
 
       - name: Compile reconciler
-        if: env.DATABASE_URL != ''
+        if: ${{ env.DATABASE_URL != '' }}
         run: |
           python -m py_compile \
             auto_deposit_reconciler.py \
             hh_real_payments.py
 
       - name: Scan confirmed incoming transfers and reconcile deposits
-        if: env.DATABASE_URL != ''
+        if: ${{ env.DATABASE_URL != '' }}
         run: python auto_deposit_reconciler.py
-```

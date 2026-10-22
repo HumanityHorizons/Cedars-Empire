@@ -850,6 +850,24 @@ USER_EMAIL = st.session_state.user_email
 USER_NAME = st.session_state.full_name
 IS_ADMIN = USER_EMAIL.lower() in ADMIN_EMAILS
 
+# Persistent visual orientation: member-facing portal is distinct from restricted admin operations.
+st.markdown("""
+<style>
+.ce-topbar { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:1rem 1.25rem; margin:0 0 1.15rem 0; background:#0A2540; border-radius:14px; color:#fff; box-shadow:0 5px 18px rgba(10,37,64,.12); }
+.ce-brand { font-size:1.25rem; font-weight:800; letter-spacing:.055em; line-height:1.2; }
+.ce-tagline { color:#D7E8F8; font-size:.78rem; margin-top:.28rem; }
+.ce-portal { text-align:right; font-size:.76rem; font-weight:750; letter-spacing:.09em; color:#D7E8F8; text-transform:uppercase; }
+.ce-portal strong { display:block; color:#fff; font-size:.95rem; margin-bottom:.2rem; }
+.ce-rule { height:4px; width:100%; margin-top:-.55rem; margin-bottom:1.2rem; border-radius:4px; background:linear-gradient(90deg,#0066CC 0%,#00A86B 68%,#F59E0B 100%); }
+@media(max-width:600px) { .ce-topbar { padding:.85rem; } .ce-brand { font-size:1rem; } .ce-portal { font-size:.65rem; } .ce-portal strong { font-size:.8rem; } }
+</style>
+<div class="ce-topbar">
+  <div><div class="ce-brand">CEDARS EMPIRE</div><div class="ce-tagline">People • Planet • Prosperity</div></div>
+  <div class="ce-portal"><strong>""" + ("ADMIN COMMAND CENTER" if IS_ADMIN else "MEMBER PORTAL") + """</strong>
+  """ + ("Restricted management workspace" if IS_ADMIN else "Your account and services") + """</div>
+</div><div class="ce-rule"></div>
+""", unsafe_allow_html=True)
+
 with st.sidebar:
     st.markdown(f"**Signed in as:** {USER_NAME}")
     st.caption(USER_EMAIL)

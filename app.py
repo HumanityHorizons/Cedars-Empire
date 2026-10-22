@@ -44,55 +44,45 @@ st.set_page_config(page_title="CEDARS EMPIRE", page_icon="🌍", layout="wide")
 st.markdown("""
 <style>
 :root { color-scheme: light; }
+html, body, [class*="css"] { font-family: Arial, Roboto, sans-serif; }
 .stApp, [data-testid="stAppViewContainer"] {
-  background: linear-gradient(180deg,#f4fbff 0%,#ffffff 70%) !important;
-  color: #172b4d !important;
+  background: #F5F7FA !important;
+  color: #1F2937 !important;
 }
-/* Explicit high-contrast text so a dark Streamlit theme cannot turn text white on white. */
 [data-testid="stMain"] h1, [data-testid="stMain"] h2,
 [data-testid="stMain"] h3, [data-testid="stMain"] h4,
 [data-testid="stMain"] p, [data-testid="stMain"] li,
 [data-testid="stMain"] label,
 [data-testid="stMain"] [data-testid="stMarkdownContainer"],
-[data-testid="stMain"] [data-testid="stMarkdownContainer"] p,
 [data-testid="stMain"] [data-testid="stCaptionContainer"],
-[data-testid="stMain"] [data-testid="stCaptionContainer"] p,
-[data-testid="stMain"] [data-testid="stWidgetLabel"],
-[data-testid="stMain"] [data-testid="stWidgetLabel"] p,
-[data-testid="stMain"] [data-testid="stWidgetLabel"] label,
-[data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2,
-[data-testid="stSidebar"] h3, [data-testid="stSidebar"] p,
-[data-testid="stSidebar"] label, [data-testid="stSidebar"] [data-testid="stMarkdownContainer"],
-[data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
-  color: #172b4d !important;
+[data-testid="stMain"] [data-testid="stWidgetLabel"] {
+  color: #1F2937;
 }
-[data-testid="stSidebar"] { background: #eaf8ff !important; }
-input, textarea { color: #172b4d !important; background-color: #ffffff !important; }
-[data-baseweb="select"] input { color: #172b4d !important; }
-div.stButton > button { color: #172b4d !important; border-radius: 10px; }
-div.stButton > button[kind="primary"],
-[data-testid="stFormSubmitButton"] button[kind="primary"] {
-  background: #078ee8 !important; color: #ffffff !important; border: 0 !important;
+input, textarea, [data-baseweb="select"] input {
+  color: #1F2937 !important; background-color: #FFFFFF !important;
 }
-.hh-small { font-size: .88rem; color: #445569 !important; }
+.hh-small { font-size: .88rem; color: #526579 !important; }
 </style>
 """, unsafe_allow_html=True)
 
 st.markdown("""
 <style>
-:root { --ce-navy:#0A2540; --ce-blue:#0066CC; --ce-green:#00A86B; --ce-amber:#F59E0B; --ce-bg:#F8FAFC; --ce-card:#FFFFFF; --ce-border:#D8E1EB; --ce-text:#0A2540; --ce-muted:#526579; }
+:root { --ce-navy:#0A2540; --ce-blue:#0A2540; --ce-gold:#D6A84F; --ce-green:#16794B; --ce-amber:#A86400; --ce-bg:#F5F7FA; --ce-card:#FFFFFF; --ce-border:#D9E0E7; --ce-text:#1F2937; --ce-muted:#526579; }
 .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] { background:var(--ce-bg) !important; color:var(--ce-text) !important; }
-[data-testid="stMain"] h1,[data-testid="stMain"] h2,[data-testid="stMain"] h3,[data-testid="stMain"] h4 { color:var(--ce-navy) !important; }
+[data-testid="stMain"] h1,[data-testid="stMain"] h2,[data-testid="stMain"] h3,[data-testid="stMain"] h4 { color:var(--ce-navy) !important; letter-spacing:-.01em; }
 [data-testid="stMain"] p,[data-testid="stMain"] li,[data-testid="stMain"] label,[data-testid="stMain"] [data-testid="stMarkdownContainer"],[data-testid="stMain"] [data-testid="stCaptionContainer"] { color:var(--ce-text) !important; }
-[data-testid="stSidebar"] { background:var(--ce-navy) !important; border-right:1px solid #183B5D !important; }
-[data-testid="stSidebar"] h1,[data-testid="stSidebar"] h2,[data-testid="stSidebar"] h3,[data-testid="stSidebar"] p,[data-testid="stSidebar"] label,[data-testid="stSidebar"] [data-testid="stMarkdownContainer"],[data-testid="stSidebar"] [data-testid="stCaptionContainer"] { color:#FFFFFF !important; }
-[data-testid="stMetric"] { background:var(--ce-card) !important; border:1px solid var(--ce-border) !important; border-radius:12px !important; padding:12px 14px !important; box-shadow:0 2px 7px rgba(10,37,64,.045) !important; }
-[data-testid="stDataFrame"],[data-testid="stForm"] { border:1px solid var(--ce-border) !important; border-radius:10px !important; background:var(--ce-card) !important; }
-[data-testid="stForm"] { padding:.75rem .9rem !important; }
-div.stButton > button,[data-testid="stDownloadButton"] button,[data-testid="stFormSubmitButton"] button { min-height:2.4rem; border-radius:8px !important; font-weight:650 !important; }
-div.stButton > button[kind="primary"],[data-testid="stFormSubmitButton"] button[kind="primary"] { background:var(--ce-blue) !important; color:white !important; border-color:var(--ce-blue) !important; }
-[data-testid="stTabs"] button[aria-selected="true"] { color:var(--ce-blue) !important; border-bottom-color:var(--ce-blue) !important; }
-@media (max-width:768px) { [data-testid="stMainBlockContainer"] { padding:.8rem !important; } [data-testid="stForm"] { padding:.65rem !important; } }
+[data-testid="stSidebar"],[data-testid="stSidebarCollapsedControl"] { display:none !important; }
+[data-testid="stMetric"] { background:var(--ce-card) !important; border:1px solid var(--ce-border) !important; border-radius:8px !important; padding:12px 14px !important; box-shadow:none !important; }
+[data-testid="stDataFrame"],[data-testid="stTable"],[data-testid="stForm"] { border:1px solid var(--ce-border) !important; border-radius:8px !important; background:var(--ce-card) !important; }
+[data-testid="stForm"] { padding:1rem !important; }
+[data-testid="stTextInput"] input,[data-testid="stNumberInput"] input,[data-testid="stTextArea"] textarea,[data-testid="stDateInput"] input,[data-testid="stTimeInput"] input,[data-baseweb="select"] > div { border-radius:6px !important; border-color:#C7D0DA !important; }
+div.stButton > button,[data-testid="stDownloadButton"] button,[data-testid="stFormSubmitButton"] button { min-height:2.5rem; border-radius:6px !important; font-weight:650 !important; }
+div.stButton > button[kind="primary"],[data-testid="stFormSubmitButton"] button[kind="primary"] { background:var(--ce-navy) !important; color:white !important; border:1px solid var(--ce-navy) !important; }
+div.stButton > button:not([kind="primary"]),[data-testid="stDownloadButton"] button { background:white !important; color:var(--ce-navy) !important; border:1px solid #C7D0DA !important; }
+[data-testid="stTabs"] button[aria-selected="true"] { color:var(--ce-navy) !important; border-bottom-color:var(--ce-gold) !important; }
+[data-testid="stAlert"] { border-radius:8px !important; }
+[data-testid="stMainBlockContainer"] { max-width:1440px; }
+@media (max-width:768px) { [data-testid="stMainBlockContainer"] { padding-left:.8rem !important; padding-right:.8rem !important; } [data-testid="stForm"] { padding:.65rem !important; } }
 </style>
 """, unsafe_allow_html=True)
 

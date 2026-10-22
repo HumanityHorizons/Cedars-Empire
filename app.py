@@ -998,7 +998,7 @@ page = page_routes.get(selected_page, selected_page)
 INTERNAL_ONLY_PAGES = {
     "Executive Command Center", "Command Center", "Treasury Management",
     "Real Money Engines", "Grid Marketplace", "World Grid Marketplace",
-    "Work & Contracts", "Client Services & Contracts", "Payments & Treasury",
+    "Work & Contracts", "Client Services & Contracts",
     "Blockchain & Treasury", "Payment Operations", "AI Operations",
     "AI Business Scenario Lab", "Business Opportunity Pipeline",
     "NeuroWave + Health", "EchoMap + Mobility", "BioLoop + Finance",

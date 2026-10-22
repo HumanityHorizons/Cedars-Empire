@@ -99,25 +99,29 @@ div.stButton > button[kind="primary"],[data-testid="stFormSubmitButton"] button[
 
 st.markdown("""
 <style>
-.ce-fixed-header {
- position:fixed; top:0; left:0; right:0; z-index:999999;
- display:flex; align-items:center; gap:18px; min-height:66px;
- padding:10px 26px; background:#0A2540; color:#fff;
- border-bottom:3px solid #D6A84F; box-shadow:0 4px 16px rgba(10,37,64,.18);
- font-family:Arial,Helvetica,sans-serif;
+[class*="st-key-ce_locked_header"] {
+ position:fixed !important; top:0 !important; left:0 !important; right:0 !important;
+ z-index:999999 !important; width:100vw !important; box-sizing:border-box !important;
+ padding:10px 24px 8px !important; background:#0A2540 !important; color:#FFFFFF !important;
+ border-bottom:3px solid #D6A84F !important; box-shadow:0 4px 16px rgba(10,37,64,.18) !important;
 }
-.ce-brand-mark { width:38px; height:38px; border-radius:10px; display:flex; align-items:center;
+.ce-brand-mark { width:42px; height:42px; border-radius:10px; display:flex; align-items:center;
  justify-content:center; background:#D6A84F; color:#0A2540; font-weight:900; font-size:21px; }
-.ce-brand-title { font-size:19px; font-weight:800; letter-spacing:.7px; color:#fff; line-height:1.2; }
-.ce-header-right { margin-left:auto; color:#E8F1F8; font-size:12px; text-align:right; }
-[data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"] { display:none !important; }\n[data-testid="stMainBlockContainer"] { padding-top:6.2rem !important; }
-.ce-menu-label { font-size:12px; font-weight:800; color:#526579; letter-spacing:.8px; text-transform:uppercase; }
-@media(max-width:700px) {
- .ce-fixed-header { min-height:58px; padding:8px 12px; }
+.ce-brand-title { font-size:19px; font-weight:800; letter-spacing:.7px; color:#FFFFFF !important; line-height:1.2; }
+.ce-header-right { margin-left:auto; color:#E8F1F8 !important; font-size:12px; text-align:right; }
+[class*="st-key-ce_locked_header"] [data-testid="stRadio"] label,
+[class*="st-key-ce_locked_header"] [data-testid="stWidgetLabel"] { color:#FFFFFF !important; }
+[class*="st-key-ce_locked_header"] [data-testid="stMarkdownContainer"],
+[class*="st-key-ce_locked_header"] p { color:#FFFFFF !important; }
+[class*="st-key-ce_locked_header"] [data-testid="stRadio"] > div { gap:.35rem !important; }
+[data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"] { display:none !important; }
+[data-testid="stMainBlockContainer"] { padding-top:12rem !important; }
+@media(max-width:900px) {
+ [class*="st-key-ce_locked_header"] { padding:8px 10px 6px !important; }
  .ce-brand-title { font-size:15px; }
  .ce-header-right { display:none; }
-}
-</style>
+ [data-testid="stMainBlockContainer"] { padding-top:14rem !important; }
+}</style>
 """, unsafe_allow_html=True)
 
 
@@ -893,40 +897,50 @@ ngo_admin_pages = [
     "Income & Revenue", "Admin Studio", "Admin Noticeboard", "Wallet & Withdrawals",
     "Branding Settings", "Report Automation", "Admin Console",
 ]
-# Locked CEDARS EMPIRE identity header, rendered in the page body (never in the sidebar).
-st.markdown("""
-<div class="ce-fixed-header">
-  <div class="ce-brand-mark">C</div>
-  <div><div class="ce-brand-title">CEDARS EMPIRE</div></div>
-  <div class="ce-header-right">SECURE WORKSPACE · VERIFIED ACTIVITY</div>
-</div>
-""", unsafe_allow_html=True)
+# Locked header container: logo, workspace switch and all page menus stay together at the top.
+with st.container(key="ce_locked_header"):
+    logo_bytes = None
+    try:
+        if LOGO.exists():
+            logo_bytes = LOGO.read_bytes()
+    except Exception:
+        logo_bytes = None
+    header_logo_col, header_brand_col, header_status_col = st.columns([0.55, 3.4, 2.0], vertical_alignment="center")
+    with header_logo_col:
+        if logo_bytes:
+            st.image(logo_bytes, width=46)
+        else:
+            st.markdown('<div class="ce-brand-mark">C</div>', unsafe_allow_html=True)
+    with header_brand_col:
+        st.markdown('<div class="ce-brand-title">CEDARS EMPIRE</div>', unsafe_allow_html=True)
+    with header_status_col:
+        st.markdown('<div class="ce-header-right">SECURE WORKSPACE · VERIFIED ACTIVITY</div>', unsafe_allow_html=True)
 
-workspace_mode = st.radio(
-    "Workspace", ["Real Money Business", "NGO Operations"],
-    index=0, key="cedars_workspace_mode", horizontal=True,
-)
-if workspace_mode == "NGO Operations":
-    pages = ngo_user_pages + (ngo_admin_pages if IS_ADMIN else [])
-else:
-    pages = business_admin_pages if IS_ADMIN else business_user_pages
+    workspace_mode = st.radio(
+        "Workspace", ["Real Money Business", "NGO Operations"],
+        index=0, key="cedars_workspace_mode", horizontal=True,
+        label_visibility="collapsed",
+    )
+    if workspace_mode == "NGO Operations":
+        pages = ngo_user_pages + (ngo_admin_pages if IS_ADMIN else [])
+    else:
+        pages = business_admin_pages if IS_ADMIN else business_user_pages
 
-st.markdown('<div class="ce-menu-label">MAIN MENU</div>', unsafe_allow_html=True)
-selected_page = st.radio(
-    "Navigate CEDARS EMPIRE", pages,
-    index=min(pages.index(st.session_state.get("ce_header_menu", pages[0])), len(pages)-1)
-      if st.session_state.get("ce_header_menu", pages[0]) in pages else 0,
-    horizontal=True, label_visibility="collapsed", key="ce_header_menu",
-)
-if "ce_header_search" not in st.session_state:
-    st.session_state.ce_header_search = ""
-quick_search = st.text_input(
-    "Quick search", placeholder="Find a page…",
-    label_visibility="collapsed", key="ce_header_search",
-)
-if quick_search.strip():
-    matches = [p for p in pages if quick_search.strip().lower() in p.lower()]
-    st.caption("Matching pages: " + (" · ".join(matches) if matches else "No matching page names."))
+    selected_page = st.radio(
+        "Main menu", pages,
+        index=min(pages.index(st.session_state.get("ce_header_menu", pages[0])), len(pages)-1)
+          if st.session_state.get("ce_header_menu", pages[0]) in pages else 0,
+        horizontal=True, label_visibility="collapsed", key="ce_header_menu",
+    )
+    if "ce_header_search" not in st.session_state:
+        st.session_state.ce_header_search = ""
+    quick_search = st.text_input(
+        "Find a page", placeholder="Find a page…",
+        label_visibility="collapsed", key="ce_header_search",
+    )
+    if quick_search.strip():
+        matches = [p for p in pages if quick_search.strip().lower() in p.lower()]
+        st.caption(" · ".join(matches) if matches else "No matching pages.")
 
 page_routes = {
     "Dashboard": "Business Dashboard",

@@ -109,14 +109,12 @@ st.markdown("""
 .ce-brand-mark { width:38px; height:38px; border-radius:10px; display:flex; align-items:center;
  justify-content:center; background:#D6A84F; color:#0A2540; font-weight:900; font-size:21px; }
 .ce-brand-title { font-size:19px; font-weight:800; letter-spacing:.7px; color:#fff; line-height:1.2; }
-.ce-brand-tagline { font-size:11px; color:#DCE7F2; letter-spacing:1.1px; margin-top:3px; }
 .ce-header-right { margin-left:auto; color:#E8F1F8; font-size:12px; text-align:right; }
 [data-testid="stMainBlockContainer"] { padding-top:1.6rem; }
 .ce-menu-label { font-size:12px; font-weight:800; color:#526579; letter-spacing:.8px; text-transform:uppercase; }
 @media(max-width:700px) {
  .ce-fixed-header { min-height:58px; padding:8px 12px; }
  .ce-brand-title { font-size:15px; }
- .ce-brand-tagline { font-size:9px; letter-spacing:.5px; }
  .ce-header-right { display:none; }
 }
 </style>
@@ -911,7 +909,6 @@ with st.sidebar:
       <div class="ce-brand-mark">C</div>
       <div>
         <div class="ce-brand-title">CEDARS EMPIRE</div>
-        <div class="ce-brand-tagline">PEOPLE · PROSPERITY · IMPACT</div>
       </div>
       <div class="ce-header-right">SECURE WORKSPACE<br/>REAL DATA · VERIFIED ACTIVITY</div>
     </div>

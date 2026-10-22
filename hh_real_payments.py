@@ -339,6 +339,14 @@ def _verify_deposit(intent, txid, db_all, db_exec, db_connect, durable, tron_tre
     sender=row.get("sender_address")
     if not sender or not validate_destination(row["network"],sender):
         raise PaymentError("This request lacks a valid recorded sender wallet. Create a new deposit request before paying.")
+    # A public wallet address and TXID are not proof of control. Require a manual ownership review
+    # before either this interactive verifier or the scheduled reconciler can credit an account.
+    wallet_rows=db_all(
+        "SELECT user_email,status FROM hh_verified_sender_wallets WHERE network=? AND address=?",
+        (row["network"],sender))
+    if not any(str(w.get("user_email","")).strip().lower()==str(row["user_email"]).strip().lower()
+               and w.get("status")=="Verified" for w in wallet_rows):
+        raise PaymentError("Sending-wallet ownership must be independently verified by an administrator before any deposit credit. No balance changed.")
     result=verify_transfer(row["network"],txid,_decimal(row["amount"]),treasury,"in",expected_sender=sender,bsc_token_contract=bsc_token,
                            bsc_rpc_url=bsc_rpc,trongrid_api_key=tron_key)
     if result.get("status")=="Verified":
@@ -571,6 +579,29 @@ def _deposit_ui(st,email,db_all,db_exec,db_connect,durable,tron_treasury,bsc_tre
             same_address=(network=="TRON-TRC20" and _tron_payload(sender_address)==_tron_payload(address)) or (network=="BSC-BEP20" and _hex_address(sender_address)==_hex_address(address))
             if same_address:
                 raise PaymentError("The treasury receiving address cannot be used as the sending address.")
+            wallet_rows=db_all(
+                "SELECT id,user_email,status FROM hh_verified_sender_wallets WHERE network=? AND lower(address)=lower(?)",
+                (network,sender_address))
+            if wallet_rows:
+                wallet=wallet_rows[0]
+                if str(wallet.get("user_email","")).strip().lower()!=email.strip().lower():
+                    raise PaymentError("This sending wallet is already linked to a different account; contact an administrator.")
+                if wallet.get("status")=="Rejected":
+                    db_exec("UPDATE hh_verified_sender_wallets SET status=?,verification_method=NULL,evidence_reference=NULL,verified_by=NULL,verification_note=NULL,updated_at=? WHERE id=?",
+                            ("Pending verification",now_iso(),wallet["id"]))
+                    record_event(email,"sender_wallet_review_requested",f"{network}:resubmitted")
+                    st.warning("Sending wallet resubmitted for administrator ownership review. No deposit request was created.")
+                    st.rerun()
+                if wallet.get("status")!="Verified":
+                    st.warning("Sending-wallet ownership review is pending. No deposit request was created and no funds should be sent. Ask an administrator to verify control of this wallet first.")
+                    st.rerun()
+            else:
+                now=now_iso()
+                db_exec("INSERT INTO hh_verified_sender_wallets(id,user_email,network,address,status,verification_method,evidence_reference,verified_by,verification_note,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                        (str(uuid.uuid4()),email,network,sender_address,"Pending verification",None,None,None,None,now,now))
+                record_event(email,"sender_wallet_review_requested",f"{network}:new")
+                st.warning("Sending wallet submitted for administrator ownership review. No deposit request was created and no funds should be sent. After approval, return and create the deposit request.")
+                st.rerun()
             intent=_create_intent(email,chosen,network,address,sender_address,package_label,db_exec,db_all,durable,now_iso,
                                   consent_accepted,DEPOSIT_CONSENT_VERSION,DEPOSIT_CONSENT_TEXT)
             record_event(email,"deposit_intent_created",f"{intent['id']}:{network}:{chosen}")
@@ -763,6 +794,7 @@ def render_payment_ops_page(st,user_email,db_all,db_exec,db_connect,database_is_
     except Exception as exc:
         st.warning(f"Receipt-to-grid-gate synchronization needs attention ({type(exc).__name__}).")
     st.subheader("Sending-wallet ownership review")
+    st.caption("Do not approve an address based only on a screenshot or public transaction hash. Independently confirm control of the sending wallet (for example, by checking a signed challenge using a trusted method) and record the evidence and reviewer note. The app does not itself validate digital signatures.")
     st.empty()
     wallet_requests=db_all("SELECT * FROM hh_verified_sender_wallets WHERE status=? ORDER BY created_at",( "Pending verification",))
     if not wallet_requests: st.info("No records.")

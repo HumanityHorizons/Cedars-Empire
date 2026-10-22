@@ -1,4 +1,4 @@
-"""Persistent action/evidence grids and calendar reminders for Humanity Horizons."""
+"""Persistent action/evidence grids and calendar reminders for CEDARS EMPIRE."""
 from __future__ import annotations
 
 import io
@@ -63,7 +63,7 @@ def _pdf_bytes(title: str, frame: pd.DataFrame) -> bytes:
     page = doc.new_page(width=595, height=842)
     margin, y = 45, 54
     page.insert_text((margin, y), title[:100], fontsize=16, fontname="helv"); y += 28
-    page.insert_text((margin, y), f"Humanity Horizons | Generated {date.today().isoformat()}", fontsize=8.5, fontname="helv"); y += 26
+    page.insert_text((margin, y), f"CEDARS EMPIRE | Generated {date.today().isoformat()}", fontsize=8.5, fontname="helv"); y += 26
     for idx, row in frame.iterrows():
         line = f"{idx + 1}. " + " | ".join(f"{col}: {'' if pd.isna(row[col]) else str(row[col])}" for col in frame.columns)
         for part in textwrap.wrap(line, width=90, break_long_words=True) or [""]:
@@ -73,7 +73,7 @@ def _pdf_bytes(title: str, frame: pd.DataFrame) -> bytes:
         y += 5
     count = len(doc)
     for i in range(count):
-        doc[i].insert_text((45, 823), "Humanity Horizons | People, Planet and Peace", fontsize=8, fontname="helv")
+        doc[i].insert_text((45, 823), "CEDARS EMPIRE", fontsize=8, fontname="helv")
         doc[i].insert_text((495, 823), f"Page {i+1} of {count}", fontsize=8, fontname="helv")
     result = doc.tobytes(); doc.close(); return result
 
@@ -151,9 +151,9 @@ def render_action_grid(page: str, user_email: str, db_all, db_exec, record_event
         stem = key
         if st.download_button("Export grid CSV", edited.to_csv(index=False).encode("utf-8"), f"{stem}.csv", "text/csv", key=key+"_csv"):
             record_event(user_email, f"action_grid_download_csv:{page}")
-        if st.download_button("Export grid Word", _docx_bytes(f"Humanity Horizons — {page} Action Grid", edited), f"{stem}.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", key=key+"_docx"):
+        if st.download_button("Export grid Word", _docx_bytes(f"CEDARS EMPIRE — {page} Action Grid", edited), f"{stem}.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", key=key+"_docx"):
             record_event(user_email, f"action_grid_download_docx:{page}")
-        if st.download_button("Export grid PDF", _pdf_bytes(f"Humanity Horizons — {page} Action Grid", edited), f"{stem}.pdf", "application/pdf", key=key+"_pdf"):
+        if st.download_button("Export grid PDF", _pdf_bytes(f"CEDARS EMPIRE — {page} Action Grid", edited), f"{stem}.pdf", "application/pdf", key=key+"_pdf"):
             record_event(user_email, f"action_grid_download_pdf:{page}")
 
 @st.fragment(run_every="60s")
@@ -246,7 +246,7 @@ def render_document_exports(title: str, text: str, key: str, record_event, user_
     word=io.BytesIO(); doc.save(word)
     pdf=pymupdf.open(); pg=pdf.new_page(width=595,height=842); margin,y=54,58
     pg.insert_text((margin,y),title[:100],fontsize=17,fontname="helv"); y+=30
-    pg.insert_text((margin,y),f"Humanity Horizons | Generated {date.today().isoformat()}",fontsize=8.5,fontname="helv"); y+=28
+    pg.insert_text((margin,y),f"CEDARS EMPIRE | Generated {date.today().isoformat()}",fontsize=8.5,fontname="helv"); y+=28
     for raw in text.splitlines():
         line=raw.strip()
         if not line: y+=12; continue
@@ -257,7 +257,7 @@ def render_document_exports(title: str, text: str, key: str, record_event, user_
         y+=5
     n=len(pdf)
     for i in range(n):
-        pdf[i].insert_text((54,822),"Humanity Horizons | People, Planet and Peace",fontsize=8,fontname="helv")
+        pdf[i].insert_text((54,822),"CEDARS EMPIRE",fontsize=8,fontname="helv")
         pdf[i].insert_text((500,822),f"Page {i+1} of {n}",fontsize=8,fontname="helv")
     pdfbytes=pdf.tobytes(); pdf.close()
     if st.download_button("Download Word (.docx)",word.getvalue(),f"{stem}.docx","application/vnd.openxmlformats-officedocument.wordprocessingml.document",key=key+"_word"):

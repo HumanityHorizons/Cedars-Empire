@@ -110,7 +110,7 @@ st.markdown("""
  justify-content:center; background:#D6A84F; color:#0A2540; font-weight:900; font-size:21px; }
 .ce-brand-title { font-size:19px; font-weight:800; letter-spacing:.7px; color:#fff; line-height:1.2; }
 .ce-header-right { margin-left:auto; color:#E8F1F8; font-size:12px; text-align:right; }
-[data-testid="stMainBlockContainer"] { padding-top:1.6rem; }
+[data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"] { display:none !important; }\n[data-testid="stMainBlockContainer"] { padding-top:6.2rem !important; }
 .ce-menu-label { font-size:12px; font-weight:800; color:#526579; letter-spacing:.8px; text-transform:uppercase; }
 @media(max-width:700px) {
  .ce-fixed-header { min-height:58px; padding:8px 12px; }
@@ -874,103 +874,107 @@ USER_EMAIL = st.session_state.user_email
 USER_NAME = st.session_state.full_name
 IS_ADMIN = USER_EMAIL.lower() in ADMIN_EMAILS
 
-with st.sidebar:
-    st.markdown(f"**Signed in as:** {USER_NAME}")
-    st.caption(USER_EMAIL)
-    if IS_ADMIN: st.success("Administrator workspace")
-    business_user_pages = ["Deposit", "Earn", "Withdraw", "Refer", "Account"]
-    business_admin_pages = [
-        "Executive Command Center", "Treasury Management", "Real Money Engines",
-        "Grid Marketplace", "Work & Contracts", "Payments & Treasury",
-        "Blockchain & Treasury", "Payment Operations", "Reports & Referrals", "AI Operations",
-    ]
-    ngo_user_pages = [
-        "Climate and Career Hub", "My Tasks", "Opportunity Analysis", "Proposal Studio",
-        "Live Studio", "CV / Resume Studio", "SDG Navigator", "Noticeboard",
-        "HH Standards & Impact", "Donor Feedback", "B2B Collaboration", "HR & Volunteers",
-        "Income Activities", "My Work & Wallet", "Revenue & Sustainability",
-        "Privacy and Data", "Calendar & Events",
-    ]
-    ngo_admin_pages = [
-        "Command Center", "HR Department", "Finance Department", "40/60 Allocation Foundation",
-        "Income & Revenue", "Admin Studio", "Admin Noticeboard", "Wallet & Withdrawals",
-        "Branding Settings", "Report Automation", "Admin Console",
-    ]
-    workspace_mode = st.radio("Workspace", ["Real Money Business", "NGO Operations"],
-                              index=0, key="cedars_workspace_mode")
-    if workspace_mode == "NGO Operations":
-        pages = ngo_user_pages + (ngo_admin_pages if IS_ADMIN else [])
-    else:
-        pages = business_admin_pages if IS_ADMIN else business_user_pages
-    selected_page = pages[0]  # Header navigation below is the single source of page selection.
-    # Fixed, consistent CEDARS EMPIRE identity bar on every authenticated page.
-    st.markdown("""
-    <div class="ce-fixed-header">
-      <div class="ce-brand-mark">C</div>
-      <div>
-        <div class="ce-brand-title">CEDARS EMPIRE</div>
-      </div>
-      <div class="ce-header-right">SECURE WORKSPACE<br/>REAL DATA · VERIFIED ACTIVITY</div>
-    </div>
-    """, unsafe_allow_html=True)
+# Page lists are kept in the application layer; navigation is rendered in the main page area.
+business_user_pages = ["Dashboard", "Deposit", "Earn", "Withdraw", "Refer", "Account"]
+business_admin_pages = [
+    "Dashboard", "Executive Command Center", "Treasury Management", "Real Money Engines",
+    "Grid Marketplace", "Work & Contracts", "Payments & Treasury",
+    "Blockchain & Treasury", "Payment Operations", "Reports & Referrals", "AI Operations",
+]
+ngo_user_pages = [
+    "Climate and Career Hub", "My Tasks", "Opportunity Analysis", "Proposal Studio",
+    "Live Studio", "CV / Resume Studio", "SDG Navigator", "Noticeboard",
+    "HH Standards & Impact", "Donor Feedback", "B2B Collaboration", "HR & Volunteers",
+    "Income Activities", "My Work & Wallet", "Revenue & Sustainability",
+    "Privacy and Data", "Calendar & Events",
+]
+ngo_admin_pages = [
+    "Command Center", "HR Department", "Finance Department", "40/60 Allocation Foundation",
+    "Income & Revenue", "Admin Studio", "Admin Noticeboard", "Wallet & Withdrawals",
+    "Branding Settings", "Report Automation", "Admin Console",
+]
+workspace_mode = st.radio(
+    "Workspace", ["Real Money Business", "NGO Operations"],
+    index=0, key="cedars_workspace_mode", horizontal=True,
+)
+if workspace_mode == "NGO Operations":
+    pages = ngo_user_pages + (ngo_admin_pages if IS_ADMIN else [])
+else:
+    pages = business_admin_pages if IS_ADMIN else business_user_pages
 
-    # Compact top-level menu replaces the old sidebar-only navigation.
-    menu_col, search_col, account_col = st.columns([1.45, 1.2, 0.8], vertical_alignment="bottom")
-    with menu_col:
-        st.markdown('<div class="ce-menu-label">Main menu</div>', unsafe_allow_html=True)
-        selected_page = st.selectbox("Navigate CEDARS EMPIRE", pages, index=0, label_visibility="collapsed", key="ce_header_menu")
-    with search_col:
-        st.markdown('<div class="ce-menu-label">Quick search</div>', unsafe_allow_html=True)
-        quick_search = st.text_input("Search pages", placeholder="Find a page…", label_visibility="collapsed", key="ce_header_search")
-    with account_col:
-        st.markdown('<div class="ce-menu-label">Account</div>', unsafe_allow_html=True)
-        st.markdown("**" + (USER_NAME.split()[0] if USER_NAME.strip() else "Member") + "**")
+# Locked CEDARS EMPIRE identity header, rendered in the page body (never in the sidebar).
+st.markdown("""
+<div class="ce-fixed-header">
+  <div class="ce-brand-mark">C</div>
+  <div><div class="ce-brand-title">CEDARS EMPIRE</div></div>
+  <div class="ce-header-right">SECURE WORKSPACE · VERIFIED ACTIVITY</div>
+</div>
+""", unsafe_allow_html=True)
 
-    if quick_search.strip():
-        matches = [p for p in pages if quick_search.strip().lower() in p.lower()]
-        st.caption("Matching pages: " + (" · ".join(matches) if matches else "No matching page names."))
+st.markdown('<div class="ce-menu-label">MAIN MENU</div>', unsafe_allow_html=True)
+selected_page = st.radio(
+    "Navigate CEDARS EMPIRE", pages,
+    index=min(pages.index(st.session_state.get("ce_header_menu", pages[0])), len(pages)-1)
+      if st.session_state.get("ce_header_menu", pages[0]) in pages else 0,
+    horizontal=True, label_visibility="collapsed", key="ce_header_menu",
+)
+if "ce_header_search" not in st.session_state:
+    st.session_state.ce_header_search = ""
+quick_search = st.text_input(
+    "Quick search", placeholder="Find a page…",
+    label_visibility="collapsed", key="ce_header_search",
+)
+if quick_search.strip():
+    matches = [p for p in pages if quick_search.strip().lower() in p.lower()]
+    st.caption("Matching pages: " + (" · ".join(matches) if matches else "No matching page names."))
 
-    page_routes = {
-        "Dashboard": "Business Dashboard",
-        "Deposit": "Deposit & Packages",
-        "Earn": "Real Money Engines",
-        "Withdraw": "Withdrawals & Full KYC",
-        "Refer": "Referral Program",
-        "Account": "Payments & Treasury",
-        "Grid Marketplace": "World Grid Marketplace",
-        "Work & Contracts": "Client Services & Contracts",
-        "Payments & Treasury": "Blockchain & Treasury",
-        "Payment Operations": "Payment Operations",
-        "Reports & Referrals": "Business Reports",
-        "AI Operations": "AI Business Scenario Lab",
-        "Climate and Career Hub": "Dashboard",
-        "Command Center": "Executive Command Center",
-        "Admin Noticeboard": "Admin Noticeboard",
-        "Wallet & Withdrawals": "Payment Operations",
-        "My Work & Wallet": "My Work & Wallet",
-        "Branding Settings": "Branding Settings",
-    }
-    if selected_page == "Withdraw" and not IS_ADMIN:
-        try:
-            kyc_route_rows = db_all("SELECT status,verification_provider,provider_reference FROM kyc_requests WHERE user_email=? ORDER BY created_at DESC", (USER_EMAIL,))
-            if kyc_route_rows and kyc_route_rows[0].get("status") == "Verified" and kyc_route_rows[0].get("verification_provider") and kyc_route_rows[0].get("provider_reference"):
-                page_routes["Withdraw"] = "Withdraw / Cash Out"
-            else:
-                page_routes["Withdraw"] = "Withdrawals & Full KYC"
-        except Exception:
+page_routes = {
+    "Dashboard": "Business Dashboard",
+    "Deposit": "Deposit & Packages",
+    "Earn": "Real Money Engines",
+    "Withdraw": "Withdrawals & Full KYC",
+    "Refer": "Referral Program",
+    "Account": "Payments & Treasury",
+    "Grid Marketplace": "World Grid Marketplace",
+    "Work & Contracts": "Client Services & Contracts",
+    "Payments & Treasury": "Blockchain & Treasury",
+    "Payment Operations": "Payment Operations",
+    "Reports & Referrals": "Business Reports",
+    "AI Operations": "AI Business Scenario Lab",
+    "Climate and Career Hub": "Dashboard",
+    "Command Center": "Executive Command Center",
+    "Admin Noticeboard": "Admin Noticeboard",
+    "Wallet & Withdrawals": "Payment Operations",
+    "My Work & Wallet": "My Work & Wallet",
+    "Branding Settings": "Branding Settings",
+}
+if selected_page == "Withdraw" and not IS_ADMIN:
+    try:
+        kyc_route_rows = db_all(
+            "SELECT status,verification_provider,provider_reference FROM kyc_requests WHERE user_email=? ORDER BY created_at DESC",
+            (USER_EMAIL,),
+        )
+        if kyc_route_rows and kyc_route_rows[0].get("status") == "Verified" and kyc_route_rows[0].get("verification_provider") and kyc_route_rows[0].get("provider_reference"):
+            page_routes["Withdraw"] = "Withdraw / Cash Out"
+        else:
             page_routes["Withdraw"] = "Withdrawals & Full KYC"
-    page = page_routes.get(selected_page, selected_page)
-    set_table_scope(page)
-    reset_table_counter()
-    if st.button("Sign out"):
+    except Exception:
+        page_routes["Withdraw"] = "Withdrawals & Full KYC"
+page = page_routes.get(selected_page, selected_page)
+set_table_scope(page)
+reset_table_counter()
+account_col, signout_col = st.columns([5, 1])
+with account_col:
+    st.caption(f"Signed in as {USER_NAME} · {USER_EMAIL}" + (" · Administrator" if IS_ADMIN else ""))
+with signout_col:
+    if st.button("Sign out", key="ce_sign_out"):
         record_event(USER_EMAIL, "sign_out")
         for key in ["user_email", "full_name", "account_type", "followup_optin", "last_login"]:
             st.session_state.pop(key, None)
         st.rerun()
-    st.divider()
-    st.caption("CEDARS EMPIRE · Merged Real-Money Grid Portfolio Release 2.1")
-    st.caption("AI: connected" if OPENAI_API_KEY else "AI: local structured mode (API key not configured)")
-    st.caption("No funding, AI accuracy, compliance certification or payment settlement is guaranteed.")
+st.divider()
+st.caption("CEDARS EMPIRE · Release 2.1")
+st.caption("AI: connected" if OPENAI_API_KEY else "AI: local structured mode (API key not configured)")
 
 # Cedars Empire: real-business scenario workspace.
 # NGO operations pages remain in the codebase but are intentionally inaccessible from this business-only navigation.

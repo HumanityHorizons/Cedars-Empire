@@ -2177,7 +2177,7 @@ elif page == "Privacy and Data":
             new_salt, new_hash = pw_hash(new_password)
             db_exec("UPDATE users SET password_salt=?,password_hash=? WHERE email=?", (new_salt, new_hash, USER_EMAIL))
             record_event(USER_EMAIL, "password_changed")
-            send_email(USER_EMAIL, "Your Cedars Empire password was changed", f"Hello {USER_NAME},\n\nYour Cedars Empire password was changed at {now_iso()}. If you did not make this change, contact platform support immediately.\n\nCedars Empire — People, Planet and Peace")
+            send_email(USER_EMAIL, "Your Cedars Empire password was changed", f"Hello {USER_NAME},\n\nYour Cedars Empire password was changed at {now_iso()}. If you did not make this change, contact platform support immediately.\n\nCedars Empire")
             st.success("Password changed successfully. A security email will be sent if email delivery is configured.")
             st.rerun()
     st.subheader("Email notifications")

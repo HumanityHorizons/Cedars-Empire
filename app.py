@@ -993,6 +993,27 @@ if selected_page == "Withdraw" and not IS_ADMIN:
     except Exception:
         page_routes["Withdraw"] = "Withdrawals & Full KYC"
 page = page_routes.get(selected_page, selected_page)
+
+# Authorization must be enforced in application logic, not only by hiding menu items.
+INTERNAL_ONLY_PAGES = {
+    "Executive Command Center", "Command Center", "Treasury Management",
+    "Real Money Engines", "Grid Marketplace", "World Grid Marketplace",
+    "Work & Contracts", "Client Services & Contracts", "Payments & Treasury",
+    "Blockchain & Treasury", "Payment Operations", "AI Operations",
+    "AI Business Scenario Lab", "Business Opportunity Pipeline",
+    "NeuroWave + Health", "EchoMap + Mobility", "BioLoop + Finance",
+    "DreamGrid + Education", "EmoFlux + Shelter", "IdeaForge + Data",
+    "QuantumLeap + Energy", "Cleaning Grid", "Shelter & Accommodation Grid",
+    "Energy & Utilities Grid", "AI Training & Data Operations",
+    "Deposit QR & TIGERS", "Deposits & Withdrawals", "Reports & Referrals",
+    "Admin Console", "Admin Studio", "Income & Revenue", "Finance Department",
+    "40/60 Allocation Foundation", "HR Department", "Admin Noticeboard",
+    "Branding Settings", "Report Automation", "Wallet & Withdrawals",
+}
+if not IS_ADMIN and page in INTERNAL_ONLY_PAGES:
+    st.error("This area is restricted to authorized Cedars Empire administrators.")
+    page = "Business Dashboard"
+
 set_table_scope(page)
 reset_table_counter()
 account_col, signout_col = st.columns([5, 1])

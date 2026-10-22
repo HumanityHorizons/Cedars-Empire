@@ -905,14 +905,16 @@ with st.container(key="ce_locked_header"):
             logo_bytes = LOGO.read_bytes()
     except Exception:
         logo_bytes = None
-    header_logo_col, header_brand_col, header_status_col = st.columns([0.55, 3.4, 2.0], vertical_alignment="center")
-    with header_logo_col:
-        if logo_bytes:
-            st.image(logo_bytes, width=46)
-        else:
-            st.markdown('<div class="ce-brand-mark">C</div>', unsafe_allow_html=True)
-    with header_brand_col:
-        st.markdown('<div class="ce-brand-title">CEDARS EMPIRE</div>', unsafe_allow_html=True)
+    header_left_spacer, header_brand_group, header_status_col = st.columns([1.0, 2.2, 1.0], vertical_alignment="center")
+    with header_brand_group:
+        logo_col, brand_col = st.columns([0.55, 2.8], vertical_alignment="center")
+        with logo_col:
+            if logo_bytes:
+                st.image(logo_bytes, width=46)
+            else:
+                st.markdown('<div class="ce-brand-mark">C</div>', unsafe_allow_html=True)
+        with brand_col:
+            st.markdown('<div class="ce-brand-title">CEDARS EMPIRE</div>', unsafe_allow_html=True)
     with header_status_col:
         st.markdown('<div class="ce-header-right">SECURE WORKSPACE · VERIFIED ACTIVITY</div>', unsafe_allow_html=True)
 

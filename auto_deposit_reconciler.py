@@ -1,4 +1,4 @@
-"""Scheduled, idempotent incoming-deposit reconciler for the test deployment.
+"""Scheduled, idempotent incoming-deposit reconciler for the live deployment.
 
 Requirements:
 - DATABASE_URL must point to the same managed PostgreSQL database as Streamlit.

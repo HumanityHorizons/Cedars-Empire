@@ -591,17 +591,17 @@ def _deposit_ui(st,email,db_all,db_exec,db_connect,durable,tron_treasury,bsc_tre
                             ("Pending verification",now_iso(),wallet["id"]))
                     record_event(email,"sender_wallet_review_requested",f"{network}:resubmitted")
                     st.warning("Sending wallet resubmitted for administrator ownership review. No deposit request was created.")
-                    st.rerun()
+                    return
                 if wallet.get("status")!="Verified":
                     st.warning("Sending-wallet ownership review is pending. No deposit request was created and no funds should be sent. Ask an administrator to verify control of this wallet first.")
-                    st.rerun()
+                    return
             else:
                 now=now_iso()
                 db_exec("INSERT INTO hh_verified_sender_wallets(id,user_email,network,address,status,verification_method,evidence_reference,verified_by,verification_note,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
                         (str(uuid.uuid4()),email,network,sender_address,"Pending verification",None,None,None,None,now,now))
                 record_event(email,"sender_wallet_review_requested",f"{network}:new")
                 st.warning("Sending wallet submitted for administrator ownership review. No deposit request was created and no funds should be sent. After approval, return and create the deposit request.")
-                st.rerun()
+                return
             intent=_create_intent(email,chosen,network,address,sender_address,package_label,db_exec,db_all,durable,now_iso,
                                   consent_accepted,DEPOSIT_CONSENT_VERSION,DEPOSIT_CONSENT_TEXT)
             record_event(email,"deposit_intent_created",f"{intent['id']}:{network}:{chosen}")

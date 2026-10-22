@@ -893,15 +893,6 @@ ngo_admin_pages = [
     "Income & Revenue", "Admin Studio", "Admin Noticeboard", "Wallet & Withdrawals",
     "Branding Settings", "Report Automation", "Admin Console",
 ]
-workspace_mode = st.radio(
-    "Workspace", ["Real Money Business", "NGO Operations"],
-    index=0, key="cedars_workspace_mode", horizontal=True,
-)
-if workspace_mode == "NGO Operations":
-    pages = ngo_user_pages + (ngo_admin_pages if IS_ADMIN else [])
-else:
-    pages = business_admin_pages if IS_ADMIN else business_user_pages
-
 # Locked CEDARS EMPIRE identity header, rendered in the page body (never in the sidebar).
 st.markdown("""
 <div class="ce-fixed-header">
@@ -910,6 +901,15 @@ st.markdown("""
   <div class="ce-header-right">SECURE WORKSPACE · VERIFIED ACTIVITY</div>
 </div>
 """, unsafe_allow_html=True)
+
+workspace_mode = st.radio(
+    "Workspace", ["Real Money Business", "NGO Operations"],
+    index=0, key="cedars_workspace_mode", horizontal=True,
+)
+if workspace_mode == "NGO Operations":
+    pages = ngo_user_pages + (ngo_admin_pages if IS_ADMIN else [])
+else:
+    pages = business_admin_pages if IS_ADMIN else business_user_pages
 
 st.markdown('<div class="ce-menu-label">MAIN MENU</div>', unsafe_allow_html=True)
 selected_page = st.radio(

@@ -766,7 +766,7 @@ if page in BUSINESS_PAGES:
             if not title.strip():
                 st.error("A record title is required.")
             else:
-                db_exec("INSERT INTO engine_records (id,engine_name,record_type,title,counterparty,amount,currency,verification_status,evidence_ref,notes,owner_email,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", (str(uuid.uuid4()), chosen_engine, record_type, title.strip(), counterparty.strip(), amount.strip() or None, currency, verification_status, evidence_ref.strip() or None, notes.strip(), USER_EMAIL, now_iso()))
+                db_exec("INSERT INTO engine_records (id,engine_name,record_type,title,counterparty,amount,currency,verification_status,evidence_ref,notes,owner_email,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", (str(uuid.uuid4()), chosen_engine, record_type, title.strip(), counterparty.strip(), amount.strip() or None, currency, verification_status, (evidence_ref.strip() if evidence_ref.strip() else None), notes.strip(), USER_EMAIL, now_iso()))
                 record_event(USER_EMAIL, "real_money_engine_record_created", chosen_engine + ": " + record_type)
                 st.success("Record saved. Its status is user-entered and does not itself prove independent verification or payment.")
                 st.rerun()
@@ -837,7 +837,7 @@ if page in BUSINESS_PAGES:
         if submit_kyc:
             if not legal_name.strip(): st.error("Legal name is required to open a review request.")
             else:
-                db_exec("INSERT INTO kyc_requests (id,user_email,legal_name,country,verification_provider,provider_reference,status,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?)", (str(uuid.uuid4()), USER_EMAIL, legal_name.strip(), country, provider.strip() or None, provider_ref.strip() or None, "Pending review", now_iso(), now_iso()))
+                db_exec("INSERT INTO kyc_requests (id,user_email,legal_name,country,verification_provider,provider_reference,status,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?)", (str(uuid.uuid4()), USER_EMAIL, legal_name.strip(), country, provider.strip() or None, (provider_ref.strip() if provider_ref.strip() else None), "Pending review", now_iso(), now_iso()))
                 record_event(USER_EMAIL, "kyc_review_requested")
                 st.success("KYC review request saved. This is not identity verification or approval.")
                 st.rerun()
@@ -907,7 +907,7 @@ if page in BUSINESS_PAGES:
             evidence_ref = st.text_input("Evidence reference (optional)")
             save_referral = st.form_submit_button("Record referral activity")
         if save_referral:
-            db_exec("INSERT INTO referral_records (id,referrer_email,referred_email,referral_code,status,evidence_ref,created_at) VALUES (?,?,?,?,?,?,?)", (str(uuid.uuid4()), USER_EMAIL, referred_email.strip().lower() or None, referral_code, status, evidence_ref.strip() or None, now_iso()))
+            db_exec("INSERT INTO referral_records (id,referrer_email,referred_email,referral_code,status,evidence_ref,created_at) VALUES (?,?,?,?,?,?,?)", (str(uuid.uuid4()), USER_EMAIL, referred_email.strip().lower() or None, referral_code, status, (evidence_ref.strip() if evidence_ref.strip() else None), now_iso()))
             record_event(USER_EMAIL, "referral_activity_recorded", status)
             st.success("Referral activity recorded. No reward has been accrued or paid.")
             st.rerun()

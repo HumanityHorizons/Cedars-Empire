@@ -22,6 +22,7 @@ DEFAULTS = {
     "treasury_compounding": "0.05", "treasury_staking": "0.06", "reserve_lock": "0.40",
     "withdrawal_fee": "0.25", "p2p_fee": "0.25", "solvency_threshold": "1.20",
     "healthy_threshold": "1.50", "distribution_approval": "Not approved",
+    "distribution_pool": "0",
     "solvency_assets": "0", "solvency_customer_balances": "0",
     "solvency_pending_rewards": "0", "solvency_pending_withdrawals": "0",
     "solvency_currency": "USDT", "stress_opening": "0", "stress_grid_revenue": "0",
@@ -150,9 +151,10 @@ def _wb_bytes(settings: dict, investors: list[dict], revenue: list[dict], ledger
         ("Healthy Threshold", settings["healthy_threshold"], "coverage multiple"),
         ("Model Approval", settings["distribution_approval"], "planning only; not payment authorization"),
         ("Model As-Of Date", date.today().isoformat(), "local workbook creation date"),
+        ("Distribution Pool (Preview Only)", settings.get("distribution_pool", "0"), "Planning only; not authorized to pay."),
     ]
     for row in settings_rows: s.append(list(row))
-    for r in range(4,16): s.cell(r,2).fill=PatternFill("solid",fgColor=yellow); s.cell(r,2).font=Font(color="0000FF")
+    for r in range(4,17): s.cell(r,2).fill=PatternFill("solid",fgColor=yellow); s.cell(r,2).font=Font(color="0000FF")
     # Packages
     s=wb["02_Packages"]; format_sheet(s,"PACKAGE REFERENCE",note,["Package","Investment reference amount","Caution"])
     for name, amount in PACKAGES.items(): s.append([name,float(amount),"Test package reference only; not a receipt or investment offer."])
@@ -189,9 +191,9 @@ def _wb_bytes(settings: dict, investors: list[dict], revenue: list[dict], ledger
     for r, inv in enumerate(investors,4):
         investment=dec(inv.get("investment"))
         s.append([inv.get("investor_id"),inv.get("package"),float(investment),inv.get("status"),None,None,None,None])
-        s.cell(r,5,f'=IF(AND(D{r}="Active",SUM(C$4:C$503)>0),C{r}/SUM(C$4:C$503),0)')
+        s.cell(r,5,f'=IF(AND(D{r}="Active",SUMIF($D$4:$D$503,"Active",$C$4:$C$503)>0),C{r}/SUMIF($D$4:$D$503,"Active",$C$4:$C$503),0)')
         s.cell(r,6,f'=IF(D{r}="Active",C{r}*\'01_Settings\'!$B$5,0)')
-        s.cell(r,7,0)
+        s.cell(r,7,f'=IF(D{r}="Active",\'01_Settings\'!$B$16*E{r},0)')
         s.cell(r,8,f'=IF(\'01_Settings\'!$B$14="Approved",MIN(F{r},G{r}),0)')
     # Customer staking (illustrative, no accrual booked)
     s=wb["07_Staking"]; format_sheet(s,"CUSTOMER STAKING ACCRUAL PREVIEW",note,["Investor ID","Investment","Status","Opt-In","Annual Rate","Daily Accrual","Monthly Accrual","Caution"])
@@ -379,8 +381,15 @@ def render_treasury_management(db_all, db_exec, record_event, user_email: str, d
             except Exception: active_days=False
             if active_days: active.append(item)
         capital=sum((dec(item["investment"]) for item in active),Decimal(0))
-        pool=st.number_input("Manually confirmed available pool (planning units; single currency)",min_value=0.0,value=0.0,step=1.0,key="cedars_dist_pool")
-        approved=st.checkbox("Explicitly preview under the model approval flag (still never executes a payment)",key="cedars_dist_approved")
+        pool=st.number_input("Manually confirmed available pool for workbook preview (planning units; single currency)",min_value=0.0,value=float(dec(settings.get("distribution_pool","0"))),step=1.0,key="cedars_dist_pool")
+        approved=st.checkbox("Save approval flag for workbook preview only (still never authorizes a payment)",value=settings.get("distribution_approval","Not approved")=="Approved",key="cedars_dist_approved")
+        if st.button("Save workbook preview inputs",key="cedars_dist_save_preview"):
+            save_settings(db_exec,record_event,user_email,{
+                "distribution_pool":str(dec(pool)),
+                "distribution_approval":"Approved" if approved else "Not approved",
+            })
+            st.success("Pool and approval flag saved for the downloadable model preview only.")
+            st.rerun()
         rows=[]
         for item in active:
             inv=dec(item["investment"])

@@ -52,8 +52,10 @@ def test_export_has_all_13_sheets_and_marks_scenarios():
         "investment": "300", "join_date": "2026-10-22", "contract_end": "2029-10-21",
         "status": "Active", "staking_opt_in": 0, "created_at": "", "updated_at": "",
     }]
+    model_settings = DEFAULTS.copy()
+    model_settings.update({"distribution_pool": "30", "distribution_approval": "Approved"})
     workbook_bytes = _wb_bytes(
-        DEFAULTS.copy(), investors, [], [], 
+        model_settings, investors, [], [], 
         {"currency": "USDT", "assets": "0", "customer_balances": "0",
          "pending_rewards": "0", "pending_withdrawals": "0",
          "health": "INPUT REQUIRED", "action": "Enter verified inputs."},
@@ -67,6 +69,11 @@ def test_export_has_all_13_sheets_and_marks_scenarios():
         "12_Stress_Test", "13_Dashboard",
     ]
     assert wb["06_Daily_Distributions"]["H4"].data_type == "f"
+    assert "SUMIF" in wb["06_Daily_Distributions"]["E4"].value
+    assert "'01_Settings'!$B$16*E4" in wb["06_Daily_Distributions"]["G4"].value
+    assert "MIN(F4,G4)" in wb["06_Daily_Distributions"]["H4"].value
+    assert wb["01_Settings"]["A16"].value == "Distribution Pool (Preview Only)"
+    assert str(wb["01_Settings"]["B16"].value) == "30"
     assert wb["12_Stress_Test"]["B17"].value == "=B15-B16"
     assert "not live" in wb["01_Settings"]["A2"].value.lower() or \
            "planning" in wb["01_Settings"]["A2"].value.lower()

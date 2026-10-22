@@ -15,4 +15,4 @@ jobs:
         with:
           python-version: '3.12'
       - name: Compile application modules
-        run: python -m py_compile app.py hh_workspace_widgets.py cedars_treasury_model.py
+        run: python -m py_compile app.py hh_workspace_widgets.py cedars_treasury_model.py hh_real_payments.py hh_table_ui.py

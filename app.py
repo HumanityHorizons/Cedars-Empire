@@ -81,7 +81,7 @@ st.markdown("""
 .ce-section-label { color:#526579 !important; font-size:11px; font-weight:800; letter-spacing:1.4px; margin:18px 0 10px; }
 .ce-stat-card { background:#fff; border:1px solid #D9E0E7; border-top:3px solid #D6A84F; border-radius:12px; padding:10px 14px 5px; min-height:100px; box-shadow:0 4px 14px rgba(10,37,64,.045); }
 .ce-stat-kicker { color:#526579 !important; font-size:10px; font-weight:800; letter-spacing:1px; margin-bottom:6px; }
-.ce-stat-card [data-testid="stMetricValue"] { color:#0A2540 !important; font-size:30px !important; font-weight:800 !important; }
+.ce-stat-value { color:#0A2540 !important; font-size:30px; line-height:1.15; font-weight:800; margin:10px 0 5px; } .ce-stat-foot { color:#738295 !important; font-size:10px; }
 .ce-action-card,.ce-grid-card,.ce-business-metric,.ce-workflow-card,.ce-empty-state { background:#fff; border:1px solid #D9E0E7; border-radius:12px; padding:16px; box-shadow:0 4px 14px rgba(10,37,64,.04); min-height:104px; }
 .ce-action-card { border-top:3px solid #0A2540; margin-bottom:8px; }
 .ce-action-title,.ce-grid-title { color:#0A2540 !important; font-size:14px; font-weight:800; margin-bottom:7px; }
@@ -98,7 +98,7 @@ st.markdown("""
 .ce-grid-number { color:#A86400; font-size:11px; font-weight:900; letter-spacing:1px; margin-bottom:9px; }
 .ce-business-metric { min-height:126px; border-left:4px solid #D6A84F; }
 .ce-business-value { color:#0A2540 !important; font-size:22px; font-weight:800; margin:10px 0 6px; }
-@media(max-width:768px) { .ce-dashboard-hero { padding:22px 18px 16px; border-radius:13px; } .ce-hero-title { font-size:24px; } .ce-stat-card { min-height:84px; padding:9px; } .ce-stat-card [data-testid="stMetricValue"] { font-size:24px !important; } .ce-action-card,.ce-grid-card { padding:12px; } }
+@media(max-width:768px) { .ce-dashboard-hero { padding:22px 18px 16px; border-radius:13px; } .ce-hero-title { font-size:24px; } .ce-stat-card { min-height:84px; padding:9px; } .ce-stat-value { font-size:24px; } .ce-action-card,.ce-grid-card { padding:12px; } }
 [data-testid="stDataFrame"],[data-testid="stTable"],[data-testid="stForm"] { border:1px solid var(--ce-border) !important; border-radius:8px !important; background:var(--ce-card) !important; }
 [data-testid="stForm"] { padding:1rem !important; }
 [data-testid="stTextInput"] input,[data-testid="stNumberInput"] input,[data-testid="stTextArea"] textarea,[data-testid="stDateInput"] input,[data-testid="stTimeInput"] input,[data-baseweb="select"] > div { border-radius:6px !important; border-color:#C7D0DA !important; }
@@ -1701,22 +1701,14 @@ if page == "Dashboard":
     """, unsafe_allow_html=True)
     st.markdown('<div class="ce-section-label">YOUR ACTIVITY</div>', unsafe_allow_html=True)
     col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.markdown('<div class="ce-stat-card"><div class="ce-stat-kicker">TASKS</div>', unsafe_allow_html=True)
-        st.metric("Total tasks", total, label_visibility="collapsed")
-        st.markdown('</div>', unsafe_allow_html=True)
-    with col2:
-        st.markdown('<div class="ce-stat-card"><div class="ce-stat-kicker">IN PROGRESS</div>', unsafe_allow_html=True)
-        st.metric("In progress", in_progress, label_visibility="collapsed")
-        st.markdown('</div>', unsafe_allow_html=True)
-    with col3:
-        st.markdown('<div class="ce-stat-card"><div class="ce-stat-kicker">COMPLETED</div>', unsafe_allow_html=True)
-        st.metric("Completed", completed, label_visibility="collapsed")
-        st.markdown('</div>', unsafe_allow_html=True)
-    with col4:
-        st.markdown('<div class="ce-stat-card"><div class="ce-stat-kicker">OPPORTUNITIES</div>', unsafe_allow_html=True)
-        st.metric("Published opportunities", published, label_visibility="collapsed")
-        st.markdown('</div>', unsafe_allow_html=True)
+    for col, kicker, value in [
+        (col1, "TOTAL TASKS", total),
+        (col2, "IN PROGRESS", in_progress),
+        (col3, "COMPLETED", completed),
+        (col4, "PUBLISHED OPPORTUNITIES", published),
+    ]:
+        with col:
+            st.markdown(f'<div class="ce-stat-card"><div class="ce-stat-kicker">{kicker}</div><div class="ce-stat-value">{value}</div><div class="ce-stat-foot">Updated from workspace records</div></div>', unsafe_allow_html=True)
     st.markdown('<div class="ce-section-label">QUICK ACCESS</div>', unsafe_allow_html=True)
     quick = st.columns(4)
     quick_items = [

@@ -97,6 +97,32 @@ div.stButton > button[kind="primary"],[data-testid="stFormSubmitButton"] button[
 """, unsafe_allow_html=True)
 
 
+st.markdown("""
+<style>
+.ce-fixed-header {
+ position:fixed; top:0; left:0; right:0; z-index:999999;
+ display:flex; align-items:center; gap:18px; min-height:66px;
+ padding:10px 26px; background:#0A2540; color:#fff;
+ border-bottom:3px solid #D6A84F; box-shadow:0 4px 16px rgba(10,37,64,.18);
+ font-family:Arial,Helvetica,sans-serif;
+}
+.ce-brand-mark { width:38px; height:38px; border-radius:10px; display:flex; align-items:center;
+ justify-content:center; background:#D6A84F; color:#0A2540; font-weight:900; font-size:21px; }
+.ce-brand-title { font-size:19px; font-weight:800; letter-spacing:.7px; color:#fff; line-height:1.2; }
+.ce-brand-tagline { font-size:11px; color:#DCE7F2; letter-spacing:1.1px; margin-top:3px; }
+.ce-header-right { margin-left:auto; color:#E8F1F8; font-size:12px; text-align:right; }
+[data-testid="stMainBlockContainer"] { padding-top:1.6rem; }
+.ce-menu-label { font-size:12px; font-weight:800; color:#526579; letter-spacing:.8px; text-transform:uppercase; }
+@media(max-width:700px) {
+ .ce-fixed-header { min-height:58px; padding:8px 12px; }
+ .ce-brand-title { font-size:15px; }
+ .ce-brand-tagline { font-size:9px; letter-spacing:.5px; }
+ .ce-header-right { display:none; }
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 def setting(name: str, default: str = "") -> str:
     """Read from Streamlit secrets first, then environment; never print secret values."""
     try:
@@ -878,7 +904,35 @@ with st.sidebar:
         pages = ngo_user_pages + (ngo_admin_pages if IS_ADMIN else [])
     else:
         pages = business_admin_pages if IS_ADMIN else business_user_pages
-    selected_page = st.radio("Navigate", pages, label_visibility="collapsed")
+    selected_page = pages[0]  # Header navigation below is the single source of page selection.
+# Fixed, consistent CEDARS EMPIRE identity bar on every authenticated page.
+st.markdown("""
+<div class="ce-fixed-header">
+  <div class="ce-brand-mark">C</div>
+  <div>
+    <div class="ce-brand-title">CEDARS EMPIRE</div>
+    <div class="ce-brand-tagline">PEOPLE · PROSPERITY · IMPACT</div>
+  </div>
+  <div class="ce-header-right">SECURE WORKSPACE<br/>REAL DATA · VERIFIED ACTIVITY</div>
+</div>
+""", unsafe_allow_html=True)
+
+# Compact top-level menu replaces the old sidebar-only navigation.
+menu_col, search_col, account_col = st.columns([1.45, 1.2, 0.8], vertical_alignment="bottom")
+with menu_col:
+    st.markdown('<div class="ce-menu-label">Main menu</div>', unsafe_allow_html=True)
+    selected_page = st.selectbox("Navigate CEDARS EMPIRE", pages, index=0, label_visibility="collapsed", key="ce_header_menu")
+with search_col:
+    st.markdown('<div class="ce-menu-label">Quick search</div>', unsafe_allow_html=True)
+    quick_search = st.text_input("Search pages", placeholder="Find a page…", label_visibility="collapsed", key="ce_header_search")
+with account_col:
+    st.markdown('<div class="ce-menu-label">Account</div>', unsafe_allow_html=True)
+    st.markdown("**" + (USER_NAME.split()[0] if USER_NAME.strip() else "Member") + "**")
+
+if quick_search.strip():
+    matches = [p for p in pages if quick_search.strip().lower() in p.lower()]
+    st.caption("Matching pages: " + (" · ".join(matches) if matches else "No matching page names."))
+
     page_routes = {
         "Dashboard": "Business Dashboard",
         "Deposit": "Deposit & Packages",

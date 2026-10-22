@@ -905,33 +905,33 @@ with st.sidebar:
     else:
         pages = business_admin_pages if IS_ADMIN else business_user_pages
     selected_page = pages[0]  # Header navigation below is the single source of page selection.
-# Fixed, consistent CEDARS EMPIRE identity bar on every authenticated page.
-st.markdown("""
-<div class="ce-fixed-header">
-  <div class="ce-brand-mark">C</div>
-  <div>
-    <div class="ce-brand-title">CEDARS EMPIRE</div>
-    <div class="ce-brand-tagline">PEOPLE · PROSPERITY · IMPACT</div>
-  </div>
-  <div class="ce-header-right">SECURE WORKSPACE<br/>REAL DATA · VERIFIED ACTIVITY</div>
-</div>
-""", unsafe_allow_html=True)
+    # Fixed, consistent CEDARS EMPIRE identity bar on every authenticated page.
+    st.markdown("""
+    <div class="ce-fixed-header">
+      <div class="ce-brand-mark">C</div>
+      <div>
+        <div class="ce-brand-title">CEDARS EMPIRE</div>
+        <div class="ce-brand-tagline">PEOPLE · PROSPERITY · IMPACT</div>
+      </div>
+      <div class="ce-header-right">SECURE WORKSPACE<br/>REAL DATA · VERIFIED ACTIVITY</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-# Compact top-level menu replaces the old sidebar-only navigation.
-menu_col, search_col, account_col = st.columns([1.45, 1.2, 0.8], vertical_alignment="bottom")
-with menu_col:
-    st.markdown('<div class="ce-menu-label">Main menu</div>', unsafe_allow_html=True)
-    selected_page = st.selectbox("Navigate CEDARS EMPIRE", pages, index=0, label_visibility="collapsed", key="ce_header_menu")
-with search_col:
-    st.markdown('<div class="ce-menu-label">Quick search</div>', unsafe_allow_html=True)
-    quick_search = st.text_input("Search pages", placeholder="Find a page…", label_visibility="collapsed", key="ce_header_search")
-with account_col:
-    st.markdown('<div class="ce-menu-label">Account</div>', unsafe_allow_html=True)
-    st.markdown("**" + (USER_NAME.split()[0] if USER_NAME.strip() else "Member") + "**")
+    # Compact top-level menu replaces the old sidebar-only navigation.
+    menu_col, search_col, account_col = st.columns([1.45, 1.2, 0.8], vertical_alignment="bottom")
+    with menu_col:
+        st.markdown('<div class="ce-menu-label">Main menu</div>', unsafe_allow_html=True)
+        selected_page = st.selectbox("Navigate CEDARS EMPIRE", pages, index=0, label_visibility="collapsed", key="ce_header_menu")
+    with search_col:
+        st.markdown('<div class="ce-menu-label">Quick search</div>', unsafe_allow_html=True)
+        quick_search = st.text_input("Search pages", placeholder="Find a page…", label_visibility="collapsed", key="ce_header_search")
+    with account_col:
+        st.markdown('<div class="ce-menu-label">Account</div>', unsafe_allow_html=True)
+        st.markdown("**" + (USER_NAME.split()[0] if USER_NAME.strip() else "Member") + "**")
 
-if quick_search.strip():
-    matches = [p for p in pages if quick_search.strip().lower() in p.lower()]
-    st.caption("Matching pages: " + (" · ".join(matches) if matches else "No matching page names."))
+    if quick_search.strip():
+        matches = [p for p in pages if quick_search.strip().lower() in p.lower()]
+        st.caption("Matching pages: " + (" · ".join(matches) if matches else "No matching page names."))
 
     page_routes = {
         "Dashboard": "Business Dashboard",

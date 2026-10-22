@@ -11,8 +11,11 @@ import hashlib
 import secrets
 import sqlite3
 import tempfile
+import smtplib
+import ssl
+from email.message import EmailMessage
 from pathlib import Path
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timezone, timedelta
 from typing import Any
 
 import pandas as pd
@@ -115,10 +118,121 @@ OPENAI_API_KEY = setting("OPENAI_API_KEY", "").strip()
 OPENAI_MODEL = setting("OPENAI_MODEL", "gpt-5-mini").strip() or "gpt-5-mini"
 TRONSCAN_API_KEY = setting("TRONSCAN_API_KEY", "").strip()
 ETHERSCAN_API_KEY = setting("ETHERSCAN_API_KEY", "").strip()
+SMTP_HOST = setting("SMTP_HOST", "").strip()
+SMTP_PORT = int(setting("SMTP_PORT", "587") or "587")
+SMTP_USERNAME = setting("SMTP_USERNAME", setting("SMTP_USER", "")).strip()
+SMTP_PASSWORD = setting("SMTP_PASSWORD", "")
+SMTP_FROM_EMAIL = setting("SMTP_FROM_EMAIL", setting("SMTP_FROM", SMTP_USERNAME)).strip()
+SMTP_USE_TLS = setting("SMTP_USE_TLS", "true").strip().lower() in {"1", "true", "yes", "on"}
 
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def email_delivery_configured() -> bool:
+    return bool(SMTP_HOST and SMTP_FROM_EMAIL and SMTP_PORT > 0)
+
+
+def send_email(to_email: str, subject: str, body: str) -> bool:
+    """Send email only with configured SMTP; never expose credentials or provider errors."""
+    if not email_delivery_configured():
+        return False
+    message = EmailMessage()
+    message["From"] = SMTP_FROM_EMAIL
+    message["To"] = to_email
+    message["Subject"] = subject
+    message.set_content(body)
+    try:
+        context = ssl.create_default_context()
+        if SMTP_PORT == 465:
+            with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=15, context=context) as server:
+                if SMTP_USERNAME:
+                    server.login(SMTP_USERNAME, SMTP_PASSWORD)
+                server.send_message(message)
+        else:
+            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as server:
+                server.ehlo()
+                if SMTP_USE_TLS:
+                    server.starttls(context=context)
+                    server.ehlo()
+                if SMTP_USERNAME:
+                    server.login(SMTP_USERNAME, SMTP_PASSWORD)
+                server.send_message(message)
+        return True
+    except Exception:
+        return False
+
+
+def post_4060_allocation(db_connect_fn, *, source_ref: str, currency: str, gross_amount: str,
+                         deductible_costs: str, evidence_ref: str, approved_by: str,
+                         entered_by: str, notes: str = "") -> dict[str, str]:
+    """Post a balanced, persistent 40/60 accounting allocation. Never sends funds."""
+    from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+    if not source_ref.strip() or not evidence_ref.strip() or not approved_by.strip():
+        raise ValueError("Receipt reference, evidence reference and approver email are required.")
+    cur_code = currency.upper().strip()
+    if cur_code not in {"USD", "UGX", "EUR", "GBP", "USDT", "USDC", "TRX", "BNB"}:
+        raise ValueError("Unsupported currency code.")
+    try:
+        gross = Decimal(gross_amount).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        costs = Decimal(deductible_costs).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    except (InvalidOperation, ValueError, TypeError):
+        raise ValueError("Gross amount and deductible costs must be valid decimal numbers.")
+    if not gross.is_finite() or not costs.is_finite() or gross <= 0 or costs < 0 or costs > gross:
+        raise ValueError("Gross must be positive; costs must be zero or more and cannot exceed gross.")
+    net = gross - costs
+    if net <= 0:
+        raise ValueError("Eligible net revenue must be greater than zero.")
+    contributor = (net * Decimal("0.40")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    sustainability = net - contributor
+    if approved_by.strip().lower() not in ADMIN_EMAILS:
+        raise ValueError("Approver must be an email listed in ADMIN_EMAILS.")
+    if approved_by.strip().lower() == entered_by.strip().lower():
+        raise ValueError("A second configured administrator must approve this allocation.")
+    import uuid as _uuid
+    allocation_id, timestamp = str(_uuid.uuid4()), now_iso()
+    conn, kind = db_connect_fn()
+    cur = conn.cursor()
+    q = (lambda sql: sql.replace("?", "%s")) if kind == "postgres" else (lambda sql: sql)
+    journal = [
+        ("TREASURY_CLEARED", "DEBIT", gross),
+        ("CUSTOMER_REVENUE", "CREDIT", gross),
+    ]
+    if costs:
+        journal.extend([("DIRECT_COST_EXPENSE", "DEBIT", costs), ("TREASURY_CLEARED", "CREDIT", costs)])
+    journal.extend([
+        ("CONTRIBUTOR_POOL_LIABILITY", "CREDIT", contributor),
+        ("SUSTAINABILITY_RESERVE", "CREDIT", sustainability),
+        ("CUSTOMER_REVENUE", "DEBIT", net),
+    ])
+    debits = sum((amount for _,side,amount in journal if side=="DEBIT"), Decimal("0"))
+    credits = sum((amount for _,side,amount in journal if side=="CREDIT"), Decimal("0"))
+    if debits != credits:
+        cur.close()
+        conn.close()
+        raise RuntimeError("Accounting journal is unbalanced; no allocation was posted.")
+    try:
+        cur.execute(q("INSERT INTO revenue_allocations (id,receipt_reference,gross_amount,deductible_costs,eligible_net,currency,user_pool_amount,sustainability_amount,status,evidence_ref,approved_by,entered_by,notes,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)"),
+            (allocation_id,source_ref.strip(),str(gross),str(costs),str(net),cur_code,str(contributor),str(sustainability),
+             "Posted — source evidence declared; external reconciliation still required",evidence_ref.strip(),
+             approved_by.strip().lower(),entered_by.strip().lower(),notes.strip(),timestamp))
+        for account, side, amount in journal:
+            cur.execute(q("INSERT INTO revenue_allocation_journal (id,allocation_id,account_code,side,amount,currency,created_at) VALUES (?,?,?,?,?,?,?)"),
+                (str(_uuid.uuid4()),allocation_id,account,side,str(amount),cur_code,timestamp))
+        conn.commit()
+        return {"allocation_id":allocation_id,"receipt_reference":source_ref.strip(),"currency":cur_code,
+                "gross_amount":str(gross),"deductible_costs":str(costs),"eligible_net":str(net),
+                "contributor_pool_40_percent":str(contributor),"sustainability_60_percent":str(sustainability),
+                "status":"Posted to internal accounting register only"}
+    except Exception as exc:
+        conn.rollback()
+        if "unique" in str(exc).lower() or "duplicate" in str(exc).lower():
+            raise ValueError("That receipt reference has already been allocated; duplicate allocation was blocked.")
+        raise
+    finally:
+        cur.close()
+        conn.close()
 
 
 def run_optional_ai(prompt: str) -> str | None:
@@ -294,6 +408,39 @@ def init_db() -> None:
             event_date TEXT NOT NULL, event_time TEXT NOT NULL, timezone_name TEXT NOT NULL,
             reminder_minutes INTEGER NOT NULL DEFAULT 15, status TEXT NOT NULL DEFAULT 'Scheduled',
             details TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+        )""",
+        """CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            id TEXT PRIMARY KEY, user_email TEXT NOT NULL, token_hash TEXT NOT NULL UNIQUE,
+            expires_at TEXT NOT NULL, used_at TEXT, created_at TEXT NOT NULL
+        )""",
+        """CREATE TABLE IF NOT EXISTS notification_preferences (
+            user_email TEXT PRIMARY KEY, email_security INTEGER NOT NULL DEFAULT 1,
+            email_task_updates INTEGER NOT NULL DEFAULT 1, email_earnings INTEGER NOT NULL DEFAULT 1,
+            email_opportunities INTEGER NOT NULL DEFAULT 0, email_product_updates INTEGER NOT NULL DEFAULT 0,
+            updated_at TEXT NOT NULL
+        )""",
+        """CREATE TABLE IF NOT EXISTS work_activities (
+            id TEXT PRIMARY KEY, title TEXT NOT NULL, category TEXT NOT NULL, description TEXT NOT NULL,
+            eligibility TEXT, instructions TEXT, rate_amount TEXT, currency TEXT NOT NULL,
+            capacity INTEGER NOT NULL DEFAULT 1, status TEXT NOT NULL, created_by TEXT NOT NULL,
+            created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+        )""",
+        """CREATE TABLE IF NOT EXISTS work_submissions (
+            id TEXT PRIMARY KEY, activity_id TEXT NOT NULL, user_email TEXT NOT NULL,
+            submission_text TEXT NOT NULL, status TEXT NOT NULL, reviewer_note TEXT,
+            approved_amount TEXT, currency TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+        )""",
+        """CREATE TABLE IF NOT EXISTS revenue_allocations (
+            id TEXT PRIMARY KEY, receipt_reference TEXT NOT NULL UNIQUE, gross_amount TEXT NOT NULL,
+            deductible_costs TEXT NOT NULL, eligible_net TEXT NOT NULL, currency TEXT NOT NULL,
+            user_pool_amount TEXT NOT NULL, sustainability_amount TEXT NOT NULL, status TEXT NOT NULL,
+            evidence_ref TEXT NOT NULL, approved_by TEXT NOT NULL, entered_by TEXT NOT NULL,
+            notes TEXT, created_at TEXT NOT NULL
+        )""",
+        """CREATE TABLE IF NOT EXISTS revenue_allocation_journal (
+            id TEXT PRIMARY KEY, allocation_id TEXT NOT NULL, account_code TEXT NOT NULL,
+            side TEXT NOT NULL CHECK(side IN ('DEBIT','CREDIT')), amount TEXT NOT NULL,
+            currency TEXT NOT NULL, created_at TEXT NOT NULL
         )""",
     ]
     conn, kind = db_connect()
@@ -531,7 +678,8 @@ def set_login(user: dict[str, Any], login_purpose: str = "") -> None:
 
 
 def signup_page() -> None:
-    signin, signup, public = st.tabs(["Sign in", "Create account", "Public noticeboard"])
+    signin, signup, public, reset_request, reset_finish = st.tabs(
+        ["Sign in", "Create account", "Public noticeboard", "Forgot password", "Set new password"])
     with signin:
         st.subheader("Welcome back")
         st.caption("Each sign-in records your stated B2B/workspace purpose for the session. This is not a payment request.")
@@ -588,6 +736,7 @@ def signup_page() -> None:
                 salt, hashed = pw_hash(password)
                 db_exec("INSERT INTO users (id,email,full_name,password_salt,password_hash,account_type,organization,sector,b2b_purpose,followup_optin,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
                         (str(uuid.uuid4()), email, full_name.strip(), salt, hashed, account_type, organization.strip(), sector, purpose.strip(), int(followup), now_iso()))
+                db_exec("INSERT INTO notification_preferences (user_email,updated_at) VALUES (?,?) ON CONFLICT (user_email) DO NOTHING", (email, now_iso()))
                 user = db_all("SELECT * FROM users WHERE email=?", (email,))[0]
                 # Attribute a referral only when the code matches an existing account.
                 try:
@@ -619,6 +768,75 @@ def signup_page() -> None:
                     if item.get("source_url"): st.caption(f"Source: {item['source_url']}")
 
 
+    with reset_request:
+        st.subheader("Reset account password")
+        st.caption("A single-use reset link expires after 30 minutes. Email delivery must be configured by an administrator.")
+        with st.form("password_reset_request_form"):
+            reset_email = st.text_input("Account email address", key="reset_request_email").strip().lower()
+            send_reset = st.form_submit_button("Send password reset link", type="primary")
+        if send_reset:
+            if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", reset_email):
+                st.error("Enter a valid email address.")
+            elif not email_delivery_configured():
+                st.error("Password reset email is unavailable because secure email delivery is not configured. Contact the administrator.")
+            else:
+                users = db_all("SELECT email,full_name FROM users WHERE email=?", (reset_email,))
+                if users:
+                    token = secrets.token_urlsafe(32)
+                    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+                    created = datetime.now(timezone.utc)
+                    expires = (created + timedelta(minutes=30)).replace(microsecond=0).isoformat()
+                    db_exec("INSERT INTO password_reset_tokens (id,user_email,token_hash,expires_at,used_at,created_at) VALUES (?,?,?,?,?,?)",
+                            (str(uuid.uuid4()), reset_email, token_hash, expires, None, created.replace(microsecond=0).isoformat()))
+                    base_url = setting("PUBLIC_APP_URL", "https://project-x4vqe4f3kfpeugzai2oqed.streamlit.app/").rstrip("/")
+                    reset_url = base_url + "/?reset_token=" + __import__("urllib.parse", fromlist=["quote"]).quote(token)
+                    sent = send_email(reset_email, "Cedars Empire password reset",
+                        "A password reset was requested for your account.\n\n"
+                        + "Use this single-use link within 30 minutes:\n" + reset_url
+                        + "\n\nIf you did not request this reset, ignore this email. No password has been changed.")
+                    if not sent:
+                        db_exec("UPDATE password_reset_tokens SET used_at=? WHERE token_hash=?",
+                                (now_iso(), token_hash))
+                st.success("If the account exists and mail delivery is working, a password reset link has been sent.")
+    with reset_finish:
+        st.subheader("Set a new password")
+        query_token = str(st.query_params.get("reset_token", "")).strip()
+        token_value = st.text_input("Single-use reset token", value=query_token, key="password_reset_token_value")
+        with st.form("password_reset_finish_form"):
+            new_password = st.text_input("New password (at least 10 characters)", type="password")
+            confirm_password = st.text_input("Confirm new password", type="password")
+            finish_reset = st.form_submit_button("Change password", type="primary")
+        if finish_reset:
+            token_hash = hashlib.sha256(token_value.encode("utf-8")).hexdigest() if token_value else ""
+            tokens = db_all("SELECT * FROM password_reset_tokens WHERE token_hash=? AND used_at IS NULL",
+                            (token_hash,)) if token_hash else []
+            valid_token = False
+            if tokens:
+                try:
+                    valid_token = datetime.fromisoformat(tokens[0]["expires_at"]) > datetime.now(timezone.utc)
+                except Exception:
+                    valid_token = False
+            if not valid_token:
+                st.error("This reset link is invalid, expired or already used. Request a new link.")
+            elif len(new_password) < 10:
+                st.error("New password must contain at least 10 characters.")
+            elif new_password != confirm_password:
+                st.error("The passwords do not match.")
+            else:
+                new_salt, new_hash = pw_hash(new_password)
+                db_exec("UPDATE users SET password_salt=?,password_hash=? WHERE email=?",
+                        (new_salt, new_hash, tokens[0]["user_email"]))
+                db_exec("UPDATE password_reset_tokens SET used_at=? WHERE id=?",
+                        (now_iso(), tokens[0]["id"]))
+                send_email(tokens[0]["user_email"], "Your Cedars Empire password was changed",
+                           "Your account password was changed. If this was not you, contact the administrator immediately.")
+                record_event(tokens[0]["user_email"], "password_reset_completed")
+                st.success("Password changed. The reset link cannot be reused.")
+                try:
+                    st.query_params.clear()
+                except Exception:
+                    pass
+
 is_logged_in = bool(st.session_state.get("user_email"))
 if not is_logged_in:
     with st.sidebar:
@@ -636,21 +854,30 @@ with st.sidebar:
     st.markdown(f"**Signed in as:** {USER_NAME}")
     st.caption(USER_EMAIL)
     if IS_ADMIN: st.success("Administrator workspace")
-    # User money-flow navigation; registration/login remain on the authentication screen.
-    user_pages = ["Deposit", "Earn", "Withdraw", "Refer", "Account"]
-    admin_pages = [
-        "Executive Command Center",
-        "Treasury Management",
-        "Real Money Engines",
-        "Grid Marketplace",
-        "Work & Contracts",
-        "Payments & Treasury",
-        "Blockchain & Treasury",
-        "Payment Operations",
-        "Reports & Referrals",
-        "AI Operations",
+    business_user_pages = ["Deposit", "Earn", "Withdraw", "Refer", "Account"]
+    business_admin_pages = [
+        "Executive Command Center", "Treasury Management", "Real Money Engines",
+        "Grid Marketplace", "Work & Contracts", "Payments & Treasury",
+        "Blockchain & Treasury", "Payment Operations", "Reports & Referrals", "AI Operations",
     ]
-    pages = admin_pages if IS_ADMIN else user_pages
+    ngo_user_pages = [
+        "Climate and Career Hub", "My Tasks", "Opportunity Analysis", "Proposal Studio",
+        "Live Studio", "CV / Resume Studio", "SDG Navigator", "Noticeboard",
+        "HH Standards & Impact", "Donor Feedback", "B2B Collaboration", "HR & Volunteers",
+        "Income Activities", "My Work & Wallet", "Revenue & Sustainability",
+        "Privacy and Data", "Calendar & Events",
+    ]
+    ngo_admin_pages = [
+        "Command Center", "HR Department", "Finance Department", "40/60 Allocation Foundation",
+        "Income & Revenue", "Admin Studio", "Admin Noticeboard", "Wallet & Withdrawals",
+        "Branding Settings", "Report Automation", "Admin Console",
+    ]
+    workspace_mode = st.radio("Workspace", ["Real Money Business", "NGO Operations"],
+                              index=0, key="cedars_workspace_mode")
+    if workspace_mode == "NGO Operations":
+        pages = ngo_user_pages + (ngo_admin_pages if IS_ADMIN else [])
+    else:
+        pages = business_admin_pages if IS_ADMIN else business_user_pages
     selected_page = st.radio("Navigate", pages, label_visibility="collapsed")
     page_routes = {
         "Dashboard": "Business Dashboard",
@@ -665,6 +892,12 @@ with st.sidebar:
         "Payment Operations": "Payment Operations",
         "Reports & Referrals": "Business Reports",
         "AI Operations": "AI Business Scenario Lab",
+        "Climate and Career Hub": "Dashboard",
+        "Command Center": "Executive Command Center",
+        "Admin Noticeboard": "Admin Noticeboard",
+        "Wallet & Withdrawals": "Payment Operations",
+        "My Work & Wallet": "My Work & Wallet",
+        "Branding Settings": "Branding Settings",
     }
     if selected_page == "Withdraw" and not IS_ADMIN:
         try:
@@ -1492,6 +1725,59 @@ elif page == "Proposal Studio":
 # -----------------------------------------------------------------------------
 # CV / Resume Studio
 # -----------------------------------------------------------------------------
+elif page == "Live Studio":
+    st.header("Live Studio")
+    st.empty()
+    lt1,lt2,lt3=st.tabs(["Schedule", "Join / attendance", "Session register"])
+    with lt1:
+        with st.form("live_studio_session_form"):
+            a,b=st.columns(2)
+            session_title=a.text_input("Session title",placeholder="Proposal clinic")
+            session_date=b.date_input("Date",value=date.today())
+            c,d=st.columns(2)
+            session_time=c.time_input("Start time")
+            duration=d.selectbox("Duration",[30,45,60,90,120],index=2,format_func=lambda x:f"{x} minutes")
+            meeting_url=st.text_input("Video meeting link",placeholder="https://…")
+            invitees=st.text_input("Invitees (comma-separated emails)",placeholder="name@example.org, team@example.org")
+            agenda=st.text_input("Agenda (optional)")
+            consent=st.checkbox("I will notify participants before recording or sharing transcripts.")
+            save_session=st.form_submit_button("Save session",type="primary",use_container_width=True)
+        if save_session:
+            if not session_title.strip(): st.error("Enter a session title.")
+            elif meeting_url.strip() and not safe_url(meeting_url.strip()): st.error("Meeting link must use http:// or https://.")
+            else:
+                detail=f"Scheduled: {session_date.isoformat()} {session_time.strftime('%H:%M')}; duration={duration}m; invitees={invitees.strip()}; agenda={agenda.strip()}; recording_notice={'confirmed' if consent else 'not confirmed'}; meeting_url={meeting_url.strip()}"
+                sid=str(uuid.uuid5(uuid.NAMESPACE_URL,session_title.strip().lower()+"|"+session_date.isoformat()+"|"+session_time.strftime('%H:%M')+"|"+(meeting_url.strip() or "no-link")))
+                db_exec("INSERT INTO attendance (id,session_id,event_name,user_email,followup_optin,created_at,details) VALUES (?,?,?,?,?,?,?)",(str(uuid.uuid4()),sid,session_title.strip(),USER_EMAIL,0,now_iso(),detail))
+                record_event(USER_EMAIL,"live_studio_session_scheduled",session_title.strip())
+                st.success("Session saved to the register.")
+                if invitees.strip():
+                    import urllib.parse
+                    body = f"You are invited to {session_title.strip()} on {session_date.isoformat()} at {session_time.strftime('%H:%M')}.\nDuration: {duration} minutes\nMeeting: {meeting_url.strip()}\nAgenda: {agenda.strip()}"
+                    mailto="mailto:"+urllib.parse.quote(invitees.strip(),safe="@,;.")+"?subject="+urllib.parse.quote("Invitation: "+session_title.strip())+"&body="+urllib.parse.quote(body)
+                    st.link_button("Open email invitation draft",mailto,use_container_width=True)
+                if meeting_url.strip(): st.link_button("Open meeting",meeting_url.strip(),use_container_width=True)
+                st.rerun()
+    with lt2:
+        with st.form("live_studio_attendance_form"):
+            attendance_title=st.text_input("Session title")
+            attendance_optin=st.checkbox("I agree that my attendance is recorded.",value=True)
+            join_submit=st.form_submit_button("Record my attendance",type="primary",use_container_width=True)
+        if join_submit:
+            if not attendance_title.strip(): st.error("Enter the session title.")
+            elif not attendance_optin: st.warning("Attendance was not recorded.")
+            else:
+                db_exec("INSERT INTO attendance (id,session_id,event_name,user_email,followup_optin,created_at,details) VALUES (?,?,?,?,?,?,?)",(str(uuid.uuid4()),str(uuid.uuid5(uuid.NAMESPACE_URL,attendance_title.strip().lower())),attendance_title.strip(),USER_EMAIL,0,now_iso(),"Attendance recorded by signed-in user"))
+                record_event(USER_EMAIL,"live_studio_attendance_saved",attendance_title.strip()); st.success("Attendance recorded."); st.rerun()
+    with lt3:
+        sessions=db_all("SELECT event_name,user_email,created_at,details FROM attendance WHERE user_email=? ORDER BY created_at DESC",(USER_EMAIL,))
+        if sessions:
+            sdf=pd.DataFrame(sessions).rename(columns={"event_name":"Session","user_email":"Owner","created_at":"Recorded","details":"Details"})
+            render_bank_table(sdf,use_container_width=True,hide_index=True)
+            download_gate("Download register",sdf.to_csv(index=False),"humanity_horizons_live_studio.csv","text/csv","hh_live_register")
+        else: st.info("No records.")
+    st.empty()
+
 elif page == "CV / Resume Studio":
     st.header("CV / Resume Studio — future-skills aware")
     st.write("Build an ATS-readable CV/resume and skills development plan from your own verified experience. This is a structured drafting tool, not a connected AI model or a guarantee of employment.")
@@ -1821,6 +2107,46 @@ elif page == "B2B Collaboration":
 elif page == "Privacy and Data":
     st.header("Privacy, consent and data controls")
     me = db_all("SELECT * FROM users WHERE email=?", (USER_EMAIL,))[0]
+    st.subheader("Change password")
+    with st.form("change_password_form"):
+        current_password = st.text_input("Current password", type="password")
+        new_password = st.text_input("New password (at least 10 characters)", type="password")
+        confirm_new_password = st.text_input("Confirm new password", type="password")
+        change_password_submit = st.form_submit_button("Change password", type="primary")
+    if change_password_submit:
+        if not verify_password(current_password, me["password_salt"], me["password_hash"]):
+            st.error("Current password is incorrect.")
+        elif len(new_password) < 10:
+            st.error("New password must contain at least 10 characters.")
+        elif new_password != confirm_new_password:
+            st.error("New passwords do not match.")
+        elif verify_password(new_password, me["password_salt"], me["password_hash"]):
+            st.error("Choose a password different from your current password.")
+        else:
+            new_salt, new_hash = pw_hash(new_password)
+            db_exec("UPDATE users SET password_salt=?,password_hash=? WHERE email=?", (new_salt, new_hash, USER_EMAIL))
+            record_event(USER_EMAIL, "password_changed")
+            send_email(USER_EMAIL, "Your Cedars Empire password was changed", f"Hello {USER_NAME},\n\nYour Cedars Empire password was changed at {now_iso()}. If you did not make this change, contact platform support immediately.\n\nCedars Empire — People, Planet and Peace")
+            st.success("Password changed successfully. A security email will be sent if email delivery is configured.")
+            st.rerun()
+    st.subheader("Email notifications")
+    st.empty()
+    prefs_rows = db_all("SELECT * FROM notification_preferences WHERE user_email=?", (USER_EMAIL,))
+    prefs = prefs_rows[0] if prefs_rows else {"email_security": 1, "email_task_updates": 1, "email_earnings": 1, "email_opportunities": 0, "email_product_updates": 0}
+    with st.form("email_notification_preferences_form"):
+        pref_security = st.checkbox("Account security alerts (recommended)", value=bool(prefs.get("email_security", 1)))
+        pref_tasks = st.checkbox("Task assignments and review updates", value=bool(prefs.get("email_task_updates", 1)))
+        pref_earnings = st.checkbox("Earnings, rewards, and withdrawal updates", value=bool(prefs.get("email_earnings", 1)))
+        pref_opportunities = st.checkbox("New opportunities and relevant B2B work", value=bool(prefs.get("email_opportunities", 0)))
+        pref_product = st.checkbox("Product news and feature announcements", value=bool(prefs.get("email_product_updates", 0)))
+        save_email_preferences = st.form_submit_button("Save email preferences")
+    if save_email_preferences:
+        db_exec("INSERT INTO notification_preferences (user_email,email_security,email_task_updates,email_earnings,email_opportunities,email_product_updates,updated_at) VALUES (?,?,?,?,?,?,?) ON CONFLICT(user_email) DO UPDATE SET email_security=excluded.email_security,email_task_updates=excluded.email_task_updates,email_earnings=excluded.email_earnings,email_opportunities=excluded.email_opportunities,email_product_updates=excluded.email_product_updates,updated_at=excluded.updated_at", (USER_EMAIL, int(pref_security), int(pref_tasks), int(pref_earnings), int(pref_opportunities), int(pref_product), now_iso()))
+        record_event(USER_EMAIL, "email_notification_preferences_changed")
+        st.success("Email preferences saved.")
+        st.rerun()
+    if not email_delivery_configured():
+        st.info("Email delivery not configured.")
     st.subheader("Your profile")
     st.write(f"**Name:** {me['full_name']}  \n**Account type:** {me['account_type']}  \n**Organization:** {me.get('organization') or 'Not provided'}  \n**Sector:** {me.get('sector') or 'Not provided'}  \n**B2B purpose:** {me.get('b2b_purpose')}")
     desired = st.checkbox("I opt in to follow-up emails and identifiable attendance records", value=bool(me.get("followup_optin", 0)), key="privacy_followup")
@@ -1831,15 +2157,345 @@ elif page == "Privacy and Data":
         st.success("Preference updated.")
     st.subheader("What this prototype stores")
     st.markdown("- Account email, display name, password hash and B2B profile. The original password is not stored.\n- Your tasks and their status changes.\n- Opportunity uploads are processed by the running app; extracted content may remain in your current session, not a private long-term document vault.\n- Action audit events needed to record authenticated uploads/downloads and their declared purposes.\n- Anonymous session counts without IP addresses or device fingerprinting. Identifiable attendance is added only when you opt in.\n- Feedback and B2B requests you submit.\n- Noticeboard listings and their source links.")
-    st.warning("For production, configure a managed database, TLS, secrets management, backups, role-based access, deletion/export workflows, a retention schedule, breach response, email verification, password reset, rate limiting and an approved privacy notice. Have counsel/local data-protection professionals review applicable Ugandan law and any other jurisdictions served.")
-    st.markdown("Review applicable local data-protection, cybersecurity, employment, safeguarding, financial and records-retention laws with qualified advisers in each jurisdiction where Cedars Empire operates.")
+    st.warning("Production hardening is incomplete: configure persistent storage, backups, access controls and recovery procedures.")
+    st.empty()
     my_tasks = db_all("SELECT * FROM tasks WHERE user_email=? ORDER BY created_at", (USER_EMAIL,))
     mydf = pd.DataFrame([{ "Title": t["title"], "Description": t["description"], "Status": t["status"], "Priority": t["priority"], "Due": t["due_date"], "Created": t["created_at"] } for t in my_tasks])
     download_gate("my data export", mydf.to_csv(index=False), "my_humanity_horizons_tasks.csv", "text/csv", "my_data_export")
 
 # -----------------------------------------------------------------------------
-# Administrator console: moderated postings, feedback, attendance, treasury ledger
+# Admin-published noticeboard: direct publishing path for authorized admins
 # -----------------------------------------------------------------------------
+
+elif page == "HR Department" and IS_ADMIN:
+    st.title("Human Resources Department")
+    st.empty()
+    records = db_all("SELECT owner_email,person_name,record_type,role_title,skills,availability,start_date,status,created_at,updated_at FROM volunteer_records ORDER BY updated_at DESC")
+    users = db_all("SELECT email,full_name,account_type,organization,created_at,last_login FROM users ORDER BY created_at DESC")
+    active = sum(1 for r in records if r.get("status") == "Active")
+    a,b,c,d = st.columns(4)
+    a.metric("Registered platform users", len(users)); b.metric("HR / volunteer records", len(records)); c.metric("Active assignments", active)
+    d.metric("Open recruitment / prospective", sum(1 for r in records if r.get("status") == "Prospective"))
+    tab1,tab2,tab3=st.tabs(["Workforce register","Add staff / volunteer","People & development"])
+    with tab1:
+        st.markdown("**Current HR records**")
+        if records:
+            df=pd.DataFrame([{ "Name":r.get("person_name"),"Type":r.get("record_type"),"Role":r.get("role_title"),"Owner account":r.get("owner_email"),"Availability":r.get("availability"),"Start date":r.get("start_date") or "—","Status":r.get("status"),"Updated":r.get("updated_at")} for r in records])
+            render_bank_table(df,use_container_width=True,hide_index=True)
+            download_gate("HR workforce register",df.to_csv(index=False),"hh_hr_workforce_register.csv","text/csv","hh_hr_register")
+        else: st.info("No records.")
+    with tab2:
+        with st.form("admin_hr_record_form"):
+            name=st.text_input("Full name")
+            owner=st.text_input("Owning account email",value=USER_EMAIL)
+            typ=st.selectbox("Record type",["Employee","Volunteer","Consultant","Intern","Mentor"])
+            role=st.text_input("Position / assignment")
+            skills=st.text_area("Skills and experience")
+            availability=st.selectbox("Availability",["Available","Limited","Unavailable","To be confirmed"])
+            start=st.text_input("Start date (YYYY-MM-DD, optional)")
+            status=st.selectbox("Status",["Prospective","Active","On hold","Completed","Archived"])
+            notes=st.text_area("Operational notes (no sensitive case details)")
+            save=st.form_submit_button("Save HR record",type="primary")
+        if save:
+            if not name.strip() or not role.strip() or not owner.strip(): st.error("Name, owning account email and role are required.")
+            elif start.strip() and not re.match(r"^\d{4}-\d{2}-\d{2}$",start.strip()): st.error("Use YYYY-MM-DD for the start date.")
+            else:
+                db_exec("INSERT INTO volunteer_records (id,owner_email,person_name,record_type,role_title,skills,availability,start_date,status,notes,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",(str(uuid.uuid4()),owner.strip().lower(),name.strip(),typ,role.strip(),skills.strip(),availability,start.strip() or None,status,notes.strip(),now_iso(),now_iso()))
+                record_event(USER_EMAIL,"admin_hr_record_created"); st.success("HR record saved."); st.rerun()
+    with tab3:
+        st.markdown("**Platform user directory**")
+        if users: render_bank_table(pd.DataFrame([{ "Name":u.get("full_name"),"Email":u.get("email"),"Account type":u.get("account_type"),"Organization":u.get("organization") or "—","Registered":u.get("created_at"),"Last login":u.get("last_login") or "Not recorded"} for u in users]),use_container_width=True,hide_index=True)
+        st.empty()
+
+elif page == "40/60 Allocation Foundation" and IS_ADMIN:
+    st.title("Cedars Empire — 40/60 Allocation Foundation")
+    st.warning("Model and internal accounting register only. Posting requires evidence, a distinct second configured administrator, and explicit confirmation. Nothing is transferred.")
+    with st.form("hh_4060_post_receipt"):
+        c1,c2,c3=st.columns(3)
+        source_ref=c1.text_input("Unique cleared receipt reference")
+        currency=c2.selectbox("Currency",["USD","UGX","EUR","GBP","USDT","USDC","TRX","BNB"])
+        gross=c3.text_input("Cleared gross amount")
+        c4,c5,c6=st.columns(3)
+        costs=c4.text_input("Deductible costs",value="0.00")
+        evidence=c5.text_input("Evidence reference (statement / invoice / transaction hash)")
+        approver=c6.text_input("Second administrator approver email")
+        notes=st.text_area("Accounting notes")
+        confirmed=st.checkbox("I confirm this receipt and its deductible costs have been independently reconciled.")
+        submit=st.form_submit_button("Post balanced 40/60 allocation",type="primary")
+    if submit:
+        if not confirmed:
+            st.error("Confirm source reconciliation before posting.")
+        else:
+            try:
+                result=post_4060_allocation(db_connect,source_ref=source_ref,currency=currency,gross_amount=gross,
+                    deductible_costs=costs,evidence_ref=evidence,approved_by=approver,entered_by=USER_EMAIL,notes=notes)
+                record_event(USER_EMAIL,"revenue_allocation_posted",source_ref.strip())
+                st.success("Balanced allocation recorded in the persistent internal register; no payment was sent.")
+                st.json(result)
+                st.rerun()
+            except Exception as exc:
+                st.error("Allocation not posted: "+str(exc))
+    records=db_all("SELECT * FROM revenue_allocations ORDER BY created_at DESC")
+    st.subheader("Allocation register")
+    if records:
+        df=pd.DataFrame(records); render_bank_table(df,use_container_width=True,hide_index=True)
+        download_gate("40/60 allocation register",df.to_csv(index=False),"cedars_40_60_allocations.csv","text/csv","cedars_4060")
+    else:
+        st.info("No allocations recorded.")
+    journal=db_all("SELECT allocation_id,account_code,side,amount,currency,created_at FROM revenue_allocation_journal ORDER BY created_at DESC LIMIT 1000")
+    st.subheader("Double-entry journal")
+    if journal: render_bank_table(pd.DataFrame(journal),use_container_width=True,hide_index=True)
+    else: st.info("No journal entries recorded.")
+elif page == "Finance Department" and IS_ADMIN:
+    st.title("Finance Department")
+    ledger=db_all("SELECT entry_type,amount,currency,source,reference,notes,entered_by,created_at FROM treasury_ledger ORDER BY created_at DESC")
+    withdrawals=db_all("SELECT * FROM withdrawal_requests ORDER BY created_at DESC")
+    incomes=[x for x in ledger if str(x.get("entry_type","")).lower() in ("income","receipt","revenue","deposit","grant receipt","subscription receipt")]
+    expenses=[x for x in ledger if str(x.get("entry_type","")).lower() in ("expense","payment","withdrawal","cost","supplier payment","payroll payment")]
+    a,b,c,d=st.columns(4); a.metric("Ledger",len(ledger)); b.metric("Income records",len(incomes)); c.metric("Expense records",len(expenses)); d.metric("Withdrawal requests",len(withdrawals))
+    st.subheader("Sustainability allocation policy — proposed, not yet automated")
+    p1,p2=st.columns(2)
+    p1.metric("Participant pool", "40%", help="Allocated from reconciled net eligible revenue only, not gross unverified receipts.")
+    p2.metric("Sustainability & operations", "60%", help="Retained for hosting, security, support, safeguarding, compliance, maintenance and reserves.")
+    st.empty()
+    tab1,tab2,tab3,tab4=st.tabs(["Ledger", "＋ Record", "Allocations", "Controls"])
+    with tab1:
+        f1,f2,f3=st.columns(3)
+        type_filter=f1.selectbox("Type",["All"]+sorted({str(x.get("entry_type","")) for x in ledger}),key="fin_type_filter")
+        currency_filter=f2.selectbox("Currency",["All"]+sorted({str(x.get("currency","")) for x in ledger}),key="fin_currency_filter")
+        search=f3.text_input("Search source / reference",key="fin_search")
+        shown=[x for x in ledger if (type_filter=="All" or x.get("entry_type")==type_filter) and (currency_filter=="All" or x.get("currency")==currency_filter) and (search.lower() in (str(x.get("source",""))+" "+str(x.get("reference",""))).lower())]
+        if shown:
+            df=pd.DataFrame(shown).rename(columns={"entry_type":"Type","amount":"Amount","currency":"Currency","source":"Source / payee","reference":"Reference","notes":"Notes","entered_by":"Entered by","created_at":"Date"})
+            render_bank_table(df,use_container_width=True,hide_index=True)
+            download_gate("Download CSV",df.to_csv(index=False),"humanity_horizons_finance_ledger.csv","text/csv","hh_finance_ledger")
+        else: st.info("No records.")
+        if withdrawals:
+            st.markdown("**Withdrawal requests**")
+            wd=pd.DataFrame(withdrawals); render_bank_table(wd,use_container_width=True,hide_index=True)
+            download_gate("Download withdrawal requests",wd.to_csv(index=False),"humanity_horizons_withdrawals.csv","text/csv","hh_finance_withdrawals")
+    with tab2:
+        with st.form("finance_ledger_form"):
+            r1,r2,r3=st.columns(3)
+            kind=r1.selectbox("Transaction type",["Income","Expense","Grant receipt","Subscription receipt","Supplier payment","Payroll payment","Refund","Adjustment"])
+            amount=r2.text_input("Amount",placeholder="0.00")
+            currency=r3.selectbox("Currency",["UGX","USD","EUR","GBP","Other"])
+            source=st.text_input("Source / payee / project")
+            r4,r5=st.columns(2)
+            reference=r4.text_input("Receipt / invoice / transaction reference")
+            notes=r5.text_input("Note (optional)")
+            submit=st.form_submit_button("Save record",type="primary",use_container_width=True)
+        if submit:
+            try: valid_amount=float(amount.replace(",",""))
+            except Exception: valid_amount=0
+            if valid_amount<=0 or not source.strip(): st.error("Enter a positive amount and source/payee.")
+            else:
+                db_exec("INSERT INTO treasury_ledger (id,entry_type,amount,currency,source,reference,notes,entered_by,created_at) VALUES (?,?,?,?,?,?,?,?,?)",(str(uuid.uuid4()),kind,f"{valid_amount:.2f}",currency,source.strip(),reference.strip() or None,notes.strip(),USER_EMAIL,now_iso()))
+                record_event(USER_EMAIL,"finance_ledger_record_created"); st.success("Saved. Reconcile against source evidence before marking verified."); st.rerun()
+    with tab3:
+        allocations = db_all("SELECT * FROM revenue_allocations ORDER BY created_at DESC")
+        if allocations:
+            adf = pd.DataFrame(allocations)
+            render_bank_table(adf, use_container_width=True, hide_index=True)
+            download_gate("Download allocation register", adf.to_csv(index=False), "hh_revenue_allocations.csv", "text/csv", "hh_revenue_allocations")
+        else:
+            st.info("No records.")
+        st.warning("Allocation posting is disabled pending reconciled receipts and tested payout controls.")
+    with tab4:
+        checks=["Source evidence attached","Bank/provider statement reconciled","Preparer and approver separated","Budget versus actual reviewed","Grant restrictions checked","Sensitive records access-restricted"]
+        cols=st.columns(2)
+        for i,item in enumerate(checks): cols[i%2].checkbox(item,key="fin_check_"+str(i))
+        st.empty()
+
+elif page == "Income & Revenue" and IS_ADMIN:
+    st.title("Income & Revenue Management")
+    st.empty()
+    ledger=db_all("SELECT entry_type,amount,currency,source,reference,entered_by,created_at FROM treasury_ledger ORDER BY created_at DESC")
+    plans=db_all("SELECT stream_name,category,status,estimated_amount,currency,updated_at FROM revenue_opportunities ORDER BY updated_at DESC")
+    receipts=[r for r in ledger if str(r.get("entry_type","")).lower() in ("income","receipt","revenue","deposit","grant receipt","subscription receipt")]
+    a,b,c=st.columns(3); a.metric("Recorded receipt entries",len(receipts)); b.metric("Revenue streams in planning",len(plans)); c.metric("Potential streams marked active",sum(1 for p in plans if p.get("status")=="Active"))
+    st.subheader("Recorded receipts (not independently bank-verified)")
+    if receipts: render_bank_table(pd.DataFrame(receipts),use_container_width=True,hide_index=True)
+    else: st.info("No records.")
+    st.subheader("Revenue pipeline — estimates are not income")
+    if plans: render_bank_table(pd.DataFrame(plans),use_container_width=True,hide_index=True)
+    else: st.info("No records.")
+    st.empty()
+
+elif page == "Admin Studio" and IS_ADMIN:
+    st.title("Cedars Empire Admin Studio")
+    st.empty()
+    st.empty()
+    ai_ready=bool(OPENAI_API_KEY)
+    checks=[("AI text generation",ai_ready,"API key configured" if ai_ready else "Local structured mode; API key not configured"),("PDF/document processing",True,"PyMuPDF package available"),("Word document support",True,"python-docx package available"),("Email delivery",email_delivery_configured() and bool(SMTP_USERNAME and SMTP_PASSWORD),"SMTP credentials configured" if email_delivery_configured() and SMTP_USERNAME and SMTP_PASSWORD else "SMTP delivery not fully configured"),("Managed database",bool(DATABASE_URL),"DATABASE_URL configured" if DATABASE_URL else "SQLite fallback; hosted persistence may be temporary")]
+    for label,ready,detail in checks:
+        (st.success if ready else st.warning)(f"{'●' if ready else '○'} **{label}** — {detail}")
+    st.subheader("Studio modules")
+    modules=[("Proposal Studio","Proposal drafting and opportunity requirements"),("Opportunity Analysis","Call/TOR review and eligibility"),("CV / Resume Studio","Career documents and skills"),("SDG Navigator","SDG alignment and impact planning"),("Live Studio","Session and attendance hub"),("Report Automation","Reporting schedules and indicator records"),("Noticeboard","Opportunity and announcement management"),("B2B Collaboration","Organization collaboration")]
+    for i in range(0,len(modules),2):
+        x,y=st.columns(2)
+        for col,(name,desc) in zip((x,y),modules[i:i+2]):
+            with col:
+                with st.container(border=True): st.markdown(f"**{name}**"); st.empty()
+    st.empty()
+
+elif page == "Admin Noticeboard" and IS_ADMIN:
+    st.header("Admin Noticeboard Publisher")
+    st.empty()
+    with st.form("admin_direct_publish_form"):
+        title = st.text_input("Opportunity title *")
+        org = st.text_input("Publisher / organization")
+        kind = st.selectbox("Opportunity type", ["Grant", "Job", "Fellowship", "Consultancy", "Tender", "Event", "Partnership", "Learning resource", "Sponsored advert"])
+        country = st.text_input("Country / region")
+        deadline = st.text_input("Deadline (YYYY-MM-DD or text)")
+        link = st.text_input("Application / event link")
+        source_url = st.text_input("Original source URL")
+        description = st.text_area("Description and eligibility *", height=160)
+        publish_now = st.form_submit_button("Publish opportunity", type="primary")
+    if publish_now:
+        if not title.strip() or not description.strip():
+            st.error("Title and description are required.")
+        elif link.strip() and not safe_url(link.strip()):
+            st.error("The application link must be a valid HTTP(S) URL.")
+        elif source_url.strip() and not safe_url(source_url.strip()):
+            st.error("The source URL must be a valid HTTP(S) URL.")
+        else:
+            db_exec("INSERT INTO noticeboard (id,title,organization,opportunity_type,country,deadline,link,description,source_url,status,created_by,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (str(uuid.uuid4()), title.strip(), org.strip(), kind, country.strip(), deadline.strip(), link.strip(), description.strip(), source_url.strip(), "Published", USER_EMAIL, now_iso()))
+            record_event(USER_EMAIL, "admin_noticeboard_published")
+            st.success("Opportunity published to the public noticeboard.")
+            st.rerun()
+    st.subheader("Manage published listings")
+    listings = db_all("SELECT * FROM noticeboard ORDER BY created_at DESC LIMIT 500")
+    for item in listings:
+        with st.container(border=True):
+            st.markdown(f"**{item['title']}** — {item['status']}")
+            st.caption(f"{item.get('organization') or 'Publisher not stated'} · {item['opportunity_type']} · {item.get('deadline') or 'No deadline'}")
+            c1, c2, c3 = st.columns(3)
+            if item['status'] != 'Published' and c1.button("Publish", key=f"admin_pub_{item['id']}"):
+                db_exec("UPDATE noticeboard SET status=? WHERE id=?", ("Published", item['id'])); record_event(USER_EMAIL, "admin_noticeboard_republished"); st.rerun()
+            if item['status'] == 'Published' and c2.button("Unpublish", key=f"admin_unpub_{item['id']}"):
+                db_exec("UPDATE noticeboard SET status=? WHERE id=?", ("Archived", item['id'])); record_event(USER_EMAIL, "admin_noticeboard_unpublished"); st.rerun()
+            if item['status'] != 'Deleted' and c3.button("Archive", key=f"admin_arch_{item['id']}"):
+                db_exec("UPDATE noticeboard SET status=? WHERE id=?", ("Archived", item['id'])); st.rerun()
+
+elif page == "Income Activities":
+    st.header("Income-Generating Activities")
+    st.empty()
+    if IS_ADMIN:
+        with st.expander("Create a work activity", expanded=True):
+            with st.form("create_work_activity"):
+                wtitle = st.text_input("Activity title *")
+                wcat = st.selectbox("Work category", ["AI text evaluation", "Data annotation", "Transcription", "Translation", "Climate / education data", "Research support", "Other"])
+                wdesc = st.text_area("Description *")
+                welig = st.text_area("Eligibility / skills")
+                winstructions = st.text_area("Instructions and quality criteria")
+                wrate = st.text_input("Proposed pay per approved unit (optional)")
+                wcurrency = st.selectbox("Currency", ["UGX", "USD", "EUR"])
+                wcapacity = st.number_input("Number of available slots", min_value=1, max_value=10000, value=1)
+                wstatus = st.selectbox("Activity status", ["Draft", "Open", "Paused", "Closed"])
+                wsave = st.form_submit_button("Save activity", type="primary")
+            if wsave:
+                if not wtitle.strip() or not wdesc.strip(): st.error("Title and description are required.")
+                else:
+                    from decimal import Decimal, InvalidOperation
+                    try:
+                        if wrate.strip() and Decimal(wrate.strip()) < 0: raise ValueError()
+                        db_exec("INSERT INTO work_activities (id,title,category,description,eligibility,instructions,rate_amount,currency,capacity,status,created_by,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                                (str(uuid.uuid4()), wtitle.strip(), wcat, wdesc.strip(), welig.strip(), winstructions.strip(), wrate.strip() or None, wcurrency, int(wcapacity), wstatus, USER_EMAIL, now_iso(), now_iso()))
+                        record_event(USER_EMAIL, "work_activity_created"); st.success("Activity saved."); st.rerun()
+                    except Exception: st.error("Enter a valid non-negative rate, or leave the rate blank.")
+    activities = db_all("SELECT * FROM work_activities ORDER BY created_at DESC")
+    st.subheader("Available activities")
+    for act in activities:
+        if act["status"] not in ("Open", "Paused") and not IS_ADMIN: continue
+        with st.container(border=True):
+            st.markdown(f"**{act['title']}** · {act['category']} · {act['status']}")
+            st.write(act["description"])
+            if act.get("eligibility"): st.caption("Eligibility: " + act["eligibility"])
+            if act.get("instructions"): st.write("**Instructions / quality criteria:** " + act["instructions"])
+            st.caption(f"Proposed rate: {act.get('rate_amount') or 'Not set'} {act.get('currency') or ''}. A rate is not a guarantee of available work or payment.")
+            if act["status"] == "Open":
+                with st.form(f"submit_work_{act['id']}"):
+                    submission = st.text_area("Your work / submission notes", key=f"submission_{act['id']}")
+                    submit_work = st.form_submit_button("Submit for review")
+                if submit_work:
+                    if not submission.strip(): st.error("Add your submission before sending.")
+                    else:
+                        db_exec("INSERT INTO work_submissions (id,activity_id,user_email,submission_text,status,reviewer_note,approved_amount,currency,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                                (str(uuid.uuid4()), act["id"], USER_EMAIL, submission.strip(), "Submitted", None, None, act["currency"], now_iso(), now_iso()))
+                        record_event(USER_EMAIL, "work_submission_created"); st.success("Submission recorded for review."); st.rerun()
+    if IS_ADMIN:
+        st.subheader("Review work submissions")
+        submissions = db_all("SELECT s.*, a.title AS activity_title FROM work_submissions s LEFT JOIN work_activities a ON s.activity_id=a.id ORDER BY s.created_at DESC")
+    else:
+        st.subheader("My submissions")
+        submissions = db_all("SELECT s.*, a.title AS activity_title FROM work_submissions s LEFT JOIN work_activities a ON s.activity_id=a.id WHERE s.user_email=? ORDER BY s.created_at DESC", (USER_EMAIL,))
+    for sub in submissions:
+        with st.container(border=True):
+            st.markdown(f"**{sub.get('activity_title') or 'Activity'}** · {sub['status']}")
+            st.write(sub["submission_text"])
+            if sub.get("reviewer_note"): st.caption("Reviewer note: " + sub["reviewer_note"])
+            if IS_ADMIN and sub["status"] == "Submitted":
+                with st.form(f"review_{sub['id']}"):
+                    decision = st.selectbox("Review decision", ["Approved", "Needs revision", "Rejected"], key=f"decision_{sub['id']}")
+                    approved_amount = st.text_input("Approved amount (optional)", key=f"amount_{sub['id']}")
+                    review_note = st.text_area("Review note", key=f"note_{sub['id']}")
+                    review_submit = st.form_submit_button("Save review")
+                if review_submit:
+                    from decimal import Decimal
+                    try:
+                        if approved_amount.strip() and Decimal(approved_amount.strip()) < 0: raise ValueError()
+                        db_exec("UPDATE work_submissions SET status=?, reviewer_note=?, approved_amount=?, currency=?, updated_at=? WHERE id=?",
+                                (decision, review_note.strip(), approved_amount.strip() or None, sub.get("currency") or "UGX", now_iso(), sub["id"]))
+                        record_event(USER_EMAIL, "work_submission_reviewed"); st.rerun()
+                    except Exception: st.error("Approved amount must be a non-negative number.")
+
+elif page == "My Work & Wallet":
+    st.header("My Work & Wallet")
+    work=db_all("SELECT title,description,status,priority,due_date,created_at,updated_at FROM tasks WHERE user_email=? ORDER BY updated_at DESC",(USER_EMAIL,))
+    submissions=db_all("SELECT activity_id,submission_text,status,reviewer_note,approved_amount,currency,created_at,updated_at FROM work_submissions WHERE user_email=? ORDER BY created_at DESC",(USER_EMAIL,))
+    a,b,c=st.columns(3)
+    a.metric("My tasks",len(work))
+    b.metric("Work submissions",len(submissions))
+    c.metric("Approved records",sum(1 for row in submissions if row.get("status")=="Approved" and row.get("approved_amount")))
+    st.info("An approved work submission is not proof of payment. Confirm actual settlement separately; no earnings or payout is guaranteed.")
+    if work:
+        render_bank_table(pd.DataFrame(work),use_container_width=True,hide_index=True)
+    else: st.info("No tasks recorded.")
+    if submissions:
+        render_bank_table(pd.DataFrame(submissions),use_container_width=True,hide_index=True)
+    else: st.info("No income activities submitted.")
+    render_user_treasury_overview_page(st,USER_EMAIL,db_all,db_exec,bool(DATABASE_URL),now_iso)
+elif page == "Branding Settings" and IS_ADMIN:
+    st.header("Branding Settings")
+    with st.form("brand_logo_form"):
+        logo_file=st.file_uploader("Official Cedars Empire logo (PNG, JPG or WEBP)",type=["png","jpg","jpeg","webp"])
+        save_logo=st.form_submit_button("Save logo",type="primary")
+    if save_logo:
+        if logo_file is None:
+            st.error("Choose a logo file first.")
+        elif len(logo_file.getvalue()) > 4*1024*1024:
+            st.error("Logo must be no larger than 4 MB.")
+        else:
+            try:
+                from PIL import Image
+                Image.open(io.BytesIO(logo_file.getvalue())).verify()
+                encoded=__import__("base64").b64encode(logo_file.getvalue()).decode("ascii")
+                db_exec("INSERT INTO app_settings (setting_key,setting_value,updated_by,updated_at) VALUES (?,?,?,?) ON CONFLICT (setting_key) DO UPDATE SET setting_value=excluded.setting_value,updated_by=excluded.updated_by,updated_at=excluded.updated_at",
+                        ("site_logo",encoded,USER_EMAIL,now_iso()))
+                record_event(USER_EMAIL,"branding_logo_updated")
+                st.success("Logo saved to the persistent app database.")
+                st.rerun()
+            except Exception:
+                st.error("The selected logo is not a valid supported image.")
+    current=db_all("SELECT setting_value,updated_at FROM app_settings WHERE setting_key=?",("site_logo",))
+    if current:
+        st.caption("A custom logo is stored in the database.")
+        try: st.image(io.BytesIO(__import__("base64").b64decode(current[0]["setting_value"])),width=260)
+        except Exception: st.warning("The saved logo could not be previewed.")
+    else:
+        st.info("No custom logo saved.")
 elif page == "Admin Console" and IS_ADMIN:
     st.header("Administrator console")
     st.warning("Restricted administration. Keep ADMIN_EMAILS and any database credentials in Streamlit secrets, never in GitHub code. Restrict admin access to authorized personnel and enable MFA on provider accounts.")

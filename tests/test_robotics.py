@@ -32,6 +32,8 @@ def test_task_requires_evidence_before_submission_and_payment_before_reconcile()
     task.add_evidence_reference("photo", "evidence://test/photo-1")
     task.add_evidence_reference("telemetry", "evidence://test/telemetry-1")
     task.transition(TaskStatus.EVIDENCE_SUBMITTED, "provider")
+    assert "evidence://test/photo-1" in task.evidence_refs
+    assert "evidence://test/telemetry-1" in task.evidence_refs
     task.transition(TaskStatus.ACCEPTED, "reviewer-1")
     with pytest.raises(ValueError, match="transaction hash"):
         task.transition(TaskStatus.PAYMENT_RECONCILED, "finance-admin")
@@ -50,3 +52,12 @@ def test_evidence_only_accepted_during_in_progress():
     task = RobotTask("agriculture_robotics", "Inspect crop", ("image",))
     with pytest.raises(ValueError, match="only be submitted"):
         task.add_evidence_reference("image", "evidence://crop/1")
+
+
+def test_duplicate_evidence_type_is_rejected():
+    task = RobotTask("warehouse_robotics", "Count inventory", ("photo",))
+    task.transition(TaskStatus.ASSIGNED, "dispatcher")
+    task.transition(TaskStatus.IN_PROGRESS, "operator")
+    task.add_evidence_reference("photo", "evidence://inventory/1")
+    with pytest.raises(ValueError, match="Duplicate evidence type"):
+        task.add_evidence_reference("photo", "evidence://inventory/2")

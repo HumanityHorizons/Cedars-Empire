@@ -1159,11 +1159,37 @@ if not IS_ADMIN and page in INTERNAL_ONLY_PAGES:
 
 set_table_scope(page)
 reset_table_counter()
-account_col, signout_col = st.columns([5, 1])
+
+# Consistent application shell: clean branded header, compact account controls,
+# grouped navigation in the sidebar, workspace content, and a simple footer.
+with st.container(key="ce_locked_header"):
+    header_left, header_right = st.columns([4, 2], vertical_alignment="center")
+    with header_left:
+        brand_cols = st.columns([1, 8], vertical_alignment="center")
+        with brand_cols[0]:
+            if LOGO.exists():
+                try:
+                    st.image(str(LOGO), width=42)
+                except Exception:
+                    st.markdown('<div class="ce-brand-mark">CE</div>', unsafe_allow_html=True)
+            else:
+                st.markdown('<div class="ce-brand-mark">CE</div>', unsafe_allow_html=True)
+        with brand_cols[1]:
+            st.markdown('<div class="ce-brand-title">CEDARS EMPIRE</div>', unsafe_allow_html=True)
+            st.caption("Business workspace")
+    with header_right:
+        st.markdown(
+            '<div class="ce-header-right">GLOBAL OPERATIONS · VERIFIED RECORDS · CONTROLLED PAYMENTS</div>',
+            unsafe_allow_html=True,
+        )
+
+account_col, status_col, signout_col = st.columns([4, 2, 1], vertical_alignment="center")
 with account_col:
-    st.caption(f"Signed in as {USER_NAME} · {USER_EMAIL}" + (" · Administrator" if IS_ADMIN else ""))
+    st.caption(f"{USER_NAME} · {USER_EMAIL}" + (" · Administrator" if IS_ADMIN else ""))
+with status_col:
+    st.caption("AI connected" if OPENAI_API_KEY else "AI mode: local structured")
 with signout_col:
-    if st.button("Sign out", key="ce_sign_out"):
+    if st.button("Sign out", key="ce_sign_out", use_container_width=True):
         record_event(USER_EMAIL, "sign_out")
         try:
             token = AUTH_COOKIE_MANAGER.get(AUTH_COOKIE_NAME)
@@ -1177,7 +1203,6 @@ with signout_col:
             st.session_state.pop(key, None)
         st.rerun()
 st.divider()
-st.caption("AI: connected" if OPENAI_API_KEY else "AI: local structured mode (API key not configured)")
 
 # Cedars Empire: real-business scenario workspace.
 # Legacy non-business handlers are not exposed by the business-only navigation.
@@ -3231,4 +3256,11 @@ else:
     st.error("This administrator page is not available for the current account.")
 
 st.divider()
+footer_left, footer_center, footer_right = st.columns([2, 3, 2], vertical_alignment="center")
+with footer_left:
+    st.markdown("**CEDARS EMPIRE**")
+with footer_center:
+    st.caption("Global business workspace · Evidence-led records · Secure account access")
+with footer_right:
+    st.caption("© " + str(datetime.now(timezone.utc).year) + " CEDARS EMPIRE")
 

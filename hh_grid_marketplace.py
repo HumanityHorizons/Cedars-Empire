@@ -117,7 +117,6 @@ GRID_CATALOG = [
         "proof": "Dataset/task ID, quality checks, reviewer approval and permitted data provenance",
         "equipment": "Authorized camera/sensor feed, dataset access and quality-review workflow",
     },
-]
 
 
     {

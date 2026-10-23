@@ -294,6 +294,8 @@ GRID_CATALOG = [
         "equipment": "Verified energy provider, compatible inverter/meter APIs and qualified installers",
     },
 
+]
+
 GRID_STATUSES = [
     "Discovery only",
     "Provider verification required",

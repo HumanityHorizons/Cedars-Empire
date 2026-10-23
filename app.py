@@ -1472,12 +1472,18 @@ if page in BUSINESS_PAGES:
             with col:
                 st.markdown(f'<div class="ce-grid-card"><div class="ce-grid-number">{item[0]}</div><div class="ce-grid-title">{item[1]}</div><div class="ce-grid-copy">{item[2]}</div></div>', unsafe_allow_html=True)
                 if st.button("Open grid", key="ce_business_grid_" + item[3], use_container_width=True):
-                    if item[3] in pages:
-                        st.session_state["ce_selected_page"] = item[3]
-                        st.session_state["ce_sub_menu"] = item[3]
+                    target_page = item[3]
+                    target_group = next(
+                        (group_name for group_name, group_pages in menu_groups.items()
+                         if target_page in group_pages),
+                        None,
+                    )
+                    if target_group is not None:
+                        st.session_state["ce_top_menu"] = target_group
+                        st.session_state["ce_sub_menu"] = target_page
                         st.rerun()
                     else:
-                        st.info("This grid is available through the Real Money Business navigation.")
+                        st.info("This grid is not currently available in your navigation.")
 
     elif page == "AI Business Scenario Lab":
         st.header("AI Business Scenario Lab")

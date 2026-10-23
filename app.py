@@ -1044,7 +1044,7 @@ BUSINESS_PAGES = {
     "AI Training & Data Operations", "World Grid Marketplace", "Client Services & Contracts",
     "Business Opportunity Pipeline", "Blockchain & Treasury", "Deposit QR & TIGERS",
     "Withdrawals & Full KYC", "Staking & Compounding", "Referral Program",
-    "Business Reports", "Executive Command Center", "Treasury Management", "Grid Marketplace", "Work & Contracts",
+    "Business Reports", "Live Studio", "Customer & Client Management", "Calendar & Events", "Executive Command Center", "Treasury Management", "Grid Marketplace", "Work & Contracts",
     "Payments & Treasury", "Deposits & Withdrawals", "Payment Operations", "Deposit & Packages", "Withdraw / Cash Out", "Reports & Referrals", "AI Operations"
 }
 if page in BUSINESS_PAGES:
@@ -2778,7 +2778,7 @@ elif page == "Customer & Client Management":
     if save_customer:
         if not customer_name.strip():
             st.error("Customer / contact name is required.")
-        elif customer_email.strip() and not re.match(r"^[^@\s]+@[^@\s]+\\.[^@\s]+$", customer_email.strip()):
+        elif customer_email.strip() and not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", customer_email.strip()):
             st.error("Enter a valid email address or leave it blank.")
         elif next_follow_up.strip() and not re.match(r"^\d{4}-\d{2}-\d{2}$", next_follow_up.strip()):
             st.error("Use YYYY-MM-DD for the follow-up date.")

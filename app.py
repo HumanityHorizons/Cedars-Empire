@@ -920,7 +920,7 @@ USER_EMAIL = st.session_state.user_email
 USER_NAME = st.session_state.full_name
 IS_ADMIN = USER_EMAIL.lower() in ADMIN_EMAILS
 
-# Cedars Empire business workspace: NGO-only navigation is retired from the user interface.
+# CEDARS EMPIRE is a business-only platform. NGO workspace is permanently retired.
 business_user_pages = [
     "Dashboard", "Studio", "Customer & Client Management", "Calendar & Events",
     "Work & Contracts", "Business Reports", "Grid Marketplace", "Deposit", "Withdraw", "Refer", "Account",

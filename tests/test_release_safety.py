@@ -24,7 +24,7 @@ class ReleaseSafetyTests(unittest.TestCase):
         app = self.read("app.py")
         self.assertIn("Durable storage is not configured", app)
         self.assertIn("Local SQLite fallback is disabled in production", app)
-        self.assertIn("No local fallback was opened", app)
+        self.assertIn("fallback was opened, so existing production data was not replaced.", app)
 
     def test_payment_module_documents_no_private_key_custody(self):
         payments = self.read("hh_real_payments.py")

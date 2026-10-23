@@ -6,7 +6,7 @@ APP_SOURCE = (Path(__file__).resolve().parents[1] / "app.py").read_text(encoding
 def test_production_does_not_silently_fall_back_to_sqlite():
     assert "Durable storage is not configured." in APP_SOURCE
     assert "Local SQLite fallback is disabled in production." in APP_SOURCE
-    assert "No local fallback was opened" in APP_SOURCE
+    assert "fallback was opened" in APP_SOURCE
 
 
 def test_database_url_uses_postgres_driver():

@@ -338,9 +338,14 @@ class PaymentModuleTests(unittest.TestCase):
         ):
             self.assertIn(route, source)
         self.assertNotIn('elif page == "Packages":', source)
-        # Navigation is now grouped into compact business menus; test the new contract
-        # instead of depending on the retired flat user_pages list.
-        self.assertIn('"Earnings": ["Earnings & Wallet", "Deposit", "Withdraw", "Refer"]', source)
+        # Development navigation contract: grouped right-side menus contain the
+        # expected earning, grid, and admin pages; no dependency on the retired menu.
+        self.assertIn('"Earnings & Payments": [', source)
+        self.assertIn('"Earnings & Wallet"', source)
+        self.assertIn('"Grid Marketplace": [', source)
+        self.assertIn('"Executive Command Center"', source)
+        self.assertIn('with st.sidebar:', source)
+        self.assertIn('st.session_state["ce_selected_page"] = page_name', source)
         self.assertIn('"Customer & Client Management"', source)
         self.assertIn('"Studio": "Live Studio"', source)
         self.assertIn('"Deposit": "Deposit & Packages"', source)

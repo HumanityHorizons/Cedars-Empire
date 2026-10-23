@@ -852,20 +852,17 @@ def signup_page() -> None:
         ["Sign in", "Create account", "Public noticeboard", "Forgot password", "Set new password"])
     with signin:
         st.subheader("Welcome back")
-        st.caption("Each sign-in records your stated B2B/workspace purpose for the session. This is not a payment request.")
+        st.caption("Sign in with the email and password used when you created your account.")
         with st.form("signin_form"):
             email = st.text_input("Email address", key="signin_email").strip().lower()
             password = st.text_input("Password", type="password", key="signin_password")
-            signin_purpose = st.text_input("B2B / business purpose for this session", placeholder="e.g. review a climate grant and plan proposal activities")
-            confirm_profile = st.checkbox("I confirm my B2B purpose is accurate and I have read the privacy notice.")
+            signin_purpose = st.text_input("Session purpose (optional)", placeholder="Optional")
             submit = st.form_submit_button("Sign in", type="primary")
         if submit:
-            if len(signin_purpose.strip()) < 8:
-                st.error("Enter your B2B / business purpose for this session (at least 8 characters).")
-            elif not confirm_profile:
-                st.error("Please confirm your B2B profile and privacy notice to continue.")
-            elif not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+            if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
                 st.error("Enter a valid email address.")
+            elif not password:
+                st.error("Enter your password.")
             else:
                 users = db_all("SELECT * FROM users WHERE email=?", (email,))
                 if not users or not verify_password(password, users[0]["password_salt"], users[0]["password_hash"]):

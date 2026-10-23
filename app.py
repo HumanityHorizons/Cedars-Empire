@@ -1075,7 +1075,7 @@ business_menu = {
         "QuantumLeap + Energy", "Cleaning Grid", "Shelter & Accommodation Grid",
         "Energy & Utilities Grid", "AI Training & Data Operations",
     ],
-    "Payments & Wallet": [
+    "Earnings & Payments": [
         "Earnings & Wallet", "Deposit", "Deposit & Packages", "Deposit QR & TIGERS",
         "Withdraw", "Withdrawals & Full KYC", "Withdraw / Cash Out", "Deposits & Withdrawals",
         "Staking & Compounding", "Referral Program", "Refer", "Payments & Treasury",

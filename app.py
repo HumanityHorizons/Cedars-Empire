@@ -28,6 +28,7 @@ from hh_real_payments import (
     render_payment_ops_page, render_user_treasury_overview_page,
 )
 from hh_table_ui import render_bank_table, reset_table_counter, set_table_scope
+from daily_crediting import initialize as initialize_daily_crediting, process_daily_credits
 
 # -----------------------------------------------------------------------------
 # CEDARS EMPIRE — functional MVP / deployment-safe prototype
@@ -526,6 +527,7 @@ def init_db() -> None:
 
 try:
     init_db()
+    initialize_daily_crediting(db_connect)
 except Exception as e:
     st.error("The workspace database could not initialize. If you configured DATABASE_URL, verify the database URL and network access in Streamlit secrets. For a durable production deployment, use a managed PostgreSQL database.")
     st.code(str(e))
@@ -923,11 +925,11 @@ IS_ADMIN = USER_EMAIL.lower() in ADMIN_EMAILS
 # CEDARS EMPIRE is a business-only platform. NGO workspace is permanently retired.
 business_user_pages = [
     "Dashboard", "Studio", "Customer & Client Management", "Calendar & Events",
-    "Work & Contracts", "Business Reports", "Grid Marketplace", "Deposit", "Withdraw", "Refer", "Account",
+    "Work & Contracts", "Business Reports", "Earnings & Wallet", "Grid Marketplace", "Deposit", "Withdraw", "Refer", "Account",
 ]
 business_admin_pages = [
     "Dashboard", "Studio", "Customer & Client Management", "Calendar & Events",
-    "Work & Contracts", "Business Reports", "Executive Command Center", "Treasury Management",
+    "Work & Contracts", "Business Reports", "Daily Crediting", "Earnings & Wallet", "Executive Command Center", "Treasury Management",
     "Real Money Engines", "Grid Marketplace", "Payments & Treasury", "Blockchain & Treasury",
     "Payment Operations", "Reports & Referrals", "AI Operations", "Deposit", "Withdraw", "Refer", "Account",
 ]
@@ -969,6 +971,7 @@ with st.container(key="ce_locked_header"):
 
 page_routes = {
     "Dashboard": "Business Dashboard",
+    "Earnings & Wallet": "Earnings & Wallet",
     "Studio": "Live Studio",
     "Customer & Client Management": "Customer & Client Management",
     "Deposit": "Deposit & Packages",
@@ -1416,6 +1419,107 @@ if page in BUSINESS_PAGES:
         if chain_reviews:
             st.subheader("Recorded chain reviews — internal records")
             render_bank_table(pd.DataFrame(chain_reviews), use_container_width=True, hide_index=True)
+    elif page == "Daily Crediting" and IS_ADMIN:
+        st.header("Daily Crediting")
+        st.caption("Evidence-backed activity rewards only. Investment returns and projected Grid profits are not automatically payable.")
+        with st.form("ce_earning_rule_form"):
+            rule_name = st.text_input("Rule name")
+            activity_type = st.selectbox("Qualifying activity", ["referral_sale", "completed_task", "verified_purchase", "loyalty_reward", "performance_bonus"])
+            rate = st.number_input("Credit rate per unit of qualifying volume", min_value=0.0, max_value=1.0, value=0.10, step=0.01, format="%.4f")
+            reward_type = st.selectbox("Credit type", ["REFERRAL_COMMISSION", "TASK_REWARD", "LOYALTY_REWARD", "PERFORMANCE_BONUS"])
+            rule_enabled = st.checkbox("Enable rule for eligible activities", value=False)
+            funding_required = st.checkbox("Require verified funding (recommended)", value=True)
+            save_rule = st.form_submit_button("Save rule")
+        if save_rule:
+            if not rule_name.strip():
+                st.error("Enter a rule name.")
+            else:
+                conn, kind = db_connect()
+                try:
+                    cur = conn.cursor()
+                    qmark = "%s" if kind == "postgres" else "?"
+                    cur.execute("INSERT INTO earning_rules (id,rule_name,activity_type,rate,reward_type,enabled,requires_verified_funding,created_at) VALUES (" + ",".join([qmark]*8) + ") ON CONFLICT(rule_name) DO UPDATE SET rate=excluded.rate,reward_type=excluded.reward_type,enabled=excluded.enabled,requires_verified_funding=excluded.requires_verified_funding",
+                                (str(uuid.uuid4()), rule_name.strip(), activity_type, str(rate), reward_type, int(rule_enabled), int(funding_required), now_iso()))
+                    conn.commit()
+                    st.success("Rule saved.")
+                    st.rerun()
+                finally:
+                    conn.close()
+        rules = db_all("SELECT rule_name,activity_type,rate,reward_type,enabled,requires_verified_funding FROM earning_rules ORDER BY rule_name")
+        st.subheader("Earning rules")
+        if rules:
+            render_bank_table(pd.DataFrame(rules), use_container_width=True, hide_index=True)
+        with st.form("ce_activity_review_form"):
+            pending = db_all("SELECT id,user_email,activity_type,qualifying_volume,currency,evidence_ref,status,funding_verified,risk_score FROM earning_activities WHERE status='PENDING' ORDER BY created_at DESC LIMIT 500")
+            pending_ids = [r["id"] for r in pending]
+            chosen = st.selectbox("Activity to review", pending_ids, format_func=lambda value: next((f'{r["user_email"]} · {r["activity_type"]} · {r["qualifying_volume"]} {r["currency"]}' for r in pending if r["id"] == value), value), disabled=not pending_ids)
+            review_funding = st.checkbox("Funding independently verified", value=False)
+            review_evidence = st.text_input("Evidence reference / explorer URL")
+            review_action = st.selectbox("Decision", ["APPROVED", "REJECTED", "HOLD_FOR_REVIEW"])
+            review_submit = st.form_submit_button("Save review", disabled=not pending_ids)
+        if review_submit and pending_ids:
+            db_exec("UPDATE earning_activities SET status=?,funding_verified=?,evidence_ref=?,reviewed_by=?,reviewed_at=? WHERE id=?",
+                    (review_action, int(review_funding), review_evidence.strip() or None, USER_EMAIL, now_iso(), chosen))
+            db_exec("INSERT INTO audit_logs (id,user_email,action,details,created_at) VALUES (?,?,?,?,?)",
+                    (str(uuid.uuid4()), USER_EMAIL, "earning_activity_reviewed", json.dumps({"activity_id": chosen, "decision": review_action, "funding_verified": review_funding}), now_iso()))
+            st.success("Review recorded.")
+            st.rerun()
+        st.subheader("Daily processing")
+        st.write("Timezone: Pacific/Auckland (IANA timezone; daylight-saving transitions handled). The processing function is idempotent by business date and activity reference.")
+        if st.button("Run daily credit batch", type="primary"):
+            try:
+                result = process_daily_credits(db_connect, "Pacific/Auckland")
+                st.success(f'Batch status: {result["status"]} · Date: {result["date"]} · Credits: {result["count"]} · Total: {result["amount"]}')
+            except Exception as exc:
+                st.error("Daily batch failed safely. No partial activity credit should be considered complete.")
+                st.caption(type(exc).__name__)
+        recent_runs = db_all("SELECT processing_date,status,started_at,completed_at,processed_count,total_amount FROM daily_credit_runs ORDER BY processing_date DESC LIMIT 90")
+        if recent_runs:
+            render_bank_table(pd.DataFrame(recent_runs), use_container_width=True, hide_index=True)
+        st.subheader("Recent credit transactions")
+        tx = db_all("SELECT user_email,transaction_type,amount,currency,reference,status,created_at FROM transactions ORDER BY created_at DESC LIMIT 500")
+        if tx:
+            render_bank_table(pd.DataFrame(tx), use_container_width=True, hide_index=True)
+        st.info("Automatic midnight execution requires a separately configured durable scheduler. This page's button is a controlled manual run; no scheduler is claimed as active.")
+    elif page == "Earnings & Wallet":
+        st.header("Earnings & Wallet")
+        wallet_rows = db_all("SELECT available_balance,lifetime_earnings,updated_at FROM wallets WHERE user_email=?", (USER_EMAIL,))
+        wallet = wallet_rows[0] if wallet_rows else {"available_balance": "0.00", "lifetime_earnings": "0.00", "updated_at": "—"}
+        earned_today = db_all("SELECT COALESCE(SUM(CAST(amount AS NUMERIC)),0) AS total FROM transactions WHERE user_email=? AND status='COMPLETED' AND created_at LIKE ?",
+                              (USER_EMAIL, datetime.now(timezone.utc).date().isoformat() + "%"))
+        pending_count = db_all("SELECT COUNT(*) AS n FROM earning_activities WHERE user_email=? AND status IN ('PENDING','HOLD_FOR_REVIEW')", (USER_EMAIL,))
+        cols = st.columns(4)
+        cols[0].metric("Available credited balance", str(wallet.get("available_balance", "0.00")))
+        cols[1].metric("Lifetime credited earnings", str(wallet.get("lifetime_earnings", "0.00")))
+        cols[2].metric("Today's credits (UTC record date)", str(earned_today[0].get("total", "0.00") if earned_today else "0.00"))
+        cols[3].metric("Pending activities", str(pending_count[0].get("n", 0) if pending_count else 0))
+        st.caption("Balances show ledger-backed platform credits, not guaranteed profits or an on-chain wallet balance.")
+        with st.form("ce_submit_earning_activity"):
+            activity_type = st.selectbox("Activity type", ["referral_sale", "completed_task", "verified_purchase", "loyalty_reward", "performance_bonus"])
+            volume = st.number_input("Qualifying volume (must be evidence-backed)", min_value=0.01, value=1.00, step=1.00)
+            currency = st.selectbox("Currency", ["USDT"])
+            evidence_ref = st.text_input("Evidence reference / transaction ID")
+            submit_activity = st.form_submit_button("Submit activity for review")
+        if submit_activity:
+            if not evidence_ref.strip():
+                st.error("An evidence reference is required; the activity will not be auto-approved.")
+            else:
+                db_exec("INSERT INTO earning_activities (id,user_email,activity_type,qualifying_volume,currency,evidence_ref,status,funding_verified,risk_score,activity_at,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                        (str(uuid.uuid4()), USER_EMAIL, activity_type, str(volume), currency, evidence_ref.strip(), "PENDING", 0, 0, now_iso(), now_iso()))
+                db_exec("INSERT INTO audit_logs (id,user_email,action,details,created_at) VALUES (?,?,?,?,?)",
+                        (str(uuid.uuid4()), USER_EMAIL, "earning_activity_submitted", json.dumps({"activity_type": activity_type, "evidence_ref": evidence_ref.strip()}), now_iso()))
+                st.success("Submitted for admin review; no balance has been credited.")
+                st.rerun()
+        st.subheader("Transaction history")
+        history = db_all("SELECT transaction_type,amount,currency,reference,status,created_at FROM transactions WHERE user_email=? ORDER BY created_at DESC LIMIT 500", (USER_EMAIL,))
+        if history:
+            render_bank_table(pd.DataFrame(history), use_container_width=True, hide_index=True)
+        else:
+            st.info("No credits recorded.")
+        ledger = db_all("SELECT entry_type,amount,currency,created_at FROM ledger_entries WHERE user_email=? ORDER BY created_at DESC LIMIT 500", (USER_EMAIL,))
+        if ledger:
+            st.subheader("Ledger")
+            render_bank_table(pd.DataFrame(ledger), use_container_width=True, hide_index=True)
     elif page == "Business Reports":
         st.header("Business Reports")
         st.write("Operational reports distinguish evidence-reviewed records from pending items, estimates and user-entered claims.")

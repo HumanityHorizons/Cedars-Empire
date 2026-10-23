@@ -872,7 +872,9 @@ def signup_page() -> None:
                 else:
                     set_login(users[0], signin_purpose.strip())
                     st.success("Signed in. Loading your workspace…")
-                    st.rerun()
+                    # Continue this run so the CookieManager component can commit
+                    # the browser cookie; an immediate st.rerun() can race the
+                    # component response. Auth state is already set in session_state.
     with signup:
         st.subheader("Create your Cedars Empire account")
         st.write("A short B2B / purpose profile helps tailor tools and understand legitimate organizational use. It is not an advertising consent and does not authorize data resale.")
@@ -920,7 +922,9 @@ def signup_page() -> None:
                 set_login(user, purpose.strip())
                 record_event(email, "account_created", purpose.strip())
                 st.success("Account created. Your workspace is ready.")
-                st.rerun()
+                # Continue this run so the CookieManager component can commit
+                # the browser cookie; an immediate st.rerun() can race the
+                # component response. Auth state is already set in session_state.
     with public:
         st.subheader("Public opportunity noticeboard")
         st.caption("Only moderated, published listings are displayed. Verify any opportunity on its original source before sharing documents or paying fees.")
@@ -957,7 +961,7 @@ def signup_page() -> None:
                     expires = (created + timedelta(minutes=30)).replace(microsecond=0).isoformat()
                     db_exec("INSERT INTO password_reset_tokens (id,user_email,token_hash,expires_at,used_at,created_at) VALUES (?,?,?,?,?,?)",
                             (str(uuid.uuid4()), reset_email, token_hash, expires, None, created.replace(microsecond=0).isoformat()))
-                    base_url = setting("PUBLIC_APP_URL", "https://project-x4vqe4f3kfpeugzai2oqed.streamlit.app/").rstrip("/")
+                    base_url = setting("PUBLIC_APP_URL", "https://cedars-empire-hakhqcqgknkaxi9bdjwl5w.streamlit.app/").rstrip("/")
                     reset_url = base_url + "/?reset_token=" + __import__("urllib.parse", fromlist=["quote"]).quote(token)
                     sent = send_email(reset_email, "Cedars Empire password reset",
                         "A password reset was requested for your account.\n\n"
@@ -1368,7 +1372,7 @@ if page in BUSINESS_PAGES:
         st.header("Referral Program")
         st.write("Share a referral link. Attribution is not a reward entitlement; any reward requires published terms, anti-fraud checks, a verified qualifying event and an approved payout process.")
         referral_code = hashlib.sha256(USER_EMAIL.lower().encode("utf-8")).hexdigest()[:12].upper()
-        base_url = setting("PUBLIC_APP_URL", "https://project-x4vqe4f3kfpeugzai2oqed.streamlit.app/").rstrip("/")
+        base_url = setting("PUBLIC_APP_URL", "https://cedars-empire-hakhqcqgknkaxi9bdjwl5w.streamlit.app/").rstrip("/")
         referral_url = base_url + "/?ref=" + referral_code
         st.text_input("Your referral link", value=referral_url, disabled=True)
         st.caption("Configure PUBLIC_APP_URL if the production URL changes. Referral rewards are not enabled unless written terms and verification are approved.")

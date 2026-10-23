@@ -750,6 +750,25 @@ def set_login(user: dict[str, Any], login_purpose: str = "") -> None:
 
 
 def signup_page() -> None:
+    st.markdown("""
+    <div class="ce-dashboard-hero ce-business-hero">
+      <div class="ce-eyebrow">GLOBAL BUSINESS PLATFORM</div>
+      <div class="ce-hero-title">CEDARS EMPIRE</div>
+      <div class="ce-hero-subtitle">Business operations, customer services, contracts, Grid marketplace and evidence-led financial controls.</div>
+      <div class="ce-hero-strip"><span>ONE WORKSPACE</span><span>VERIFIABLE RECORDS</span><span>CONTROLLED PAYMENTS</span></div>
+    </div>
+    """, unsafe_allow_html=True)
+    st.markdown("### Business workspace")
+    landing_cols = st.columns(3)
+    landing_items = [
+        ("Business operations", "Customer records, calendar, tasks, contracts and reports."),
+        ("Grid marketplace", "Explore service categories and submit evidence-backed activity."),
+        ("Earnings & controls", "Review recorded credits and transaction history; finance controls are role-restricted."),
+    ]
+    for col, (heading, detail) in zip(landing_cols, landing_items):
+        with col:
+            st.markdown(f'<div class="ce-business-metric"><div class="ce-stat-kicker">{heading.upper()}</div><div class="ce-business-detail">{detail}</div></div>', unsafe_allow_html=True)
+    st.caption("Only verified receipts and approved records can be reported as actual financial results. Displayed scenarios are not guaranteed returns.")
     signin, signup, public, reset_request, reset_finish = st.tabs(
         ["Sign in", "Create account", "Public noticeboard", "Forgot password", "Set new password"])
     with signin:
@@ -923,17 +942,21 @@ USER_NAME = st.session_state.full_name
 IS_ADMIN = USER_EMAIL.lower() in ADMIN_EMAILS
 
 # CEDARS EMPIRE is a business-only platform. NGO workspace is permanently retired.
-business_user_pages = [
-    "Dashboard", "Studio", "Customer & Client Management", "Calendar & Events",
-    "Work & Contracts", "Business Reports", "Earnings & Wallet", "Grid Marketplace", "Deposit", "Withdraw", "Refer", "Account",
-]
-business_admin_pages = [
-    "Dashboard", "Studio", "Customer & Client Management", "Calendar & Events",
-    "Work & Contracts", "Business Reports", "Daily Crediting", "Earnings & Wallet", "Executive Command Center", "Treasury Management",
-    "Real Money Engines", "Grid Marketplace", "Payments & Treasury", "Blockchain & Treasury",
-    "Payment Operations", "Reports & Referrals", "AI Operations", "Deposit", "Withdraw", "Refer", "Account",
-]
-pages = business_admin_pages if IS_ADMIN else business_user_pages
+# Compact top-level navigation with grouped submenus; internal finance stays admin-only.
+business_menu = {
+    "Overview": ["Dashboard", "Studio"],
+    "Business": ["Customer & Client Management", "Calendar & Events", "Work & Contracts", "Business Reports"],
+    "Earnings": ["Earnings & Wallet", "Deposit", "Withdraw", "Refer"],
+    "Grids": ["Grid Marketplace"],
+    "Account": ["Account"],
+}
+admin_menu = {
+    **business_menu,
+    "Executive": ["Executive Command Center", "Treasury Management", "Real Money Engines"],
+    "Payments": ["Payments & Treasury", "Blockchain & Treasury", "Payment Operations"],
+    "Automation": ["Daily Crediting", "Reports & Referrals", "AI Operations"],
+}
+menu_groups = admin_menu if IS_ADMIN else business_menu
 with st.container(key="ce_locked_header"):
     logo_bytes = None
     try:
@@ -953,22 +976,27 @@ with st.container(key="ce_locked_header"):
             st.markdown('<div class="ce-brand-title">CEDARS EMPIRE</div>', unsafe_allow_html=True)
     with header_status_col:
         st.markdown('<div class="ce-header-right">DIE RICH OR DIE TRYING</div>', unsafe_allow_html=True)
-    selected_page = st.radio(
-        "Main menu", pages,
-        index=min(pages.index(st.session_state.get("ce_header_menu", pages[0])), len(pages)-1)
-          if st.session_state.get("ce_header_menu", pages[0]) in pages else 0,
-        horizontal=True, label_visibility="collapsed", key="ce_header_menu",
-    )
-    if "ce_header_search" not in st.session_state:
-        st.session_state.ce_header_search = ""
-    quick_search = st.text_input(
-        "Find a page", placeholder="Find a page…",
-        label_visibility="collapsed", key="ce_header_search",
-    )
+    nav_cols = st.columns([1.0, 1.65, 1.2], vertical_alignment="center")
+    with nav_cols[0]:
+        menu_keys = list(menu_groups)
+        current_group = st.session_state.get("ce_top_menu", menu_keys[0])
+        if current_group not in menu_keys:
+            current_group = menu_keys[0]
+        top_menu = st.selectbox("Menu", menu_keys, index=menu_keys.index(current_group),
+                                key="ce_top_menu", label_visibility="collapsed")
+    with nav_cols[1]:
+        submenu_options = menu_groups[top_menu]
+        current_submenu = st.session_state.get("ce_sub_menu", submenu_options[0])
+        if current_submenu not in submenu_options:
+            current_submenu = submenu_options[0]
+        selected_page = st.selectbox("Pages", submenu_options, index=submenu_options.index(current_submenu),
+                                     key="ce_sub_menu", label_visibility="collapsed")
+    with nav_cols[2]:
+        quick_search = st.text_input("Find a page", placeholder="Find a page…",
+                                     label_visibility="collapsed", key="ce_header_search")
     if quick_search.strip():
-        matches = [p for p in pages if quick_search.strip().lower() in p.lower()]
-        st.caption(" · ".join(matches) if matches else "No matching pages.")
-
+        matches = [p for group in menu_groups.values() for p in group if quick_search.strip().lower() in p.lower()]
+        st.caption("Matching pages: " + (" · ".join(matches) if matches else "None"))
 page_routes = {
     "Dashboard": "Business Dashboard",
     "Earnings & Wallet": "Earnings & Wallet",

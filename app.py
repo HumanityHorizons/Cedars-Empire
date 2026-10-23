@@ -35,7 +35,7 @@ from daily_crediting import initialize as initialize_daily_crediting, process_da
 # Build marker retained for integration checks: Deposit & Packages QR integration (build 2026-10-21)
 # -----------------------------------------------------------------------------
 APP_DIR = Path(__file__).parent
-# Use only the new CEDARS EMPIRE logo asset when uploaded; never fall back to legacy Humanity Horizons branding.
+# Use only the CEDARS EMPIRE logo asset when uploaded; do not fall back to legacy branding.
 LOGO = APP_DIR / "assets" / "cedars_empire_logo.png"
 LOCAL_DB = Path(os.getenv("HH_DATA_DIR", tempfile.gettempdir())) / "humanity_horizons.db"
 PBKDF2_ITERATIONS = 310_000
@@ -803,7 +803,7 @@ def signup_page() -> None:
             email = st.text_input("Email address").strip().lower()
             password = st.text_input("Create password (at least 10 characters)", type="password")
             password2 = st.text_input("Confirm password", type="password")
-            account_type = st.selectbox("Account type", ["Individual / job seeker", "NGO / civil society organization", "Business / private sector", "Public institution", "Donor / funder", "Research / academic", "Other"])
+            account_type = st.selectbox("Account type", ["Individual / professional", "Business / private sector", "Service provider", "Research / academic", "Other"])
             organization = st.text_input("Organization (optional for individuals)")
             sector = st.selectbox("Main sector", ["Select…", "Education", "Health", "Climate / environment", "Livelihoods / economic inclusion", "Gender / protection", "Governance / peacebuilding", "Humanitarian response", "Agriculture / food security", "Digital / technology", "Research / evaluation", "Multiple sectors", "Other"])
             purpose = st.text_area("B2B / workspace purpose — how will you use Cedars Empire?", placeholder="Example: identify grants, draft proposals and monitor a youth employment project.")
@@ -941,7 +941,7 @@ USER_EMAIL = st.session_state.user_email
 USER_NAME = st.session_state.full_name
 IS_ADMIN = USER_EMAIL.lower() in ADMIN_EMAILS
 
-# CEDARS EMPIRE is a business-only platform. NGO workspace is permanently retired.
+# CEDARS EMPIRE is a business-only platform; legacy non-business pages are not exposed.
 # Compact top-level navigation with grouped submenus; internal finance stays admin-only.
 business_menu = {
     "Overview": ["Dashboard", "Studio"],
@@ -1068,7 +1068,7 @@ st.divider()
 st.caption("AI: connected" if OPENAI_API_KEY else "AI: local structured mode (API key not configured)")
 
 # Cedars Empire: real-business scenario workspace.
-# NGO operations pages remain in the codebase but are intentionally inaccessible from this business-only navigation.
+# Legacy non-business handlers are not exposed by the business-only navigation.
 BUSINESS_PAGES = {
     "Investor Landing", "Business Dashboard", "Real Money Engines", "NeuroWave + Health", "EchoMap + Mobility", "BioLoop + Finance", "DreamGrid + Education", "EmoFlux + Shelter", "IdeaForge + Data", "QuantumLeap + Energy", "AI Business Scenario Lab",
     "Cleaning Grid", "Shelter & Accommodation Grid", "Energy & Utilities Grid",
@@ -1076,10 +1076,13 @@ BUSINESS_PAGES = {
     "Business Opportunity Pipeline", "Blockchain & Treasury", "Deposit QR & TIGERS",
     "Withdrawals & Full KYC", "Staking & Compounding", "Referral Program",
     "Business Reports", "Live Studio", "Customer & Client Management", "Calendar & Events", "Executive Command Center", "Treasury Management", "Grid Marketplace", "Work & Contracts",
-    "Payments & Treasury", "Deposits & Withdrawals", "Payment Operations", "Deposit & Packages", "Withdraw / Cash Out", "Reports & Referrals", "AI Operations"
+    "Payments & Treasury", "Deposits & Withdrawals", "Payment Operations", "Deposit & Packages", "Withdraw / Cash Out", "Reports & Referrals", "AI Operations", "Daily Crediting"
 }
+# Fail closed: retired non-business handlers cannot render, even if a stale route is supplied.
+if page not in BUSINESS_PAGES:
+    page = "Business Dashboard"
 if page in BUSINESS_PAGES:
-    # Internal 360-degree command oversight; keep public-facing branding clean and never print "360" in UI.
+    # Internal administrator oversight; keep public-facing branding clean.
     media_rows = db_all("SELECT setting_key,setting_value FROM app_settings WHERE setting_key IN (?,?)",
                         ("site_logo", "page_image:" + page))
     media = {row["setting_key"]: row["setting_value"] for row in media_rows}
@@ -1840,7 +1843,7 @@ if page in BUSINESS_PAGES:
             render_treasury_management(db_all, db_exec, record_event, USER_EMAIL, bool(DATABASE_URL))
     st.stop()
 
-# Legacy NGO operations handlers are intentionally unreachable from the business-only navigation.
+# Legacy non-business handlers are intentionally unreachable from the business-only navigation.
 # Shared working grids and calendar controls are available throughout the authenticated workspace.
 render_action_grid(page, USER_EMAIL, db_all, db_exec, record_event)
 if page != "Calendar & Events":
@@ -1889,7 +1892,7 @@ if page == "Dashboard":
                     st.session_state["ce_header_menu"] = item[1]
                     st.rerun()
                 else:
-                    st.info("Switch to NGO Operations in the top menu to open this page.")
+                    st.info("This legacy workspace is not available in CEDARS EMPIRE.")
     left, right = st.columns([1.5, 1])
     with left:
         st.markdown('<div class="ce-section-label">RECENT TASKS</div>', unsafe_allow_html=True)
@@ -1902,7 +1905,7 @@ if page == "Dashboard":
                     st.session_state["ce_header_menu"] = "My Tasks"
                     st.rerun()
                 else:
-                    st.info("Switch to NGO Operations to manage tasks.")
+                    st.info("Task tools are available through the business workspace navigation.")
     with right:
         st.markdown('<div class="ce-section-label">WORKFLOW</div>', unsafe_allow_html=True)
         st.markdown('<div class="ce-workflow-card"><div class="ce-step"><span>01</span><div><b>Discover</b><small>Review an opportunity</small></div></div><div class="ce-step"><span>02</span><div><b>Prepare</b><small>Check requirements and draft</small></div></div><div class="ce-step"><span>03</span><div><b>Deliver</b><small>Track tasks and evidence</small></div></div><div class="ce-step"><span>04</span><div><b>Report</b><small>Measure results and learning</small></div></div></div>', unsafe_allow_html=True)
@@ -2402,10 +2405,10 @@ elif page == "Donor Feedback":
 # -----------------------------------------------------------------------------
 elif page == "B2B Collaboration":
     st.header("B2B collaboration and platform sustainability")
-    st.write("Connect NGOs, funders, researchers, service providers and businesses around measurable development outcomes.")
+    st.write("Connect businesses, clients, researchers and service providers around measurable outcomes.")
     st.markdown("**Transparent approach:** This release does not charge hidden access fees, sell visitor data or pay users for downloads. Sponsored content must be labelled and reviewed. A real revenue programme requires written sponsor/advertiser agreements, tax/accounting review and a tested payment provider.")
     with st.form("b2b_form"):
-        kind = st.selectbox("Collaboration type", ["Institutional partnership", "Corporate sponsorship", "Sponsored noticeboard placement", "Research / data collaboration", "Service provider offer", "NGO-to-NGO collaboration", "Training / CV support", "Other"])
+        kind = st.selectbox("Collaboration type", ["Institutional partnership", "Corporate sponsorship", "Sponsored noticeboard placement", "Research / data collaboration", "Service provider offer", "Business-to-business collaboration", "Professional training", "Other"])
         org = st.text_input("Organization / business")
         sector = st.text_input("Sector / capability")
         offer = st.text_area("What can you offer or what do you need?")
@@ -2423,7 +2426,7 @@ elif page == "B2B Collaboration":
             record_event(USER_EMAIL, "b2b_collaboration_request")
             st.success("Request saved for review. This prototype does not automatically sell placements or settle revenue.")
     st.subheader("B2B engagement ideas")
-    st.markdown("- Clearly labelled sponsored opportunity placements.\n- Paid training or institutional workshops with written terms.\n- Ethical business services for NGOs (translation, design, evaluation, data tools).\n- Approved downloadable templates with transparent licensing.\n- Research partnerships with data minimization and consent.")
+    st.markdown("- Clearly labelled sponsored opportunity placements.\n- Paid training or institutional workshops with written terms.\n- Professional services (translation, design, evaluation and data tools).\n- Approved downloadable templates with transparent licensing.\n- Research partnerships with data minimization and consent.")
 
 # -----------------------------------------------------------------------------
 # Privacy and user data
@@ -2991,9 +2994,9 @@ elif page == "Revenue & Sustainability":
         ("Budget and budget-narrative support", "Professional services"), ("CV and resume coaching", "Career services"),
         ("Cover-letter and application coaching", "Career services"), ("Interview preparation workshops", "Training"),
         ("Grant-writing training", "Training"), ("M&E training", "Training"),
-        ("Digital-skills training", "Training"), ("NGO governance workshops", "Training"),
+        ("Digital-skills training", "Training"), ("Business governance workshops", "Training"),
         ("Safeguarding and accountability training", "Training"), ("Institutional subscriptions", "Subscription"),
-        ("NGO team subscriptions", "Subscription"), ("University / research institution licences", "Institutional licence"),
+        ("Business team subscriptions", "Subscription"), ("University / research institution licences", "Institutional licence"),
         ("White-label platform licence", "Licensing"), ("API access for approved clients", "Licensing"),
         ("Custom integrations", "Technology services"), ("Data migration and setup", "Technology services"),
         ("Custom dashboard development", "Technology services"), ("Impact measurement services", "Research and evaluation"),

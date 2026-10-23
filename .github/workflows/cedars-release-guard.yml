@@ -1,0 +1,37 @@
+name: CEDARS EMPIRE Release Guard
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, "cleanup/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cedars-release-guard-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  inspect-and-test:
+    name: Syntax and safety checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - name: Install application dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+      - name: Compile Python source
+        run: python -m compileall -q .
+      - name: Run release safety checks
+        run: python -m unittest discover -s tests -p "test_*.py" -v

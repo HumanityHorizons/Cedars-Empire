@@ -1076,8 +1076,11 @@ BUSINESS_PAGES = {
     "Business Opportunity Pipeline", "Blockchain & Treasury", "Deposit QR & TIGERS",
     "Withdrawals & Full KYC", "Staking & Compounding", "Referral Program",
     "Business Reports", "Live Studio", "Customer & Client Management", "Calendar & Events", "Executive Command Center", "Treasury Management", "Grid Marketplace", "Work & Contracts",
-    "Payments & Treasury", "Deposits & Withdrawals", "Payment Operations", "Deposit & Packages", "Withdraw / Cash Out", "Reports & Referrals", "AI Operations"
+    "Payments & Treasury", "Deposits & Withdrawals", "Payment Operations", "Deposit & Packages", "Withdraw / Cash Out", "Reports & Referrals", "AI Operations", "Daily Crediting"
 }
+# Fail closed: retired non-business handlers cannot render, even if a stale route is supplied.
+if page not in BUSINESS_PAGES:
+    page = "Business Dashboard"
 if page in BUSINESS_PAGES:
     # Internal administrator oversight; keep public-facing branding clean.
     media_rows = db_all("SELECT setting_key,setting_value FROM app_settings WHERE setting_key IN (?,?)",

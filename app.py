@@ -1727,7 +1727,7 @@ if page == "Dashboard":
       <div class="ce-eyebrow">PERSONAL WORKSPACE</div>
       <div class="ce-hero-title">Welcome back</div>
       <div class="ce-hero-subtitle">Your work, opportunities and delivery progress in one place.</div>
-      <div class="ce-hero-strip"><span>CEDARS EMPIRE</span><span>WORKSPACE OVERVIEW</span><span>LIVE RECORDS ONLY</span></div>
+      <div class="ce-hero-strip"><span>WORKSPACE OVERVIEW</span><span>LIVE RECORDS ONLY</span></div>
     </div>
     """, unsafe_allow_html=True)
     st.markdown('<div class="ce-section-label">YOUR ACTIVITY</div>', unsafe_allow_html=True)

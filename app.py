@@ -952,7 +952,7 @@ with st.container(key="ce_locked_header"):
         with brand_col:
             st.markdown('<div class="ce-brand-title">CEDARS EMPIRE</div>', unsafe_allow_html=True)
     with header_status_col:
-        st.markdown('<div class="ce-header-right">SECURE WORKSPACE · VERIFIED ACTIVITY</div>', unsafe_allow_html=True)
+        st.markdown('<div class="ce-header-right">DIE RICH OR DIE TRYING</div>', unsafe_allow_html=True)
 
     def _reset_menu_on_workspace_change() -> None:
         """Clear a menu selection that belongs to the previous workspace."""

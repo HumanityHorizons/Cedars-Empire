@@ -82,7 +82,7 @@ class RobotTask:
         if target not in ALLOWED_TRANSITIONS[self.status]:
             raise ValueError(f"Invalid task transition: {self.status.value} -> {target.value}")
         if target == TaskStatus.EVIDENCE_SUBMITTED:
-            missing = [kind for kind in self.required_evidence if kind not in self.evidence_refs]
+            missing = [kind for kind in self.required_evidence if kind not in self.evidence_types]
             if missing:
                 raise ValueError(f"Required evidence missing: {', '.join(missing)}")
         if target == TaskStatus.ACCEPTED:

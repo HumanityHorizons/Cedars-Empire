@@ -1467,7 +1467,8 @@ if page in BUSINESS_PAGES:
                 st.markdown(f'<div class="ce-grid-card"><div class="ce-grid-number">{item[0]}</div><div class="ce-grid-title">{item[1]}</div><div class="ce-grid-copy">{item[2]}</div></div>', unsafe_allow_html=True)
                 if st.button("Open grid", key="ce_business_grid_" + item[3], use_container_width=True):
                     if item[3] in pages:
-                        st.session_state["ce_header_menu"] = item[3]
+                        st.session_state["ce_selected_page"] = item[3]
+                        st.session_state["ce_sub_menu"] = item[3]
                         st.rerun()
                     else:
                         st.info("This grid is available through the Real Money Business navigation.")
@@ -2028,7 +2029,8 @@ if page == "Dashboard":
             st.markdown(f'<div class="ce-action-card"><div class="ce-action-title">{item[0]}</div><div class="ce-action-copy">{item[2]}</div></div>', unsafe_allow_html=True)
             if st.button("Open", key="ce_quick_" + item[1], use_container_width=True):
                 if item[1] in pages:
-                    st.session_state["ce_header_menu"] = item[1]
+                    st.session_state["ce_selected_page"] = item[1]
+                    st.session_state["ce_sub_menu"] = item[1]
                     st.rerun()
                 else:
                     st.info("This legacy workspace is not available in CEDARS EMPIRE.")
@@ -2041,7 +2043,8 @@ if page == "Dashboard":
             st.markdown('<div class="ce-empty-state"><div class="ce-empty-icon">✓</div><b>No tasks yet</b><div>Create your first task to start tracking delivery.</div></div>', unsafe_allow_html=True)
             if st.button("Create your first task", key="ce_create_first_task", type="primary"):
                 if "My Tasks" in pages:
-                    st.session_state["ce_header_menu"] = "My Tasks"
+                    st.session_state["ce_selected_page"] = "My Tasks"
+                    st.session_state["ce_sub_menu"] = "My Tasks"
                     st.rerun()
                 else:
                     st.info("Task tools are available through the business workspace navigation.")

@@ -72,7 +72,12 @@ st.markdown("""
 .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] { background:var(--ce-bg) !important; color:var(--ce-text) !important; }
 [data-testid="stMain"] h1,[data-testid="stMain"] h2,[data-testid="stMain"] h3,[data-testid="stMain"] h4 { color:var(--ce-navy) !important; letter-spacing:-.01em; }
 [data-testid="stMain"] p,[data-testid="stMain"] li,[data-testid="stMain"] label,[data-testid="stMain"] [data-testid="stMarkdownContainer"],[data-testid="stMain"] [data-testid="stCaptionContainer"] { color:var(--ce-text) !important; }
-[data-testid="stSidebar"],[data-testid="stSidebarCollapsedControl"] { display:none !important; }
+
+[data-testid="stSidebar"] { display:block !important; position:fixed !important; top:0 !important; right:0 !important; left:auto !important; transform:none !important; width:320px !important; min-width:320px !important; z-index:1000 !important; }
+[data-testid="stSidebar"] > div { width:320px !important; }
+[data-testid="stMain"] { margin-right:320px !important; }
+@media(max-width:900px) { [data-testid="stSidebar"] { width:280px !important; min-width:280px !important; } [data-testid="stSidebar"] > div { width:280px !important; } [data-testid="stMain"] { margin-right:0 !important; } }
+
 [data-testid="stMetric"] { background:transparent !important; border:0 !important; border-radius:0 !important; padding:4px 0 !important; box-shadow:none !important; }
 .ce-dashboard-hero { background:linear-gradient(115deg,#0A2540 0%,#123D60 70%,#1B4D70 100%); color:#fff; border-radius:18px; padding:28px 30px 20px; margin:0 0 24px; border-bottom:4px solid #D6A84F; box-shadow:0 12px 30px rgba(10,37,64,.13); }
 .ce-eyebrow { color:#E7C77D !important; font-size:11px; font-weight:800; letter-spacing:2px; margin-bottom:10px; }
@@ -131,7 +136,12 @@ st.markdown("""
 [class*="st-key-ce_locked_header"] [data-testid="stMarkdownContainer"],
 [class*="st-key-ce_locked_header"] p { color:#FFFFFF !important; }
 [class*="st-key-ce_locked_header"] [data-testid="stRadio"] > div { gap:.35rem !important; }
-[data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"] { display:none !important; }
+
+[data-testid="stSidebar"] { display:block !important; position:fixed !important; top:0 !important; right:0 !important; left:auto !important; transform:none !important; width:320px !important; min-width:320px !important; z-index:1000 !important; }
+[data-testid="stSidebar"] > div { width:320px !important; }
+[data-testid="stMain"] { margin-right:320px !important; }
+@media(max-width:900px) { [data-testid="stSidebar"] { width:280px !important; min-width:280px !important; } [data-testid="stSidebar"] > div { width:280px !important; } [data-testid="stMain"] { margin-right:0 !important; } }
+
 [data-testid="stMainBlockContainer"] { padding-top:1rem !important; }
 @media(max-width:900px) {
  [class*="st-key-ce_locked_header"] { padding:8px 10px 6px !important; }
@@ -1010,6 +1020,29 @@ def signup_page() -> None:
 # account from the signed-by-randomness, database-backed browser session token.
 _restore_persistent_session()
 
+# Consistent application shell: clean branded header, compact account controls,
+# grouped navigation in the sidebar, workspace content, and a simple footer.
+with st.container(key="ce_locked_header"):
+    header_left, header_right = st.columns([4, 2], vertical_alignment="center")
+    with header_left:
+        brand_cols = st.columns([1, 8], vertical_alignment="center")
+        with brand_cols[0]:
+            if LOGO.exists():
+                try:
+                    st.image(str(LOGO), width=42)
+                except Exception:
+                    st.markdown('<div class="ce-brand-mark">CE</div>', unsafe_allow_html=True)
+            else:
+                st.markdown('<div class="ce-brand-mark">CE</div>', unsafe_allow_html=True)
+        with brand_cols[1]:
+            st.markdown('<div class="ce-brand-title">CEDARS EMPIRE</div>', unsafe_allow_html=True)
+            st.caption("Business workspace")
+    with header_right:
+        st.markdown(
+            '<div class="ce-header-right">GLOBAL OPERATIONS · VERIFIED RECORDS · CONTROLLED PAYMENTS</div>',
+            unsafe_allow_html=True,
+        )
+
 is_logged_in = bool(st.session_state.get("user_email"))
 if not is_logged_in:
     with st.sidebar:
@@ -1017,68 +1050,75 @@ if not is_logged_in:
         st.write("Sign in or create an account to save your work, manage tasks and use the personal tools.")
         st.caption("Administrator tools are enabled only for addresses explicitly configured in Streamlit secrets.")
     signup_page()
+    st.divider()
+    st.caption("© " + str(datetime.now(timezone.utc).year) + " CEDARS EMPIRE")
     st.stop()
 
 USER_EMAIL = st.session_state.user_email
 USER_NAME = st.session_state.full_name
 IS_ADMIN = USER_EMAIL.lower() in ADMIN_EMAILS
 
-# CEDARS EMPIRE is a business-only platform; legacy non-business pages are not exposed.
-# Compact top-level navigation with grouped submenus; internal finance stays admin-only.
+# Development navigation inventory: every known business page is grouped here.
+# This branch is for development/review only; it is not the live deployment.
 business_menu = {
-    "Overview": ["Dashboard", "Studio"],
-    "Business": ["Customer & Client Management", "Calendar & Events", "Work & Contracts", "Business Reports"],
-    "Earnings": ["Earnings & Wallet", "Deposit", "Withdraw", "Refer"],
-    "Grids": ["Grid Marketplace"],
-    "Account": ["Account"],
+    "Overview": [
+        "Dashboard", "Business Dashboard", "Investor Landing", "AI Business Scenario Lab",
+    ],
+    "Customers & Delivery": [
+        "Customer & Client Management", "Calendar & Events", "Live Studio",
+        "Work & Contracts", "Client Services & Contracts", "Business Opportunity Pipeline",
+    ],
+    "Grid Marketplace": [
+        "Grid Marketplace", "World Grid Marketplace", "Real Money Engines",
+        "NeuroWave + Health", "EchoMap + Mobility", "BioLoop + Finance",
+        "DreamGrid + Education", "EmoFlux + Shelter", "IdeaForge + Data",
+        "QuantumLeap + Energy", "Cleaning Grid", "Shelter & Accommodation Grid",
+        "Energy & Utilities Grid", "AI Training & Data Operations",
+    ],
+    "Earnings & Payments": [
+        "Earnings & Wallet", "Deposit", "Deposit & Packages", "Deposit QR & TIGERS",
+        "Withdraw", "Withdrawals & Full KYC", "Withdraw / Cash Out", "Deposits & Withdrawals",
+        "Staking & Compounding", "Referral Program", "Refer", "Payments & Treasury",
+        "Blockchain & Treasury", "Payment Operations",
+    ],
+    "Reports & Automation": [
+        "Business Reports", "Reports & Referrals", "Daily Crediting", "AI Operations",
+    ],
+    "Account": ["Account", "My Work & Wallet"],
 }
 admin_menu = {
     **business_menu,
-    "Executive": ["Executive Command Center", "Treasury Management", "Real Money Engines"],
-    "Payments": ["Payments & Treasury", "Blockchain & Treasury", "Payment Operations"],
-    "Automation": ["Daily Crediting", "Reports & Referrals", "AI Operations"],
+    "Administration": [
+        "Executive Command Center", "Treasury Management", "Admin Noticeboard",
+        "Branding Settings", "Wallet & Withdrawals", "Report Automation",
+    ],
 }
 menu_groups = admin_menu if IS_ADMIN else business_menu
-with st.container(key="ce_locked_header"):
-    logo_bytes = None
-    try:
-        if LOGO.exists():
-            logo_bytes = LOGO.read_bytes()
-    except Exception:
-        logo_bytes = None
-    _, header_brand_group, header_status_col = st.columns([1.0, 2.2, 1.0], vertical_alignment="center")
-    with header_brand_group:
-        logo_col, brand_col = st.columns([0.55, 2.8], vertical_alignment="center")
-        with logo_col:
-            if logo_bytes:
-                st.image(logo_bytes, width=46)
-            else:
-                st.markdown('<div class="ce-brand-mark">C</div>', unsafe_allow_html=True)
-        with brand_col:
-            st.markdown('<div class="ce-brand-title">CEDARS EMPIRE</div>', unsafe_allow_html=True)
-    with header_status_col:
-        st.markdown('<div class="ce-header-right">DIE RICH OR DIE TRYING</div>', unsafe_allow_html=True)
-    nav_cols = st.columns([1.0, 1.65, 1.2], vertical_alignment="center")
-    with nav_cols[0]:
-        menu_keys = list(menu_groups)
-        current_group = st.session_state.get("ce_top_menu", menu_keys[0])
-        if current_group not in menu_keys:
-            current_group = menu_keys[0]
-        top_menu = st.selectbox("Menu", menu_keys, index=menu_keys.index(current_group),
-                                key="ce_top_menu", label_visibility="collapsed")
-    with nav_cols[1]:
-        submenu_options = menu_groups[top_menu]
-        current_submenu = st.session_state.get("ce_sub_menu", submenu_options[0])
-        if current_submenu not in submenu_options:
-            current_submenu = submenu_options[0]
-        selected_page = st.selectbox("Pages", submenu_options, index=submenu_options.index(current_submenu),
-                                     key="ce_sub_menu", label_visibility="collapsed")
-    with nav_cols[2]:
-        quick_search = st.text_input("Find a page", placeholder="Find a page…",
-                                     label_visibility="collapsed", key="ce_header_search")
-    if quick_search.strip():
-        matches = [p for group in menu_groups.values() for p in group if quick_search.strip().lower() in p.lower()]
-        st.caption("Matching pages: " + (" · ".join(matches) if matches else "None"))
+current_page = st.session_state.get("ce_selected_page", st.session_state.get("ce_sub_menu", "Dashboard"))
+with st.sidebar:
+    st.markdown("## CEDARS EMPIRE")
+    st.caption("PAGE NAVIGATION")
+    quick_search = st.text_input("Find a page", placeholder="Search all pages…", key="ce_sidebar_search")
+    for group_name, group_pages in menu_groups.items():
+        visible_pages = [
+            name for name in group_pages
+            if not quick_search.strip() or quick_search.strip().casefold() in name.casefold()
+        ]
+        if not visible_pages:
+            continue
+        # Keep navigation compact: open only the active group, or matching groups during search.
+        # All page routes remain available; this changes presentation only.
+        group_is_active = current_page in group_pages or st.session_state.get("ce_selected_page") in group_pages
+        with st.expander(group_name, expanded=bool(quick_search.strip()) or group_is_active):
+            for page_name in visible_pages:
+                prefix = "● " if page_name == current_page else ""
+                if st.button(prefix + page_name, key="ce_nav_" + re.sub(r"[^a-zA-Z0-9]+", "_", group_name + "_" + page_name), use_container_width=True):
+                    st.session_state["ce_selected_page"] = page_name
+                    st.session_state["ce_sub_menu"] = page_name
+                    st.rerun()
+selected_page = st.session_state.get("ce_selected_page", current_page)
+if selected_page not in [name for group in menu_groups.values() for name in group]:
+    selected_page = "Dashboard"
 page_routes = {
     "Dashboard": "Business Dashboard",
     "Earnings & Wallet": "Earnings & Wallet",
@@ -1101,6 +1141,16 @@ page_routes = {
     "Wallet & Withdrawals": "Payment Operations",
     "My Work & Wallet": "My Work & Wallet",
     "Branding Settings": "Branding Settings",
+    # Grid labels are aliases into the shared Real Money Engines workspace until
+    # dedicated grid-specific handlers are implemented; access remains admin-only.
+    "Deposits & Withdrawals": "Payment Operations",
+    "NeuroWave + Health": "Real Money Engines",
+    "EchoMap + Mobility": "Real Money Engines",
+    "BioLoop + Finance": "Real Money Engines",
+    "DreamGrid + Education": "Real Money Engines",
+    "EmoFlux + Shelter": "Real Money Engines",
+    "IdeaForge + Data": "Real Money Engines",
+    "QuantumLeap + Energy": "Real Money Engines",
 }
 if selected_page == "Withdraw" and not IS_ADMIN:
     try:
@@ -1137,11 +1187,14 @@ if not IS_ADMIN and page in INTERNAL_ONLY_PAGES:
 
 set_table_scope(page)
 reset_table_counter()
-account_col, signout_col = st.columns([5, 1])
+
+account_col, status_col, signout_col = st.columns([4, 2, 1], vertical_alignment="center")
 with account_col:
-    st.caption(f"Signed in as {USER_NAME} · {USER_EMAIL}" + (" · Administrator" if IS_ADMIN else ""))
+    st.caption(f"{USER_NAME} · {USER_EMAIL}" + (" · Administrator" if IS_ADMIN else ""))
+with status_col:
+    st.caption("AI connected" if OPENAI_API_KEY else "AI mode: local structured")
 with signout_col:
-    if st.button("Sign out", key="ce_sign_out"):
+    if st.button("Sign out", key="ce_sign_out", use_container_width=True):
         record_event(USER_EMAIL, "sign_out")
         try:
             token = AUTH_COOKIE_MANAGER.get(AUTH_COOKIE_NAME)
@@ -1155,7 +1208,6 @@ with signout_col:
             st.session_state.pop(key, None)
         st.rerun()
 st.divider()
-st.caption("AI: connected" if OPENAI_API_KEY else "AI: local structured mode (API key not configured)")
 
 # Cedars Empire: real-business scenario workspace.
 # Legacy non-business handlers are not exposed by the business-only navigation.
@@ -1418,7 +1470,8 @@ if page in BUSINESS_PAGES:
                 st.markdown(f'<div class="ce-grid-card"><div class="ce-grid-number">{item[0]}</div><div class="ce-grid-title">{item[1]}</div><div class="ce-grid-copy">{item[2]}</div></div>', unsafe_allow_html=True)
                 if st.button("Open grid", key="ce_business_grid_" + item[3], use_container_width=True):
                     if item[3] in pages:
-                        st.session_state["ce_header_menu"] = item[3]
+                        st.session_state["ce_selected_page"] = item[3]
+                        st.session_state["ce_sub_menu"] = item[3]
                         st.rerun()
                     else:
                         st.info("This grid is available through the Real Money Business navigation.")
@@ -1979,7 +2032,8 @@ if page == "Dashboard":
             st.markdown(f'<div class="ce-action-card"><div class="ce-action-title">{item[0]}</div><div class="ce-action-copy">{item[2]}</div></div>', unsafe_allow_html=True)
             if st.button("Open", key="ce_quick_" + item[1], use_container_width=True):
                 if item[1] in pages:
-                    st.session_state["ce_header_menu"] = item[1]
+                    st.session_state["ce_selected_page"] = item[1]
+                    st.session_state["ce_sub_menu"] = item[1]
                     st.rerun()
                 else:
                     st.info("This legacy workspace is not available in CEDARS EMPIRE.")
@@ -1992,7 +2046,8 @@ if page == "Dashboard":
             st.markdown('<div class="ce-empty-state"><div class="ce-empty-icon">✓</div><b>No tasks yet</b><div>Create your first task to start tracking delivery.</div></div>', unsafe_allow_html=True)
             if st.button("Create your first task", key="ce_create_first_task", type="primary"):
                 if "My Tasks" in pages:
-                    st.session_state["ce_header_menu"] = "My Tasks"
+                    st.session_state["ce_selected_page"] = "My Tasks"
+                    st.session_state["ce_sub_menu"] = "My Tasks"
                     st.rerun()
                 else:
                     st.info("Task tools are available through the business workspace navigation.")
@@ -3209,4 +3264,11 @@ else:
     st.error("This administrator page is not available for the current account.")
 
 st.divider()
+footer_left, footer_center, footer_right = st.columns([2, 3, 2], vertical_alignment="center")
+with footer_left:
+    st.markdown("**CEDARS EMPIRE**")
+with footer_center:
+    st.caption("Global business workspace · Evidence-led records · Secure account access")
+with footer_right:
+    st.caption("© " + str(datetime.now(timezone.utc).year) + " CEDARS EMPIRE")
 

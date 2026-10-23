@@ -872,7 +872,9 @@ def signup_page() -> None:
                 else:
                     set_login(users[0], signin_purpose.strip())
                     st.success("Signed in. Loading your workspace…")
-                    st.rerun()
+                    # Continue this run so the CookieManager component can commit
+                    # the browser cookie; an immediate st.rerun() can race the
+                    # component response. Auth state is already set in session_state.
     with signup:
         st.subheader("Create your Cedars Empire account")
         st.write("A short B2B / purpose profile helps tailor tools and understand legitimate organizational use. It is not an advertising consent and does not authorize data resale.")
@@ -920,7 +922,9 @@ def signup_page() -> None:
                 set_login(user, purpose.strip())
                 record_event(email, "account_created", purpose.strip())
                 st.success("Account created. Your workspace is ready.")
-                st.rerun()
+                # Continue this run so the CookieManager component can commit
+                # the browser cookie; an immediate st.rerun() can race the
+                # component response. Auth state is already set in session_state.
     with public:
         st.subheader("Public opportunity noticeboard")
         st.caption("Only moderated, published listings are displayed. Verify any opportunity on its original source before sharing documents or paying fees.")

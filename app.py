@@ -412,6 +412,12 @@ def init_db() -> None:
             availability TEXT, start_date TEXT, status TEXT NOT NULL,
             notes TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
         )""",
+        """CREATE TABLE IF NOT EXISTS customer_records (
+            id TEXT PRIMARY KEY, owner_email TEXT NOT NULL, customer_name TEXT NOT NULL,
+            organization TEXT, customer_type TEXT NOT NULL, email TEXT, phone TEXT,
+            service_interest TEXT, relationship_status TEXT NOT NULL, next_follow_up TEXT,
+            notes TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+        )""",
         """CREATE TABLE IF NOT EXISTS revenue_opportunities (
             id TEXT PRIMARY KEY, owner_email TEXT NOT NULL, stream_name TEXT NOT NULL,
             category TEXT NOT NULL, status TEXT NOT NULL, estimated_amount TEXT,
@@ -914,73 +920,24 @@ USER_EMAIL = st.session_state.user_email
 USER_NAME = st.session_state.full_name
 IS_ADMIN = USER_EMAIL.lower() in ADMIN_EMAILS
 
-# Page lists are kept in the application layer; navigation is rendered in the main page area.
-business_user_pages = ["Dashboard", "Deposit", "Withdraw", "Refer", "Account"]
+# Cedars Empire business workspace: NGO-only navigation is retired from the user interface.
+business_user_pages = [
+    "Dashboard", "Studio", "Customer & Client Management", "Calendar & Events",
+    "Work & Contracts", "Business Reports", "Grid Marketplace", "Deposit", "Withdraw", "Refer", "Account",
+]
 business_admin_pages = [
-    "Dashboard", "Executive Command Center", "Treasury Management", "Real Money Engines",
-    "Grid Marketplace", "Work & Contracts", "Payments & Treasury",
-    "Blockchain & Treasury", "Payment Operations", "Reports & Referrals", "AI Operations",
+    "Dashboard", "Studio", "Customer & Client Management", "Calendar & Events",
+    "Work & Contracts", "Business Reports", "Studio", "Customer & Client Management", "Calendar & Events", "Executive Command Center", "Treasury Management",
+    "Real Money Engines", "Grid Marketplace", "Payments & Treasury", "Blockchain & Treasury",
+    "Payment Operations", "Reports & Referrals", "AI Operations", "Deposit", "Withdraw", "Refer", "Account",
 ]
-ngo_user_pages = [
-    "Climate and Career Hub", "My Tasks", "Opportunity Analysis", "Proposal Studio",
-    "Live Studio", "CV / Resume Studio", "SDG Navigator", "Noticeboard",
-    "HH Standards & Impact", "Donor Feedback", "B2B Collaboration", "HR & Volunteers",
-    "Income Activities", "My Work & Wallet", "Revenue & Sustainability",
-    "Privacy and Data", "Calendar & Events",
-]
-ngo_admin_pages = [
-    "Command Center", "HR Department", "Finance Department", "40/60 Allocation Foundation",
-    "Income & Revenue", "Admin Studio", "Admin Noticeboard", "Wallet & Withdrawals",
-    "Branding Settings", "Report Automation", "Admin Console",
-]
-# Locked header container: logo, workspace switch and all page menus stay together at the top.
-with st.container(key="ce_locked_header"):
-    logo_bytes = None
-    try:
-        if LOGO.exists():
-            logo_bytes = LOGO.read_bytes()
-    except Exception:
-        logo_bytes = None
-    header_left_spacer, header_brand_group, header_status_col = st.columns([1.0, 2.2, 1.0], vertical_alignment="center")
-    with header_brand_group:
-        logo_col, brand_col = st.columns([0.55, 2.8], vertical_alignment="center")
-        with logo_col:
-            if logo_bytes:
-                st.image(logo_bytes, width=46)
-            else:
-                st.markdown('<div class="ce-brand-mark">C</div>', unsafe_allow_html=True)
-        with brand_col:
-            st.markdown('<div class="ce-brand-title">CEDARS EMPIRE</div>', unsafe_allow_html=True)
-    with header_status_col:
-        st.markdown('<div class="ce-header-right">DIE RICH OR DIE TRYING</div>', unsafe_allow_html=True)
-
-    def _reset_menu_on_workspace_change() -> None:
-        """Clear a menu selection that belongs to the previous workspace."""
-        target_mode = st.session_state.get("cedars_workspace_mode", "Real Money Business")
-        if target_mode == "NGO Operations":
-            next_pages = ngo_user_pages + (ngo_admin_pages if IS_ADMIN else [])
-        else:
-            next_pages = business_admin_pages if IS_ADMIN else business_user_pages
-        # Streamlit validates widget state against the current radio options.
-        # Reset before the main-menu widget is instantiated on this rerun.
-        st.session_state["ce_header_menu"] = next_pages[0]
-
-    workspace_mode = st.radio(
-        "Workspace", ["Real Money Business", "NGO Operations"],
-        index=0, key="cedars_workspace_mode", horizontal=True,
-        label_visibility="collapsed", on_change=_reset_menu_on_workspace_change,
-    )
-    if workspace_mode == "NGO Operations":
-        pages = ngo_user_pages + (ngo_admin_pages if IS_ADMIN else [])
-    else:
-        pages = business_admin_pages if IS_ADMIN else business_user_pages
-
-    selected_page = st.radio(
-        "Main menu", pages,
-        index=min(pages.index(st.session_state.get("ce_header_menu", pages[0])), len(pages)-1)
-          if st.session_state.get("ce_header_menu", pages[0]) in pages else 0,
-        horizontal=True, label_visibility="collapsed", key="ce_header_menu",
-    )
+pages = business_admin_pages if IS_ADMIN else business_user_pages
+selected_page = st.radio(
+    "Main menu", pages,
+    index=min(pages.index(st.session_state.get("ce_header_menu", pages[0])), len(pages)-1)
+      if st.session_state.get("ce_header_menu", pages[0]) in pages else 0,
+    horizontal=True, label_visibility="collapsed", key="ce_header_menu",
+)
     if "ce_header_search" not in st.session_state:
         st.session_state.ce_header_search = ""
     quick_search = st.text_input(
@@ -993,6 +950,8 @@ with st.container(key="ce_locked_header"):
 
 page_routes = {
     "Dashboard": "Business Dashboard",
+    "Studio": "Live Studio",
+    "Customer & Client Management": "Customer & Client Management",
     "Deposit": "Deposit & Packages",
     "Earn": "Real Money Engines",
     "Withdraw": "Withdrawals & Full KYC",
@@ -2784,6 +2743,47 @@ elif page == "Admin Console" and IS_ADMIN:
             st.info("No verified ledger entries recorded yet.")
 
 # -----------------------------------------------------------------------------
+elif page == "Customer & Client Management":
+    st.header("Customer & Client Management")
+    st.caption("Manage customer relationships and service enquiries. Record only information you are authorized to hold.")
+    with st.form("customer_record_form"):
+        customer_name = st.text_input("Customer / contact name")
+        organization = st.text_input("Company / organization")
+        customer_type = st.selectbox("Relationship type", ["Customer", "Business client", "Service provider", "Prospective client", "Partner"])
+        customer_email = st.text_input("Business email")
+        customer_phone = st.text_input("Phone (optional)")
+        service_interest = st.text_input("Service / grid of interest")
+        relationship_status = st.selectbox("Relationship status", ["New lead", "Contacted", "Qualified", "Proposal sent", "Active customer", "On hold", "Closed"])
+        next_follow_up = st.text_input("Next follow-up date (YYYY-MM-DD, optional)", placeholder="2026-11-01")
+        customer_notes = st.text_area("Business notes (avoid sensitive personal information)")
+        save_customer = st.form_submit_button("Save customer", type="primary")
+    if save_customer:
+        if not customer_name.strip():
+            st.error("Customer / contact name is required.")
+        elif customer_email.strip() and not re.match(r"^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", customer_email.strip()):
+            st.error("Enter a valid email address or leave it blank.")
+        elif next_follow_up.strip() and not re.match(r"^\\d{4}-\\d{2}-\\d{2}$", next_follow_up.strip()):
+            st.error("Use YYYY-MM-DD for the follow-up date.")
+        else:
+            db_exec("INSERT INTO customer_records (id,owner_email,customer_name,organization,customer_type,email,phone,service_interest,relationship_status,next_follow_up,notes,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (str(uuid.uuid4()), USER_EMAIL, customer_name.strip(), organization.strip(), customer_type, customer_email.strip(), customer_phone.strip(), service_interest.strip(), relationship_status, next_follow_up.strip() or None, customer_notes.strip(), now_iso(), now_iso()))
+            record_event(USER_EMAIL, "customer_record_created", customer_type)
+            st.success("Customer record saved.")
+            st.rerun()
+    customers = db_all("SELECT customer_name AS Customer,organization AS Organization,customer_type AS Type,email AS Email,phone AS Phone,service_interest AS Service,relationship_status AS Status,next_follow_up AS Follow_up,notes AS Notes,updated_at AS Updated FROM customer_records WHERE owner_email=? ORDER BY updated_at DESC", (USER_EMAIL,))
+    st.subheader("My customers and client contacts")
+    if customers:
+        customer_frame = pd.DataFrame(customers)
+        render_bank_table(customer_frame, use_container_width=True, hide_index=True)
+        download_gate("customer records", customer_frame.to_csv(index=False), "cedars_empire_customers.csv", "text/csv", "customer_records")
+    else:
+        st.info("No customer records yet.")
+    if IS_ADMIN:
+        st.subheader("Platform customer register — administrator view")
+        all_customers = db_all("SELECT owner_email AS Owner,customer_name AS Customer,organization AS Organization,customer_type AS Type,email AS Email,service_interest AS Service,relationship_status AS Status,next_follow_up AS Follow_up,updated_at AS Updated FROM customer_records ORDER BY updated_at DESC LIMIT 1000")
+        if all_customers:
+            render_bank_table(pd.DataFrame(all_customers), use_container_width=True, hide_index=True)
+
 # HR & Volunteer Hub — user-scoped records, admin visibility
 # -----------------------------------------------------------------------------
 elif page == "HR & Volunteers":

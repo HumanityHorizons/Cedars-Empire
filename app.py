@@ -1086,7 +1086,7 @@ if page in BUSINESS_PAGES:
         st.caption("No customer, contract, provider, revenue, payout or performance result is presumed to exist. Record actual activity below and submit evidence for review.")
         render_engine_dashboard(page)
     elif page == "Investor Landing":
-        st.header("CEDARS EMPIRE")
+        # The shared header already displays CEDARS EMPIRE; keep this page title-free.
         st.subheader("Investment-grade operating discipline for real AI and real-world services")
         st.write("Explore business engines, verified counterparties, service delivery, costs and reconciled receipts. This workspace is an operating platform—not a public investment offer and not a promise of returns.")
         tiles = st.columns(3)

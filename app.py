@@ -1074,7 +1074,7 @@ if page in BUSINESS_PAGES:
     }
     if page in MERGED_GRID_CATALOG:
         grid = MERGED_GRID_CATALOG[page]
-        # Page-specific headings are rendered inside each route; avoid a duplicate generic heading.
+        st.header(page)
         st.subheader(grid["service"])
         st.write("**Target paying customers:** " + grid["buyer"])
         st.write("**Commercial model:** " + grid["revenue"])

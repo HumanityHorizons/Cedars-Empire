@@ -927,17 +927,36 @@ business_user_pages = [
 ]
 business_admin_pages = [
     "Dashboard", "Studio", "Customer & Client Management", "Calendar & Events",
-    "Work & Contracts", "Business Reports", "Studio", "Customer & Client Management", "Calendar & Events", "Executive Command Center", "Treasury Management",
+    "Work & Contracts", "Business Reports", "Executive Command Center", "Treasury Management",
     "Real Money Engines", "Grid Marketplace", "Payments & Treasury", "Blockchain & Treasury",
     "Payment Operations", "Reports & Referrals", "AI Operations", "Deposit", "Withdraw", "Refer", "Account",
 ]
 pages = business_admin_pages if IS_ADMIN else business_user_pages
-selected_page = st.radio(
-    "Main menu", pages,
-    index=min(pages.index(st.session_state.get("ce_header_menu", pages[0])), len(pages)-1)
-      if st.session_state.get("ce_header_menu", pages[0]) in pages else 0,
-    horizontal=True, label_visibility="collapsed", key="ce_header_menu",
-)
+with st.container(key="ce_locked_header"):
+    logo_bytes = None
+    try:
+        if LOGO.exists():
+            logo_bytes = LOGO.read_bytes()
+    except Exception:
+        logo_bytes = None
+    _, header_brand_group, header_status_col = st.columns([1.0, 2.2, 1.0], vertical_alignment="center")
+    with header_brand_group:
+        logo_col, brand_col = st.columns([0.55, 2.8], vertical_alignment="center")
+        with logo_col:
+            if logo_bytes:
+                st.image(logo_bytes, width=46)
+            else:
+                st.markdown('<div class="ce-brand-mark">C</div>', unsafe_allow_html=True)
+        with brand_col:
+            st.markdown('<div class="ce-brand-title">CEDARS EMPIRE</div>', unsafe_allow_html=True)
+    with header_status_col:
+        st.markdown('<div class="ce-header-right">DIE RICH OR DIE TRYING</div>', unsafe_allow_html=True)
+    selected_page = st.radio(
+        "Main menu", pages,
+        index=min(pages.index(st.session_state.get("ce_header_menu", pages[0])), len(pages)-1)
+          if st.session_state.get("ce_header_menu", pages[0]) in pages else 0,
+        horizontal=True, label_visibility="collapsed", key="ce_header_menu",
+    )
     if "ce_header_search" not in st.session_state:
         st.session_state.ce_header_search = ""
     quick_search = st.text_input(

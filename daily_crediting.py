@@ -122,22 +122,28 @@ def process_daily_credits(db_connect, timezone_name="Pacific/Auckland", now=None
                         WHERE status='APPROVED' AND activity_at >= ? AND activity_at < ?
                         ORDER BY activity_at,id"""), (start.isoformat(), end.isoformat()))
         activities = cur.fetchall()
+        conn.commit()
         for raw in activities:
             activity = dict(raw) if not isinstance(raw, dict) else raw
             cur.execute(q("SELECT rate,enabled,requires_verified_funding,reward_type FROM earning_rules WHERE activity_type=?"),
                         (activity["activity_type"],))
             rule_raw = cur.fetchone()
             if not rule_raw:
+                conn.commit()
                 continue
             rule = dict(rule_raw) if not isinstance(rule_raw, dict) else rule_raw
+            conn.commit()
             if not int(rule["enabled"]):
+                conn.commit()
                 continue
             if int(rule["requires_verified_funding"]) and not int(activity["funding_verified"]):
+                conn.commit()
                 continue
             if int(activity["risk_score"] or 0) >= risk_limit:
                 cur.execute(q("INSERT INTO fraud_flags (id,user_email,risk_score,reason,created_at) VALUES (?,?,?,?,?)"),
                             (str(uuid.uuid4()), activity["user_email"], int(activity["risk_score"]),
                              "Activity exceeded configured risk threshold; credit held for review", started))
+                conn.commit()
                 continue
             try:
                 amount = _decimal(Decimal(str(activity["qualifying_volume"])) * Decimal(str(rule["rate"])))

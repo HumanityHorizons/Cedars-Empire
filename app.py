@@ -1045,7 +1045,7 @@ business_menu = {
     ],
     "Earnings & Payments": [
         "Earnings & Wallet", "Deposit", "Deposit & Packages", "Deposit QR & TIGERS",
-        "Withdraw", "Withdrawals & Full KYC", "Withdraw / Cash Out",
+        "Withdraw", "Withdrawals & Full KYC", "Withdraw / Cash Out", "Deposits & Withdrawals",
         "Staking & Compounding", "Referral Program", "Refer", "Payments & Treasury",
         "Blockchain & Treasury", "Payment Operations",
     ],
@@ -1064,8 +1064,8 @@ business_menu = {
 admin_menu = {
     **business_menu,
     "Administration": [
-        "Executive Command Center", "Treasury Management", "Admin Noticeboard",
-        "Branding Settings",
+        "Executive Command Center", "Command Center", "Treasury Management", "Admin Noticeboard",
+        "Branding Settings", "Wallet & Withdrawals", "Report Automation",
     ],
 }
 menu_groups = admin_menu if IS_ADMIN else business_menu

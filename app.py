@@ -34,9 +34,8 @@ from hh_table_ui import render_bank_table, reset_table_counter, set_table_scope
 # Build marker retained for integration checks: Deposit & Packages QR integration (build 2026-10-21)
 # -----------------------------------------------------------------------------
 APP_DIR = Path(__file__).parent
-LOGO = APP_DIR / "assets" / "humanity_horizons_logo.jpg"
-if not LOGO.exists():
-    LOGO = APP_DIR / "humanity_horizons_logo.jpg"
+# Use only the new CEDARS EMPIRE logo asset when uploaded; never fall back to legacy Humanity Horizons branding.
+LOGO = APP_DIR / "assets" / "cedars_empire_logo.png"
 LOCAL_DB = Path(os.getenv("HH_DATA_DIR", tempfile.gettempdir())) / "humanity_horizons.db"
 PBKDF2_ITERATIONS = 310_000
 

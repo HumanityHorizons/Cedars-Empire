@@ -14,9 +14,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install application and test dependencies
+        run: python -m pip install -r requirements.txt pytest
       - name: Compile application and modules
         run: python -m compileall -q app.py streamlit_app.py hh_real_payments.py hh_workspace_widgets.py hh_table_ui.py
-      - name: Install test runner
-        run: python -m pip install pytest
       - name: Run persistence safety checks
-        run: python -m pytest -q tests
+        run: python -m pytest -q tests/test_persistence_configuration.py

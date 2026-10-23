@@ -1451,6 +1451,11 @@ if page in BUSINESS_PAGES:
             st.header("Executive Command Center")
             st.write("Admin-only oversight for business operations. Financial records must be evidence-backed; no simulated balance or revenue is shown.")
 
+            st.subheader("Treasury Risk Policy")
+            st.metric("Maximum tolerated Grid-revenue loss target", "15%")
+            st.warning("If Grid revenue falls more than 15% below the modelled baseline, activate emergency controls: reduce discretionary costs, protect reserves, and reassess distributions. The 25%, 50%, 75% and 100% loss cases remain stress tests. This policy display is not a live solvency calculation; do not treat it as proof of profitability or available funds.")
+            st.caption("Customer deposits are capital, not operating revenue. Distributions must be capped by verified available distributable cash; unsupported payouts must be suspended.")
+
             # Grid terminal board: operational health is deliberately separate from revenue.
             # No live health probes are configured yet, so never imply a grid is working or failed.
             st.subheader("Grid Operations Terminal")

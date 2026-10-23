@@ -761,6 +761,8 @@ def _issue_persistent_session(email: str) -> None:
     AUTH_COOKIE_MANAGER.set(
         AUTH_COOKIE_NAME, raw_token,
         expires_at=created.replace(tzinfo=None) + timedelta(days=AUTH_SESSION_DAYS),
+        secure=True,
+        same_site="lax",
         key="ce_auth_cookie_issue",
     )
 

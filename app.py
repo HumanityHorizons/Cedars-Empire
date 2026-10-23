@@ -707,7 +707,6 @@ HH_STANDARDS_CHECKS = [
 # -----------------------------------------------------------------------------
 # Page chrome and auth
 # -----------------------------------------------------------------------------
-st.title("CEDARS EMPIRE")
 
 
 def set_login(user: dict[str, Any], login_purpose: str = "") -> None:

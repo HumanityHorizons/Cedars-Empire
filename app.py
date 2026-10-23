@@ -934,10 +934,21 @@ with st.container(key="ce_locked_header"):
     with header_status_col:
         st.markdown('<div class="ce-header-right">SECURE WORKSPACE · VERIFIED ACTIVITY</div>', unsafe_allow_html=True)
 
+    def _reset_menu_on_workspace_change() -> None:
+        """Clear a menu selection that belongs to the previous workspace."""
+        target_mode = st.session_state.get("cedars_workspace_mode", "Real Money Business")
+        if target_mode == "NGO Operations":
+            next_pages = ngo_user_pages + (ngo_admin_pages if IS_ADMIN else [])
+        else:
+            next_pages = business_admin_pages if IS_ADMIN else business_user_pages
+        # Streamlit validates widget state against the current radio options.
+        # Reset before the main-menu widget is instantiated on this rerun.
+        st.session_state["ce_header_menu"] = next_pages[0]
+
     workspace_mode = st.radio(
         "Workspace", ["Real Money Business", "NGO Operations"],
         index=0, key="cedars_workspace_mode", horizontal=True,
-        label_visibility="collapsed",
+        label_visibility="collapsed", on_change=_reset_menu_on_workspace_change,
     )
     if workspace_mode == "NGO Operations":
         pages = ngo_user_pages + (ngo_admin_pages if IS_ADMIN else [])

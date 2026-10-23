@@ -941,7 +941,7 @@ USER_EMAIL = st.session_state.user_email
 USER_NAME = st.session_state.full_name
 IS_ADMIN = USER_EMAIL.lower() in ADMIN_EMAILS
 
-# CEDARS EMPIRE is a business-only platform. The former NGO workspace is retired and not exposed.
+# CEDARS EMPIRE is a business-only platform; legacy non-business pages are not exposed.
 # Compact top-level navigation with grouped submenus; internal finance stays admin-only.
 business_menu = {
     "Overview": ["Dashboard", "Studio"],

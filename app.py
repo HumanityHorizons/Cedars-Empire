@@ -892,7 +892,12 @@ if not is_logged_in:
 
 USER_EMAIL = st.session_state.user_email
 USER_NAME = st.session_state.full_name
-IS_ADMIN = USER_EMAIL.lower() in ADMIN_EMAILS
+MEMBER_PORTAL_MODE = str(st.query_params.get("portal", "")).strip().lower() in {"member", "user"}
+IS_ADMIN = USER_EMAIL.lower() in ADMIN_EMAILS and not MEMBER_PORTAL_MODE
+if MEMBER_PORTAL_MODE:
+    # Explicit member URL must not inherit a previous administrator menu selection.
+    st.session_state["cedars_workspace_mode"] = "NGO Operations"
+    st.session_state["ce_header_menu"] = "Dashboard"
 
 # Page lists are kept in the application layer; navigation is rendered in the main page area.
 business_user_pages = ["Dashboard", "Deposit", "Withdraw", "Refer", "Account"]
@@ -902,7 +907,7 @@ business_admin_pages = [
     "Blockchain & Treasury", "Payment Operations", "Reports & Referrals", "AI Operations",
 ]
 ngo_user_pages = [
-    "Climate and Career Hub", "My Tasks", "Opportunity Analysis", "Proposal Studio",
+    "Dashboard", "Climate and Career Hub", "My Tasks", "Opportunity Analysis", "Proposal Studio",
     "Live Studio", "CV / Resume Studio", "SDG Navigator", "Noticeboard",
     "HH Standards & Impact", "Donor Feedback", "B2B Collaboration", "HR & Volunteers",
     "Income Activities", "My Work & Wallet", "Revenue & Sustainability",

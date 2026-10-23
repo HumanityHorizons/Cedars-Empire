@@ -30,6 +30,12 @@ class AuthSessionPersistenceTests(unittest.TestCase):
         self.assertIn("UPDATE login_sessions SET revoked_at=? WHERE token_hash=? AND revoked_at IS NULL", self.app)
         self.assertIn("AUTH_COOKIE_MANAGER.delete(AUTH_COOKIE_NAME", self.app)
 
+    def test_login_and_signup_do_not_force_rerun_before_cookie_component_commit(self):
+        signin = self.app.split('set_login(users[0], signin_purpose.strip())', 1)[1].split('with signup:', 1)[0]
+        self.assertNotIn("st.rerun()", signin)
+        signup = self.app.split('set_login(user, purpose.strip())', 1)[1].split('with public:', 1)[0]
+        self.assertNotIn("st.rerun()", signup)
+
     def test_signin_does_not_require_reentering_profile_consent(self):
         signin = self.app.split('with st.form("signin_form")', 1)[1].split('with signup:', 1)[0]
         self.assertNotIn("confirm_profile", signin)

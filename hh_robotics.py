@@ -72,6 +72,7 @@ class RobotTask:
     status: TaskStatus = TaskStatus.REGISTERED
     robot_id: str | None = None
     evidence_refs: list[str] = field(default_factory=list)
+    evidence_types: list[str] = field(default_factory=list)
     accepted_by: str | None = None
     payment_tx_hash: str | None = None
     payment_verified: bool = False
@@ -103,7 +104,10 @@ class RobotTask:
             raise ValueError("Evidence can only be submitted while task is in progress")
         if not evidence_type.strip() or not reference.strip():
             raise ValueError("Evidence type and durable reference are required")
-        self.evidence_refs.append(evidence_type)
+        if evidence_type in self.evidence_types:
+            raise ValueError(f"Duplicate evidence type: {evidence_type}")
+        self.evidence_types.append(evidence_type)
+        self.evidence_refs.append(reference)
 
     def attach_verified_payment(self, tx_hash: str, verified: bool) -> None:
         if self.status != TaskStatus.ACCEPTED:

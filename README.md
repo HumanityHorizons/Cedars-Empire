@@ -17,8 +17,8 @@ Business workspace for real AI-enabled services, client work, business grids, ve
 ## Branding and navigation
 
 - Product name: **CEDARS EMPIRE**
-- Business-only platform; no NGO division or NGO Operations navigation
-- No legacy Humanity Horizons branding, “360” branding or former tagline
+- Business-only product scope; no legacy nonprofit workspace or navigation
+- No legacy company branding or former tagline
 - Member and administrator workspaces remain role-separated; sensitive treasury and reconciliation functions are administrator-only
 
 ## Data and deployment

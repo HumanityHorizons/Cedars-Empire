@@ -28,15 +28,15 @@ from hh_real_payments import (
     render_payment_ops_page, render_user_treasury_overview_page,
 )
 from hh_table_ui import render_bank_table, reset_table_counter, set_table_scope
+from daily_crediting import initialize as initialize_daily_crediting, process_daily_credits
 
 # -----------------------------------------------------------------------------
 # CEDARS EMPIRE — functional MVP / deployment-safe prototype
 # Build marker retained for integration checks: Deposit & Packages QR integration (build 2026-10-21)
 # -----------------------------------------------------------------------------
 APP_DIR = Path(__file__).parent
-LOGO = APP_DIR / "assets" / "humanity_horizons_logo.jpg"
-if not LOGO.exists():
-    LOGO = APP_DIR / "humanity_horizons_logo.jpg"
+# Use only the new CEDARS EMPIRE logo asset when uploaded; never fall back to legacy Humanity Horizons branding.
+LOGO = APP_DIR / "assets" / "cedars_empire_logo.png"
 LOCAL_DB = Path(os.getenv("HH_DATA_DIR", tempfile.gettempdir())) / "humanity_horizons.db"
 PBKDF2_ITERATIONS = 310_000
 
@@ -295,14 +295,36 @@ def run_optional_ai(prompt: str) -> str | None:
 
 
 def db_connect():
+    """Open the configured durable database; never silently use ephemeral disk in production."""
     if DATABASE_URL:
         try:
             import psycopg
             from psycopg.rows import dict_row
         except ImportError as exc:
             raise RuntimeError("DATABASE_URL is configured, but psycopg is missing. Rebuild after installing requirements.txt.") from exc
-        conn = psycopg.connect(DATABASE_URL, row_factory=dict_row, connect_timeout=10)
+        try:
+            conn = psycopg.connect(DATABASE_URL, row_factory=dict_row, connect_timeout=10)
+        except Exception as exc:
+            # Fail closed: do not fall back to a blank local database if production
+            # PostgreSQL is unavailable, because that can look like lost user data.
+            raise RuntimeError(
+                "The configured durable database could not be reached. Check the "
+                "DATABASE_URL secret and database availability, then retry. No local "
+                "fallback was opened, so existing production data was not replaced."
+            ) from exc
         return conn, "postgres"
+
+    # Streamlit Community Cloud instances are ephemeral. SQLite may be used for
+    # local development only; production must explicitly configure PostgreSQL.
+    is_streamlit_cloud = bool(os.getenv("STREAMLIT_SHARING_MODE") or os.getenv("STREAMLIT_SERVER_HEADLESS"))
+    is_production = setting("CEDARS_PRODUCTION", "").strip().lower() in {"1", "true", "yes", "on"}
+    if is_streamlit_cloud or is_production:
+        raise RuntimeError(
+            "Durable storage is not configured. Add DATABASE_URL to the app's "
+            "Streamlit Secrets (managed PostgreSQL connection string) before using "
+            "the production workspace. Local SQLite fallback is disabled in production."
+        )
+
     LOCAL_DB.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(LOCAL_DB), timeout=15)
     conn.row_factory = sqlite3.Row
@@ -389,6 +411,12 @@ def init_db() -> None:
             id TEXT PRIMARY KEY, owner_email TEXT NOT NULL, person_name TEXT NOT NULL,
             record_type TEXT NOT NULL, role_title TEXT NOT NULL, skills TEXT,
             availability TEXT, start_date TEXT, status TEXT NOT NULL,
+            notes TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+        )""",
+        """CREATE TABLE IF NOT EXISTS customer_records (
+            id TEXT PRIMARY KEY, owner_email TEXT NOT NULL, customer_name TEXT NOT NULL,
+            organization TEXT, customer_type TEXT NOT NULL, email TEXT, phone TEXT,
+            service_interest TEXT, relationship_status TEXT NOT NULL, next_follow_up TEXT,
             notes TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
         )""",
         """CREATE TABLE IF NOT EXISTS revenue_opportunities (
@@ -499,6 +527,7 @@ def init_db() -> None:
 
 try:
     init_db()
+    initialize_daily_crediting(db_connect)
 except Exception as e:
     st.error("The workspace database could not initialize. If you configured DATABASE_URL, verify the database URL and network access in Streamlit secrets. For a durable production deployment, use a managed PostgreSQL database.")
     st.code(str(e))
@@ -721,6 +750,25 @@ def set_login(user: dict[str, Any], login_purpose: str = "") -> None:
 
 
 def signup_page() -> None:
+    st.markdown("""
+    <div class="ce-dashboard-hero ce-business-hero">
+      <div class="ce-eyebrow">GLOBAL BUSINESS PLATFORM</div>
+      <div class="ce-hero-title">CEDARS EMPIRE</div>
+      <div class="ce-hero-subtitle">Business operations, customer services, contracts, Grid marketplace and evidence-led financial controls.</div>
+      <div class="ce-hero-strip"><span>ONE WORKSPACE</span><span>VERIFIABLE RECORDS</span><span>CONTROLLED PAYMENTS</span></div>
+    </div>
+    """, unsafe_allow_html=True)
+    st.markdown("### Business workspace")
+    landing_cols = st.columns(3)
+    landing_items = [
+        ("Business operations", "Customer records, calendar, tasks, contracts and reports."),
+        ("Grid marketplace", "Explore service categories and submit evidence-backed activity."),
+        ("Earnings & controls", "Review recorded credits and transaction history; finance controls are role-restricted."),
+    ]
+    for col, (heading, detail) in zip(landing_cols, landing_items):
+        with col:
+            st.markdown(f'<div class="ce-business-metric"><div class="ce-stat-kicker">{heading.upper()}</div><div class="ce-business-detail">{detail}</div></div>', unsafe_allow_html=True)
+    st.caption("Only verified receipts and approved records can be reported as actual financial results. Displayed scenarios are not guaranteed returns.")
     signin, signup, public, reset_request, reset_finish = st.tabs(
         ["Sign in", "Create account", "Public noticeboard", "Forgot password", "Set new password"])
     with signin:
@@ -893,26 +941,22 @@ USER_EMAIL = st.session_state.user_email
 USER_NAME = st.session_state.full_name
 IS_ADMIN = USER_EMAIL.lower() in ADMIN_EMAILS
 
-# Page lists are kept in the application layer; navigation is rendered in the main page area.
-business_user_pages = ["Dashboard", "Deposit", "Withdraw", "Refer", "Account"]
-business_admin_pages = [
-    "Dashboard", "Executive Command Center", "Treasury Management", "Real Money Engines",
-    "Grid Marketplace", "Work & Contracts", "Payments & Treasury",
-    "Blockchain & Treasury", "Payment Operations", "Reports & Referrals", "AI Operations",
-]
-ngo_user_pages = [
-    "Climate and Career Hub", "My Tasks", "Opportunity Analysis", "Proposal Studio",
-    "Live Studio", "CV / Resume Studio", "SDG Navigator", "Noticeboard",
-    "HH Standards & Impact", "Donor Feedback", "B2B Collaboration", "HR & Volunteers",
-    "Income Activities", "My Work & Wallet", "Revenue & Sustainability",
-    "Privacy and Data", "Calendar & Events",
-]
-ngo_admin_pages = [
-    "Command Center", "HR Department", "Finance Department", "40/60 Allocation Foundation",
-    "Income & Revenue", "Admin Studio", "Admin Noticeboard", "Wallet & Withdrawals",
-    "Branding Settings", "Report Automation", "Admin Console",
-]
-# Locked header container: logo, workspace switch and all page menus stay together at the top.
+# CEDARS EMPIRE is a business-only platform. NGO workspace is permanently retired.
+# Compact top-level navigation with grouped submenus; internal finance stays admin-only.
+business_menu = {
+    "Overview": ["Dashboard", "Studio"],
+    "Business": ["Customer & Client Management", "Calendar & Events", "Work & Contracts", "Business Reports"],
+    "Earnings": ["Earnings & Wallet", "Deposit", "Withdraw", "Refer"],
+    "Grids": ["Grid Marketplace"],
+    "Account": ["Account"],
+}
+admin_menu = {
+    **business_menu,
+    "Executive": ["Executive Command Center", "Treasury Management", "Real Money Engines"],
+    "Payments": ["Payments & Treasury", "Blockchain & Treasury", "Payment Operations"],
+    "Automation": ["Daily Crediting", "Reports & Referrals", "AI Operations"],
+}
+menu_groups = admin_menu if IS_ADMIN else business_menu
 with st.container(key="ce_locked_header"):
     logo_bytes = None
     try:
@@ -920,7 +964,7 @@ with st.container(key="ce_locked_header"):
             logo_bytes = LOGO.read_bytes()
     except Exception:
         logo_bytes = None
-    header_left_spacer, header_brand_group, header_status_col = st.columns([1.0, 2.2, 1.0], vertical_alignment="center")
+    _, header_brand_group, header_status_col = st.columns([1.0, 2.2, 1.0], vertical_alignment="center")
     with header_brand_group:
         logo_col, brand_col = st.columns([0.55, 2.8], vertical_alignment="center")
         with logo_col:
@@ -931,47 +975,33 @@ with st.container(key="ce_locked_header"):
         with brand_col:
             st.markdown('<div class="ce-brand-title">CEDARS EMPIRE</div>', unsafe_allow_html=True)
     with header_status_col:
-        st.markdown('<div class="ce-header-right">SECURE WORKSPACE · VERIFIED ACTIVITY</div>', unsafe_allow_html=True)
-
-    def _reset_menu_on_workspace_change() -> None:
-        """Clear a menu selection that belongs to the previous workspace."""
-        target_mode = st.session_state.get("cedars_workspace_mode", "Real Money Business")
-        if target_mode == "NGO Operations":
-            next_pages = ngo_user_pages + (ngo_admin_pages if IS_ADMIN else [])
-        else:
-            next_pages = business_admin_pages if IS_ADMIN else business_user_pages
-        # Streamlit validates widget state against the current radio options.
-        # Reset before the main-menu widget is instantiated on this rerun.
-        st.session_state["ce_header_menu"] = next_pages[0]
-
-    workspace_mode = st.radio(
-        "Workspace", ["Real Money Business", "NGO Operations"],
-        index=0, key="cedars_workspace_mode", horizontal=True,
-        label_visibility="collapsed", on_change=_reset_menu_on_workspace_change,
-    )
-    if workspace_mode == "NGO Operations":
-        pages = ngo_user_pages + (ngo_admin_pages if IS_ADMIN else [])
-    else:
-        pages = business_admin_pages if IS_ADMIN else business_user_pages
-
-    selected_page = st.radio(
-        "Main menu", pages,
-        index=min(pages.index(st.session_state.get("ce_header_menu", pages[0])), len(pages)-1)
-          if st.session_state.get("ce_header_menu", pages[0]) in pages else 0,
-        horizontal=True, label_visibility="collapsed", key="ce_header_menu",
-    )
-    if "ce_header_search" not in st.session_state:
-        st.session_state.ce_header_search = ""
-    quick_search = st.text_input(
-        "Find a page", placeholder="Find a page…",
-        label_visibility="collapsed", key="ce_header_search",
-    )
+        st.markdown('<div class="ce-header-right">DIE RICH OR DIE TRYING</div>', unsafe_allow_html=True)
+    nav_cols = st.columns([1.0, 1.65, 1.2], vertical_alignment="center")
+    with nav_cols[0]:
+        menu_keys = list(menu_groups)
+        current_group = st.session_state.get("ce_top_menu", menu_keys[0])
+        if current_group not in menu_keys:
+            current_group = menu_keys[0]
+        top_menu = st.selectbox("Menu", menu_keys, index=menu_keys.index(current_group),
+                                key="ce_top_menu", label_visibility="collapsed")
+    with nav_cols[1]:
+        submenu_options = menu_groups[top_menu]
+        current_submenu = st.session_state.get("ce_sub_menu", submenu_options[0])
+        if current_submenu not in submenu_options:
+            current_submenu = submenu_options[0]
+        selected_page = st.selectbox("Pages", submenu_options, index=submenu_options.index(current_submenu),
+                                     key="ce_sub_menu", label_visibility="collapsed")
+    with nav_cols[2]:
+        quick_search = st.text_input("Find a page", placeholder="Find a page…",
+                                     label_visibility="collapsed", key="ce_header_search")
     if quick_search.strip():
-        matches = [p for p in pages if quick_search.strip().lower() in p.lower()]
-        st.caption(" · ".join(matches) if matches else "No matching pages.")
-
+        matches = [p for group in menu_groups.values() for p in group if quick_search.strip().lower() in p.lower()]
+        st.caption("Matching pages: " + (" · ".join(matches) if matches else "None"))
 page_routes = {
     "Dashboard": "Business Dashboard",
+    "Earnings & Wallet": "Earnings & Wallet",
+    "Studio": "Live Studio",
+    "Customer & Client Management": "Customer & Client Management",
     "Deposit": "Deposit & Packages",
     "Earn": "Real Money Engines",
     "Withdraw": "Withdrawals & Full KYC",
@@ -1007,8 +1037,7 @@ page = page_routes.get(selected_page, selected_page)
 # Authorization must be enforced in application logic, not only by hiding menu items.
 INTERNAL_ONLY_PAGES = {
     "Executive Command Center", "Command Center", "Treasury Management",
-    "Real Money Engines", "Grid Marketplace", "World Grid Marketplace",
-    "Work & Contracts", "Client Services & Contracts",
+    "Real Money Engines",
     "Blockchain & Treasury", "Payment Operations", "AI Operations",
     "AI Business Scenario Lab", "Business Opportunity Pipeline",
     "NeuroWave + Health", "EchoMap + Mobility", "BioLoop + Finance",
@@ -1046,7 +1075,7 @@ BUSINESS_PAGES = {
     "AI Training & Data Operations", "World Grid Marketplace", "Client Services & Contracts",
     "Business Opportunity Pipeline", "Blockchain & Treasury", "Deposit QR & TIGERS",
     "Withdrawals & Full KYC", "Staking & Compounding", "Referral Program",
-    "Business Reports", "Executive Command Center", "Treasury Management", "Grid Marketplace", "Work & Contracts",
+    "Business Reports", "Live Studio", "Customer & Client Management", "Calendar & Events", "Executive Command Center", "Treasury Management", "Grid Marketplace", "Work & Contracts",
     "Payments & Treasury", "Deposits & Withdrawals", "Payment Operations", "Deposit & Packages", "Withdraw / Cash Out", "Reports & Referrals", "AI Operations"
 }
 if page in BUSINESS_PAGES:
@@ -1418,6 +1447,107 @@ if page in BUSINESS_PAGES:
         if chain_reviews:
             st.subheader("Recorded chain reviews — internal records")
             render_bank_table(pd.DataFrame(chain_reviews), use_container_width=True, hide_index=True)
+    elif page == "Daily Crediting" and IS_ADMIN:
+        st.header("Daily Crediting")
+        st.caption("Evidence-backed activity rewards only. Investment returns and projected Grid profits are not automatically payable.")
+        with st.form("ce_earning_rule_form"):
+            rule_name = st.text_input("Rule name")
+            activity_type = st.selectbox("Qualifying activity", ["referral_sale", "completed_task", "verified_purchase", "loyalty_reward", "performance_bonus"])
+            rate = st.number_input("Credit rate per unit of qualifying volume", min_value=0.0, max_value=1.0, value=0.10, step=0.01, format="%.4f")
+            reward_type = st.selectbox("Credit type", ["REFERRAL_COMMISSION", "TASK_REWARD", "LOYALTY_REWARD", "PERFORMANCE_BONUS"])
+            rule_enabled = st.checkbox("Enable rule for eligible activities", value=False)
+            funding_required = st.checkbox("Require verified funding (recommended)", value=True)
+            save_rule = st.form_submit_button("Save rule")
+        if save_rule:
+            if not rule_name.strip():
+                st.error("Enter a rule name.")
+            else:
+                conn, kind = db_connect()
+                try:
+                    cur = conn.cursor()
+                    qmark = "%s" if kind == "postgres" else "?"
+                    cur.execute("INSERT INTO earning_rules (id,rule_name,activity_type,rate,reward_type,enabled,requires_verified_funding,created_at) VALUES (" + ",".join([qmark]*8) + ") ON CONFLICT(rule_name) DO UPDATE SET rate=excluded.rate,reward_type=excluded.reward_type,enabled=excluded.enabled,requires_verified_funding=excluded.requires_verified_funding",
+                                (str(uuid.uuid4()), rule_name.strip(), activity_type, str(rate), reward_type, int(rule_enabled), int(funding_required), now_iso()))
+                    conn.commit()
+                    st.success("Rule saved.")
+                    st.rerun()
+                finally:
+                    conn.close()
+        rules = db_all("SELECT rule_name,activity_type,rate,reward_type,enabled,requires_verified_funding FROM earning_rules ORDER BY rule_name")
+        st.subheader("Earning rules")
+        if rules:
+            render_bank_table(pd.DataFrame(rules), use_container_width=True, hide_index=True)
+        with st.form("ce_activity_review_form"):
+            pending = db_all("SELECT id,user_email,activity_type,qualifying_volume,currency,evidence_ref,status,funding_verified,risk_score FROM earning_activities WHERE status='PENDING' ORDER BY created_at DESC LIMIT 500")
+            pending_ids = [r["id"] for r in pending]
+            chosen = st.selectbox("Activity to review", pending_ids, format_func=lambda value: next((f'{r["user_email"]} · {r["activity_type"]} · {r["qualifying_volume"]} {r["currency"]}' for r in pending if r["id"] == value), value), disabled=not pending_ids)
+            review_funding = st.checkbox("Funding independently verified", value=False)
+            review_evidence = st.text_input("Evidence reference / explorer URL")
+            review_action = st.selectbox("Decision", ["APPROVED", "REJECTED", "HOLD_FOR_REVIEW"])
+            review_submit = st.form_submit_button("Save review", disabled=not pending_ids)
+        if review_submit and pending_ids:
+            db_exec("UPDATE earning_activities SET status=?,funding_verified=?,evidence_ref=?,reviewed_by=?,reviewed_at=? WHERE id=?",
+                    (review_action, int(review_funding), review_evidence.strip() or None, USER_EMAIL, now_iso(), chosen))
+            db_exec("INSERT INTO audit_logs (id,user_email,action,details,created_at) VALUES (?,?,?,?,?)",
+                    (str(uuid.uuid4()), USER_EMAIL, "earning_activity_reviewed", json.dumps({"activity_id": chosen, "decision": review_action, "funding_verified": review_funding}), now_iso()))
+            st.success("Review recorded.")
+            st.rerun()
+        st.subheader("Daily processing")
+        st.write("Timezone: Pacific/Auckland (IANA timezone; daylight-saving transitions handled). The processing function is idempotent by business date and activity reference.")
+        if st.button("Run daily credit batch", type="primary"):
+            try:
+                result = process_daily_credits(db_connect, "Pacific/Auckland")
+                st.success(f'Batch status: {result["status"]} · Date: {result["date"]} · Credits: {result["count"]} · Total: {result["amount"]}')
+            except Exception as exc:
+                st.error("Daily batch failed safely. No partial activity credit should be considered complete.")
+                st.caption(type(exc).__name__)
+        recent_runs = db_all("SELECT processing_date,status,started_at,completed_at,processed_count,total_amount FROM daily_credit_runs ORDER BY processing_date DESC LIMIT 90")
+        if recent_runs:
+            render_bank_table(pd.DataFrame(recent_runs), use_container_width=True, hide_index=True)
+        st.subheader("Recent credit transactions")
+        tx = db_all("SELECT user_email,transaction_type,amount,currency,reference,status,created_at FROM transactions ORDER BY created_at DESC LIMIT 500")
+        if tx:
+            render_bank_table(pd.DataFrame(tx), use_container_width=True, hide_index=True)
+        st.info("Automatic midnight execution requires a separately configured durable scheduler. This page's button is a controlled manual run; no scheduler is claimed as active.")
+    elif page == "Earnings & Wallet":
+        st.header("Earnings & Wallet")
+        wallet_rows = db_all("SELECT available_balance,lifetime_earnings,updated_at FROM wallets WHERE user_email=?", (USER_EMAIL,))
+        wallet = wallet_rows[0] if wallet_rows else {"available_balance": "0.00", "lifetime_earnings": "0.00", "updated_at": "—"}
+        earned_today = db_all("SELECT COALESCE(SUM(CAST(amount AS NUMERIC)),0) AS total FROM transactions WHERE user_email=? AND status='COMPLETED' AND created_at LIKE ?",
+                              (USER_EMAIL, datetime.now(timezone.utc).date().isoformat() + "%"))
+        pending_count = db_all("SELECT COUNT(*) AS n FROM earning_activities WHERE user_email=? AND status IN ('PENDING','HOLD_FOR_REVIEW')", (USER_EMAIL,))
+        cols = st.columns(4)
+        cols[0].metric("Available credited balance", str(wallet.get("available_balance", "0.00")))
+        cols[1].metric("Lifetime credited earnings", str(wallet.get("lifetime_earnings", "0.00")))
+        cols[2].metric("Today's credits (UTC record date)", str(earned_today[0].get("total", "0.00") if earned_today else "0.00"))
+        cols[3].metric("Pending activities", str(pending_count[0].get("n", 0) if pending_count else 0))
+        st.caption("Balances show ledger-backed platform credits, not guaranteed profits or an on-chain wallet balance.")
+        with st.form("ce_submit_earning_activity"):
+            activity_type = st.selectbox("Activity type", ["referral_sale", "completed_task", "verified_purchase", "loyalty_reward", "performance_bonus"])
+            volume = st.number_input("Qualifying volume (must be evidence-backed)", min_value=0.01, value=1.00, step=1.00)
+            currency = st.selectbox("Currency", ["USDT"])
+            evidence_ref = st.text_input("Evidence reference / transaction ID")
+            submit_activity = st.form_submit_button("Submit activity for review")
+        if submit_activity:
+            if not evidence_ref.strip():
+                st.error("An evidence reference is required; the activity will not be auto-approved.")
+            else:
+                db_exec("INSERT INTO earning_activities (id,user_email,activity_type,qualifying_volume,currency,evidence_ref,status,funding_verified,risk_score,activity_at,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                        (str(uuid.uuid4()), USER_EMAIL, activity_type, str(volume), currency, evidence_ref.strip(), "PENDING", 0, 0, now_iso(), now_iso()))
+                db_exec("INSERT INTO audit_logs (id,user_email,action,details,created_at) VALUES (?,?,?,?,?)",
+                        (str(uuid.uuid4()), USER_EMAIL, "earning_activity_submitted", json.dumps({"activity_type": activity_type, "evidence_ref": evidence_ref.strip()}), now_iso()))
+                st.success("Submitted for admin review; no balance has been credited.")
+                st.rerun()
+        st.subheader("Transaction history")
+        history = db_all("SELECT transaction_type,amount,currency,reference,status,created_at FROM transactions WHERE user_email=? ORDER BY created_at DESC LIMIT 500", (USER_EMAIL,))
+        if history:
+            render_bank_table(pd.DataFrame(history), use_container_width=True, hide_index=True)
+        else:
+            st.info("No credits recorded.")
+        ledger = db_all("SELECT entry_type,amount,currency,created_at FROM ledger_entries WHERE user_email=? ORDER BY created_at DESC LIMIT 500", (USER_EMAIL,))
+        if ledger:
+            st.subheader("Ledger")
+            render_bank_table(pd.DataFrame(ledger), use_container_width=True, hide_index=True)
     elif page == "Business Reports":
         st.header("Business Reports")
         st.write("Operational reports distinguish evidence-reviewed records from pending items, estimates and user-entered claims.")
@@ -1452,6 +1582,11 @@ if page in BUSINESS_PAGES:
         else:
             st.header("Executive Command Center")
             st.write("Admin-only oversight for business operations. Financial records must be evidence-backed; no simulated balance or revenue is shown.")
+
+            st.subheader("Treasury Risk Policy")
+            st.metric("Maximum tolerated Grid-revenue loss target", "15%")
+            st.warning("If Grid revenue falls more than 15% below the modelled baseline, activate emergency controls: reduce discretionary costs, protect reserves, and reassess distributions. The 25%, 50%, 75% and 100% loss cases remain stress tests. This policy display is not a live solvency calculation; do not treat it as proof of profitability or available funds.")
+            st.caption("Customer deposits are capital, not operating revenue. Distributions must be capped by verified available distributable cash; unsupported payouts must be suspended.")
 
             # Grid terminal board: operational health is deliberately separate from revenue.
             # No live health probes are configured yet, so never imply a grid is working or failed.
@@ -2763,6 +2898,47 @@ elif page == "Admin Console" and IS_ADMIN:
             st.info("No verified ledger entries recorded yet.")
 
 # -----------------------------------------------------------------------------
+elif page == "Customer & Client Management":
+    st.header("Customer & Client Management")
+    st.caption("Manage customer relationships and service enquiries. Record only information you are authorized to hold.")
+    with st.form("customer_record_form"):
+        customer_name = st.text_input("Customer / contact name")
+        organization = st.text_input("Company / organization")
+        customer_type = st.selectbox("Relationship type", ["Customer", "Business client", "Service provider", "Prospective client", "Partner"])
+        customer_email = st.text_input("Business email")
+        customer_phone = st.text_input("Phone (optional)")
+        service_interest = st.text_input("Service / grid of interest")
+        relationship_status = st.selectbox("Relationship status", ["New lead", "Contacted", "Qualified", "Proposal sent", "Active customer", "On hold", "Closed"])
+        next_follow_up = st.text_input("Next follow-up date (YYYY-MM-DD, optional)", placeholder="2026-11-01")
+        customer_notes = st.text_area("Business notes (avoid sensitive personal information)")
+        save_customer = st.form_submit_button("Save customer", type="primary")
+    if save_customer:
+        if not customer_name.strip():
+            st.error("Customer / contact name is required.")
+        elif customer_email.strip() and not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", customer_email.strip()):
+            st.error("Enter a valid email address or leave it blank.")
+        elif next_follow_up.strip() and not re.match(r"^\d{4}-\d{2}-\d{2}$", next_follow_up.strip()):
+            st.error("Use YYYY-MM-DD for the follow-up date.")
+        else:
+            db_exec("INSERT INTO customer_records (id,owner_email,customer_name,organization,customer_type,email,phone,service_interest,relationship_status,next_follow_up,notes,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (str(uuid.uuid4()), USER_EMAIL, customer_name.strip(), organization.strip(), customer_type, customer_email.strip(), customer_phone.strip(), service_interest.strip(), relationship_status, next_follow_up.strip() or None, customer_notes.strip(), now_iso(), now_iso()))
+            record_event(USER_EMAIL, "customer_record_created", customer_type)
+            st.success("Customer record saved.")
+            st.rerun()
+    customers = db_all("SELECT customer_name AS Customer,organization AS Organization,customer_type AS Type,email AS Email,phone AS Phone,service_interest AS Service,relationship_status AS Status,next_follow_up AS Follow_up,notes AS Notes,updated_at AS Updated FROM customer_records WHERE owner_email=? ORDER BY updated_at DESC", (USER_EMAIL,))
+    st.subheader("My customers and client contacts")
+    if customers:
+        customer_frame = pd.DataFrame(customers)
+        render_bank_table(customer_frame, use_container_width=True, hide_index=True)
+        download_gate("customer records", customer_frame.to_csv(index=False), "cedars_empire_customers.csv", "text/csv", "customer_records")
+    else:
+        st.info("No customer records yet.")
+    if IS_ADMIN:
+        st.subheader("Platform customer register — administrator view")
+        all_customers = db_all("SELECT owner_email AS Owner,customer_name AS Customer,organization AS Organization,customer_type AS Type,email AS Email,service_interest AS Service,relationship_status AS Status,next_follow_up AS Follow_up,updated_at AS Updated FROM customer_records ORDER BY updated_at DESC LIMIT 1000")
+        if all_customers:
+            render_bank_table(pd.DataFrame(all_customers), use_container_width=True, hide_index=True)
+
 # HR & Volunteer Hub — user-scoped records, admin visibility
 # -----------------------------------------------------------------------------
 elif page == "HR & Volunteers":

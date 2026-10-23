@@ -338,11 +338,15 @@ class PaymentModuleTests(unittest.TestCase):
         ):
             self.assertIn(route, source)
         self.assertNotIn('elif page == "Packages":', source)
-        menu_start = source.index("user_pages = [")
-        menu_end = source.index("]", menu_start)
-        self.assertIn('"Deposit"', source[menu_start:menu_end])
+        # Navigation is now grouped into compact business menus; test the new contract
+        # instead of depending on the retired flat user_pages list.
+        self.assertIn('"Earnings": ["Earnings & Wallet", "Deposit", "Withdraw", "Refer"]', source)
+        self.assertIn('"Customer & Client Management"', source)
+        self.assertIn('"Studio": "Live Studio"', source)
         self.assertIn('"Deposit": "Deposit & Packages"', source)
-        self.assertNotIn('"Packages"', source[menu_start:menu_end])
+        self.assertNotIn('"Packages":', source)
+        self.assertIn('menu_groups = admin_menu if IS_ADMIN else business_menu', source)
+        self.assertIn('selected_page = st.selectbox("Pages"', source)
         self.assertIn("Deposit & Packages QR integration (build 2026-10-21)", source)
         payment_source = Path("hh_real_payments.py").read_text(encoding="utf-8")
         deposit_start = payment_source.index("def _deposit_ui(")

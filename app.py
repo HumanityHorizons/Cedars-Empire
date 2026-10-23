@@ -1061,7 +1061,7 @@ if page in BUSINESS_PAGES:
     if media.get("page_image:" + page):
         try: st.image(io.BytesIO(__import__("base64").b64decode(media["page_image:" + page])), use_container_width=True)
         except Exception: pass
-    st.title("CEDARS EMPIRE")
+    # Shared branded header above already displays CEDARS EMPIRE; avoid a duplicate page title.
     st.caption("AI Real Business Scenarios")
     st.info("Integrity rule: scenarios, leads, estimates and planned contracts are not revenue. Record income only after a verifiable payment is received and reconciled. No earnings or contract is guaranteed.")
     MERGED_GRID_CATALOG = {

@@ -1056,8 +1056,7 @@ with st.container(key="ce_locked_header"):
                 st.markdown('<div class="ce-brand-mark">C</div>', unsafe_allow_html=True)
         with brand_col:
             st.markdown('<div class="ce-brand-title">CEDARS EMPIRE</div>', unsafe_allow_html=True)
-    with header_status_col:
-        st.markdown('<div class="ce-header-right">DIE RICH OR DIE TRYING</div>', unsafe_allow_html=True)
+    # Keep the locked company header clean: no extra slogan/tagline.
     nav_cols = st.columns([1.0, 1.65, 1.2], vertical_alignment="center")
     with nav_cols[0]:
         menu_keys = list(menu_groups)
@@ -1385,14 +1384,8 @@ if page in BUSINESS_PAGES:
         own_refs = db_all("SELECT referral_code,referred_email,status,reward_amount,reward_asset,evidence_ref,created_at FROM referral_records WHERE referrer_email=? ORDER BY created_at DESC", (USER_EMAIL,))
         if own_refs: render_bank_table(pd.DataFrame(own_refs), use_container_width=True, hide_index=True)
     elif page == "Business Dashboard":
-        st.markdown("""
-        <div class="ce-dashboard-hero ce-business-hero">
-          <div class="ce-eyebrow">REAL MONEY BUSINESS</div>
-          <div class="ce-hero-title">Business Command Overview</div>
-          <div class="ce-hero-subtitle">Monitor service grids, customer activity, contract readiness and reconciled receipts.</div>
-          <div class="ce-hero-strip"><span>GLOBAL OPERATIONS</span><span>CONTROLLED PAYMENTS</span><span>VERIFIED RECORDS</span></div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.subheader("Business Command Overview")
+        st.caption("Monitor service grids, customer activity, contract readiness and reconciled receipts.")
         st.markdown('<div class="ce-section-label">FINANCIAL CONTROL</div>', unsafe_allow_html=True)
         cols = st.columns(3)
         for col, label, value, detail in [

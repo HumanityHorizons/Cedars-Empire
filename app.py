@@ -295,14 +295,36 @@ def run_optional_ai(prompt: str) -> str | None:
 
 
 def db_connect():
+    """Open the configured durable database; never silently use ephemeral disk in production."""
     if DATABASE_URL:
         try:
             import psycopg
             from psycopg.rows import dict_row
         except ImportError as exc:
             raise RuntimeError("DATABASE_URL is configured, but psycopg is missing. Rebuild after installing requirements.txt.") from exc
-        conn = psycopg.connect(DATABASE_URL, row_factory=dict_row, connect_timeout=10)
+        try:
+            conn = psycopg.connect(DATABASE_URL, row_factory=dict_row, connect_timeout=10)
+        except Exception as exc:
+            # Fail closed: do not fall back to a blank local database if production
+            # PostgreSQL is unavailable, because that can look like lost user data.
+            raise RuntimeError(
+                "The configured durable database could not be reached. Check the "
+                "DATABASE_URL secret and database availability, then retry. No local "
+                "fallback was opened, so existing production data was not replaced."
+            ) from exc
         return conn, "postgres"
+
+    # Streamlit Community Cloud instances are ephemeral. SQLite may be used for
+    # local development only; production must explicitly configure PostgreSQL.
+    is_streamlit_cloud = bool(os.getenv("STREAMLIT_SHARING_MODE") or os.getenv("STREAMLIT_SERVER_HEADLESS"))
+    is_production = setting("CEDARS_PRODUCTION", "").strip().lower() in {"1", "true", "yes", "on"}
+    if is_streamlit_cloud or is_production:
+        raise RuntimeError(
+            "Durable storage is not configured. Add DATABASE_URL to the app's "
+            "Streamlit Secrets (managed PostgreSQL connection string) before using "
+            "the production workspace. Local SQLite fallback is disabled in production."
+        )
+
     LOCAL_DB.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(LOCAL_DB), timeout=15)
     conn.row_factory = sqlite3.Row

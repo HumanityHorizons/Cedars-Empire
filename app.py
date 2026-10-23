@@ -1106,7 +1106,10 @@ with st.sidebar:
         ]
         if not visible_pages:
             continue
-        with st.expander(group_name, expanded=True):
+        # Keep navigation compact: open only the active group, or matching groups during search.
+        # All page routes remain available; this changes presentation only.
+        group_is_active = current_page in group_pages or st.session_state.get("ce_selected_page") in group_pages
+        with st.expander(group_name, expanded=bool(quick_search.strip()) or group_is_active):
             for page_name in visible_pages:
                 prefix = "● " if page_name == current_page else ""
                 if st.button(prefix + page_name, key="ce_nav_" + re.sub(r"[^a-zA-Z0-9]+", "_", group_name + "_" + page_name), use_container_width=True):

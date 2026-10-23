@@ -35,7 +35,7 @@ from daily_crediting import initialize as initialize_daily_crediting, process_da
 # Build marker retained for integration checks: Deposit & Packages QR integration (build 2026-10-21)
 # -----------------------------------------------------------------------------
 APP_DIR = Path(__file__).parent
-# Use only the new CEDARS EMPIRE logo asset when uploaded; never fall back to legacy Humanity Horizons branding.
+# Use only the CEDARS EMPIRE logo asset when uploaded; do not fall back to legacy branding.
 LOGO = APP_DIR / "assets" / "cedars_empire_logo.png"
 LOCAL_DB = Path(os.getenv("HH_DATA_DIR", tempfile.gettempdir())) / "humanity_horizons.db"
 PBKDF2_ITERATIONS = 310_000
@@ -941,7 +941,7 @@ USER_EMAIL = st.session_state.user_email
 USER_NAME = st.session_state.full_name
 IS_ADMIN = USER_EMAIL.lower() in ADMIN_EMAILS
 
-# CEDARS EMPIRE is a business-only platform. The NGO workspace is permanently retired.
+# CEDARS EMPIRE is a business-only platform. The former NGO workspace is retired and not exposed.
 # Compact top-level navigation with grouped submenus; internal finance stays admin-only.
 business_menu = {
     "Overview": ["Dashboard", "Studio"],
@@ -1079,7 +1079,7 @@ BUSINESS_PAGES = {
     "Payments & Treasury", "Deposits & Withdrawals", "Payment Operations", "Deposit & Packages", "Withdraw / Cash Out", "Reports & Referrals", "AI Operations"
 }
 if page in BUSINESS_PAGES:
-    # Internal 360-degree command oversight; keep public-facing branding clean and never print "360" in UI.
+    # Internal administrator oversight; keep public-facing branding clean.
     media_rows = db_all("SELECT setting_key,setting_value FROM app_settings WHERE setting_key IN (?,?)",
                         ("site_logo", "page_image:" + page))
     media = {row["setting_key"]: row["setting_value"] for row in media_rows}

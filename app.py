@@ -1036,7 +1036,6 @@ with signout_col:
             st.session_state.pop(key, None)
         st.rerun()
 st.divider()
-st.caption("CEDARS EMPIRE · Release 2.1")
 st.caption("AI: connected" if OPENAI_API_KEY else "AI: local structured mode (API key not configured)")
 
 # Cedars Empire: real-business scenario workspace.

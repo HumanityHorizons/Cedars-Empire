@@ -1074,7 +1074,6 @@ if page in BUSINESS_PAGES:
     }
     if page in MERGED_GRID_CATALOG:
         grid = MERGED_GRID_CATALOG[page]
-        st.header(page)
         st.subheader(grid["service"])
         st.write("**Target paying customers:** " + grid["buyer"])
         st.write("**Commercial model:** " + grid["revenue"])

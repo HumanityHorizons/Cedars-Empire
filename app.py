@@ -1068,7 +1068,7 @@ business_menu = {
         "Customer & Client Management", "Calendar & Events", "Live Studio",
         "Work & Contracts", "Client Services & Contracts", "Business Opportunity Pipeline",
     ],
-    "Real Money Grids": [
+    "Grid Marketplace": [
         "Grid Marketplace", "World Grid Marketplace", "Real Money Engines",
         "NeuroWave + Health", "EchoMap + Mobility", "BioLoop + Finance",
         "DreamGrid + Education", "EmoFlux + Shelter", "IdeaForge + Data",

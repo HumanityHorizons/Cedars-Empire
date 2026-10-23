@@ -32,9 +32,11 @@ class AuthSessionPersistenceTests(unittest.TestCase):
 
     def test_login_and_signup_do_not_force_rerun_before_cookie_component_commit(self):
         signin = self.app.split('set_login(users[0], signin_purpose.strip())', 1)[1].split('with signup:', 1)[0]
-        self.assertNotIn("st.rerun()", signin)
+        signin_code = "\\n".join(line for line in signin.splitlines() if not line.lstrip().startswith("#"))
+        self.assertNotIn("st.rerun()", signin_code)
         signup = self.app.split('set_login(user, purpose.strip())', 1)[1].split('with public:', 1)[0]
-        self.assertNotIn("st.rerun()", signup)
+        signup_code = "\\n".join(line for line in signup.splitlines() if not line.lstrip().startswith("#"))
+        self.assertNotIn("st.rerun()", signup_code)
 
     def test_signin_does_not_require_reentering_profile_consent(self):
         signin = self.app.split('with st.form("signin_form")', 1)[1].split('with signup:', 1)[0]

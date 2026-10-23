@@ -25,6 +25,7 @@ import pymupdf
 from docx import Document
 from hh_workspace_widgets import render_action_grid, render_calendar, render_document_exports
 from hh_grid_marketplace import render_grid_marketplace
+from hh_robot_dashboard import render_robot_dashboard
 from hh_real_payments import (
     ensure_payment_tables, render_deposit_page, render_cashout_page,
     render_payment_ops_page, render_user_treasury_overview_page,
@@ -1070,7 +1071,7 @@ business_menu = {
         "Work & Contracts", "Client Services & Contracts", "Business Opportunity Pipeline",
     ],
     "Grid Marketplace": [
-        "Grid Marketplace", "World Grid Marketplace", "Real Work & Robot Grid Marketplace", "Real Money Engines",
+        "Grid Marketplace", "World Grid Marketplace", "Real Work & Robot Grid Marketplace", "Robot Operations Dashboard", "Real Money Engines",
         "NeuroWave + Health", "EchoMap + Mobility", "BioLoop + Finance",
         "DreamGrid + Education", "EmoFlux + Shelter", "IdeaForge + Data",
         "QuantumLeap + Energy", "Cleaning Grid", "Shelter & Accommodation Grid",
@@ -1131,6 +1132,7 @@ page_routes = {
     "Refer": "Referral Program",
     "Account": "Payments & Treasury",
     "Grid Marketplace": "World Grid Marketplace",
+    "Robot Operations Dashboard": "Robot Operations Dashboard",
     "Work & Contracts": "Client Services & Contracts",
     "Payments & Treasury": "Blockchain & Treasury",
     "Payment Operations": "Payment Operations",
@@ -1511,6 +1513,8 @@ if page in BUSINESS_PAGES:
         render_engine_dashboard("AI training & data operations")
     elif page in {"World Grid Marketplace", "Real Work & Robot Grid Marketplace"}:
         render_grid_marketplace()
+    elif page == "Robot Operations Dashboard":
+        render_robot_dashboard()
     elif page == "Client Services & Contracts":
         st.header("Client Services & Contracts")
         st.write("Potential paid services: document and workflow automation, data analysis, digital operations, reporting, training and custom business support.")

@@ -1006,8 +1006,7 @@ page = page_routes.get(selected_page, selected_page)
 # Authorization must be enforced in application logic, not only by hiding menu items.
 INTERNAL_ONLY_PAGES = {
     "Executive Command Center", "Command Center", "Treasury Management",
-    "Real Money Engines", "Grid Marketplace", "World Grid Marketplace",
-    "Work & Contracts", "Client Services & Contracts",
+    "Real Money Engines",
     "Blockchain & Treasury", "Payment Operations", "AI Operations",
     "AI Business Scenario Lab", "Business Opportunity Pipeline",
     "NeuroWave + Health", "EchoMap + Mobility", "BioLoop + Finance",
@@ -2779,9 +2778,9 @@ elif page == "Customer & Client Management":
     if save_customer:
         if not customer_name.strip():
             st.error("Customer / contact name is required.")
-        elif customer_email.strip() and not re.match(r"^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", customer_email.strip()):
+        elif customer_email.strip() and not re.match(r"^[^@\s]+@[^@\s]+\\.[^@\s]+$", customer_email.strip()):
             st.error("Enter a valid email address or leave it blank.")
-        elif next_follow_up.strip() and not re.match(r"^\\d{4}-\\d{2}-\\d{2}$", next_follow_up.strip()):
+        elif next_follow_up.strip() and not re.match(r"^\d{4}-\d{2}-\d{2}$", next_follow_up.strip()):
             st.error("Use YYYY-MM-DD for the follow-up date.")
         else:
             db_exec("INSERT INTO customer_records (id,owner_email,customer_name,organization,customer_type,email,phone,service_interest,relationship_status,next_follow_up,notes,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",

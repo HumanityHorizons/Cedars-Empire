@@ -1020,6 +1020,29 @@ def signup_page() -> None:
 # account from the signed-by-randomness, database-backed browser session token.
 _restore_persistent_session()
 
+# Consistent application shell: clean branded header, compact account controls,
+# grouped navigation in the sidebar, workspace content, and a simple footer.
+with st.container(key="ce_locked_header"):
+    header_left, header_right = st.columns([4, 2], vertical_alignment="center")
+    with header_left:
+        brand_cols = st.columns([1, 8], vertical_alignment="center")
+        with brand_cols[0]:
+            if LOGO.exists():
+                try:
+                    st.image(str(LOGO), width=42)
+                except Exception:
+                    st.markdown('<div class="ce-brand-mark">CE</div>', unsafe_allow_html=True)
+            else:
+                st.markdown('<div class="ce-brand-mark">CE</div>', unsafe_allow_html=True)
+        with brand_cols[1]:
+            st.markdown('<div class="ce-brand-title">CEDARS EMPIRE</div>', unsafe_allow_html=True)
+            st.caption("Business workspace")
+    with header_right:
+        st.markdown(
+            '<div class="ce-header-right">GLOBAL OPERATIONS · VERIFIED RECORDS · CONTROLLED PAYMENTS</div>',
+            unsafe_allow_html=True,
+        )
+
 is_logged_in = bool(st.session_state.get("user_email"))
 if not is_logged_in:
     with st.sidebar:
@@ -1027,6 +1050,8 @@ if not is_logged_in:
         st.write("Sign in or create an account to save your work, manage tasks and use the personal tools.")
         st.caption("Administrator tools are enabled only for addresses explicitly configured in Streamlit secrets.")
     signup_page()
+    st.divider()
+    st.caption("© " + str(datetime.now(timezone.utc).year) + " CEDARS EMPIRE")
     st.stop()
 
 USER_EMAIL = st.session_state.user_email
@@ -1037,24 +1062,24 @@ IS_ADMIN = USER_EMAIL.lower() in ADMIN_EMAILS
 # This branch is for development/review only; it is not the live deployment.
 business_menu = {
     "Overview": [
-        "Dashboard", "Investor Landing", "Business Dashboard", "AI Business Scenario Lab",
+        "Dashboard", "Business Dashboard", "Investor Landing", "AI Business Scenario Lab",
     ],
-    "Business & Customers": [
+    "Customers & Delivery": [
         "Customer & Client Management", "Calendar & Events", "Live Studio",
         "Work & Contracts", "Client Services & Contracts", "Business Opportunity Pipeline",
     ],
-    "Earnings & Payments": [
-        "Earnings & Wallet", "Deposit", "Deposit & Packages", "Deposit QR & TIGERS",
-        "Withdraw", "Withdrawals & Full KYC", "Withdraw / Cash Out", "Deposits & Withdrawals",
-        "Staking & Compounding", "Referral Program", "Refer", "Payments & Treasury",
-        "Blockchain & Treasury", "Payment Operations",
-    ],
-    "Grid Marketplace": [
+    "Real Money Grids": [
         "Grid Marketplace", "World Grid Marketplace", "Real Money Engines",
         "NeuroWave + Health", "EchoMap + Mobility", "BioLoop + Finance",
         "DreamGrid + Education", "EmoFlux + Shelter", "IdeaForge + Data",
         "QuantumLeap + Energy", "Cleaning Grid", "Shelter & Accommodation Grid",
         "Energy & Utilities Grid", "AI Training & Data Operations",
+    ],
+    "Payments & Wallet": [
+        "Earnings & Wallet", "Deposit", "Deposit & Packages", "Deposit QR & TIGERS",
+        "Withdraw", "Withdrawals & Full KYC", "Withdraw / Cash Out", "Deposits & Withdrawals",
+        "Staking & Compounding", "Referral Program", "Refer", "Payments & Treasury",
+        "Blockchain & Treasury", "Payment Operations",
     ],
     "Reports & Automation": [
         "Business Reports", "Reports & Referrals", "Daily Crediting", "AI Operations",
@@ -1064,7 +1089,7 @@ business_menu = {
 admin_menu = {
     **business_menu,
     "Administration": [
-        "Executive Command Center", "Command Center", "Treasury Management", "Admin Noticeboard",
+        "Executive Command Center", "Treasury Management", "Admin Noticeboard",
         "Branding Settings", "Wallet & Withdrawals", "Report Automation",
     ],
 }
@@ -1159,29 +1184,6 @@ if not IS_ADMIN and page in INTERNAL_ONLY_PAGES:
 
 set_table_scope(page)
 reset_table_counter()
-
-# Consistent application shell: clean branded header, compact account controls,
-# grouped navigation in the sidebar, workspace content, and a simple footer.
-with st.container(key="ce_locked_header"):
-    header_left, header_right = st.columns([4, 2], vertical_alignment="center")
-    with header_left:
-        brand_cols = st.columns([1, 8], vertical_alignment="center")
-        with brand_cols[0]:
-            if LOGO.exists():
-                try:
-                    st.image(str(LOGO), width=42)
-                except Exception:
-                    st.markdown('<div class="ce-brand-mark">CE</div>', unsafe_allow_html=True)
-            else:
-                st.markdown('<div class="ce-brand-mark">CE</div>', unsafe_allow_html=True)
-        with brand_cols[1]:
-            st.markdown('<div class="ce-brand-title">CEDARS EMPIRE</div>', unsafe_allow_html=True)
-            st.caption("Business workspace")
-    with header_right:
-        st.markdown(
-            '<div class="ce-header-right">GLOBAL OPERATIONS · VERIFIED RECORDS · CONTROLLED PAYMENTS</div>',
-            unsafe_allow_html=True,
-        )
 
 account_col, status_col, signout_col = st.columns([4, 2, 1], vertical_alignment="center")
 with account_col:

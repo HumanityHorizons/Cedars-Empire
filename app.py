@@ -1113,6 +1113,16 @@ page_routes = {
     "Wallet & Withdrawals": "Payment Operations",
     "My Work & Wallet": "My Work & Wallet",
     "Branding Settings": "Branding Settings",
+    # Grid labels are aliases into the shared Real Money Engines workspace until
+    # dedicated grid-specific handlers are implemented; access remains admin-only.
+    "Deposits & Withdrawals": "Payment Operations",
+    "NeuroWave + Health": "Real Money Engines",
+    "EchoMap + Mobility": "Real Money Engines",
+    "BioLoop + Finance": "Real Money Engines",
+    "DreamGrid + Education": "Real Money Engines",
+    "EmoFlux + Shelter": "Real Money Engines",
+    "IdeaForge + Data": "Real Money Engines",
+    "QuantumLeap + Energy": "Real Money Engines",
 }
 if selected_page == "Withdraw" and not IS_ADMIN:
     try:

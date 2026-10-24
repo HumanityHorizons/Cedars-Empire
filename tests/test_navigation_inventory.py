@@ -108,7 +108,7 @@ def test_dashboard_header_is_not_a_second_brand_header():
     dashboard = source.split('elif page == "Business Dashboard":', 1)[1].split('\n    elif page ==', 1)[0]
     assert "CEDARS EMPIRE · BUSINESS OVERVIEW" not in dashboard
     assert '<div class="ce-dashboard-intro-title">Business dashboard</div>' not in dashboard
-    assert "ce-dashboard-intro" in dashboard
+    # Dashboard intentionally begins with the existing Financial Control section; the shared locked header is the only header.
     assert "st.title(" not in dashboard
     assert "st.header(" not in dashboard
     assert '"07", "Robot Operations"' in dashboard

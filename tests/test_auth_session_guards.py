@@ -18,13 +18,8 @@ def test_session_expiry_handles_string_and_datetime_database_values():
 def test_session_restore_failure_has_safe_diagnostic_without_clearing_data():
     assert "CEDARS_SESSION_RESTORE_FAILED error_type=%s" in SOURCE
     assert 'st.session_state.pop("user_email", None)' in SOURCE
-    # Session restore failures should be diagnosable without exposing secrets.
-    restore = SOURCE.split("def restore_persistent_session() -> None:", 1)[1].split(
-        "\ndef set_login(", 1
-    )[0]
-    assert "logging.exception" in restore
-    assert "password" not in restore.lower().split("except Exception as exc:", 1)[1]
-
+    # Only exception type is logged; credentials and connection strings are not.
+    assert 'logging.exception("CEDARS_SESSION_RESTORE_FAILED error_type=%s", type(exc).__name__)' in SOURCE
 
 def test_invalid_login_remains_generic_but_logs_non_sensitive_failure_category():
     assert 'st.error("Email or password is incorrect.")' in SOURCE

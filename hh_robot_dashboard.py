@@ -27,7 +27,6 @@ def render_robot_dashboard() -> None:
     .robot-name{font-size:16px;font-weight:800;color:#0A2540}
     .robot-state{font-size:11px;font-weight:800;letter-spacing:.7px;margin-top:10px}
     .robot-meta{font-size:12px;color:#526579;margin-top:8px}
-    </style>
     .robot-motion-stage{display:flex;align-items:center;justify-content:center;min-height:150px;
       background:radial-gradient(circle at 50% 45%,rgba(214,168,79,.18),rgba(7,29,51,.96) 68%);
       border:1px solid #244E68;border-radius:14px;overflow:hidden;position:relative}

@@ -75,7 +75,7 @@ st.markdown("""
 [data-testid="stMain"] p,[data-testid="stMain"] li,[data-testid="stMain"] label,[data-testid="stMain"] [data-testid="stMarkdownContainer"],[data-testid="stMain"] [data-testid="stCaptionContainer"] { color:var(--ce-text) !important; }
 [data-testid="stSidebar"],[data-testid="stSidebarCollapsedControl"] { display:none !important; }
 [data-testid="stMetric"] { background:transparent !important; border:0 !important; border-radius:0 !important; padding:4px 0 !important; box-shadow:none !important; }
-.ce-dashboard-hero { background:linear-gradient(115deg,#071A33 0%,#0A2342 68%,#12345A 100%); color:#fff; border-radius:18px; padding:28px 30px 20px; margin:0 0 24px; border-bottom:2px solid rgba(255,255,255,.78); box-shadow:0 12px 30px rgba(10,35,66,.14), inset 0 1px 0 rgba(255,255,255,.18); }
+.ce-dashboard-hero { background:radial-gradient(circle at 88% 10%,rgba(96,213,255,.23),transparent 30%),linear-gradient(115deg,#071A33 0%,#0A2342 54%,#176078 100%); color:#fff; border-radius:18px; padding:22px 26px 16px; margin:0 0 18px; border-bottom:3px solid #D6A84F; box-shadow:0 12px 30px rgba(10,35,66,.18), inset 0 1px 0 rgba(255,255,255,.18); }
 .ce-eyebrow { color:#FFFFFF !important; font-size:11px; font-weight:800; letter-spacing:2px; margin-bottom:10px; }
 .ce-hero-title { color:#fff !important; font-size:30px; line-height:1.2; font-weight:800; letter-spacing:-.6px; }
 .ce-hero-subtitle { color:#FFFFFF !important; margin-top:8px; font-size:14px; }
@@ -95,11 +95,11 @@ st.markdown("""
 @keyframes ce-orbit { to { transform:rotate(360deg); } }
 @media(max-width:600px) { .ce-dashboard-robot { width:76px; height:76px; flex-basis:76px; } .ce-dashboard-robot .ce-robot-avatar { font-size:38px; } }
 .ce-section-label { color:#0A2342 !important; font-size:11px; font-weight:800; letter-spacing:1.4px; margin:14px 0 8px; }
-.ce-stat-card { background:linear-gradient(145deg,#FFFFFF 0%,#FFFFFF 72%,#EEF1F5 100%); border:1px solid #DCE4ED; border-top:3px solid #FFFFFF; border-radius:12px; padding:10px 14px 5px; min-height:100px; box-shadow:0 5px 16px rgba(10,35,66,.055), inset 0 1px 0 rgba(255,255,255,1); }
+.ce-stat-card { background:linear-gradient(145deg,#FFFFFF 0%,#F8FBFF 72%,#E5EEF8 100%); border:1px solid #DCE4ED; border-top:3px solid #D6A84F; border-radius:12px; padding:10px 14px 8px; min-height:100px; box-shadow:0 7px 20px rgba(10,35,66,.08), inset 0 1px 0 rgba(255,255,255,1); }
 .ce-stat-kicker { color:#0A2342 !important; font-size:10px; font-weight:800; letter-spacing:1px; margin-bottom:6px; }
 .ce-stat-value { color:#0A2342 !important; font-size:30px; line-height:1.15; font-weight:800; margin:10px 0 5px; } .ce-stat-foot { color:#0A2342 !important; font-size:10px; }
 .ce-action-card,.ce-grid-card,.ce-business-metric,.ce-workflow-card,.ce-empty-state { background:linear-gradient(145deg,#FFFFFF 0%,#FFFFFF 72%,#EEF1F5 100%); border:1px solid #DCE4ED; border-radius:12px; padding:16px; box-shadow:0 5px 16px rgba(10,35,66,.05), inset 0 1px 0 rgba(255,255,255,1); min-height:104px; }
-.ce-action-card { border-top:3px solid #0A2342; margin-bottom:8px; }
+.ce-action-card { border-top:3px solid #D6A84F; margin-bottom:8px; transition:transform .18s ease,box-shadow .18s ease; } .ce-action-card:hover,.ce-grid-card:hover { transform:translateY(-2px); box-shadow:0 12px 24px rgba(10,35,66,.12); }
 .ce-action-title,.ce-grid-title { color:#0A2342 !important; font-size:14px; font-weight:800; margin-bottom:7px; }
 .ce-action-copy,.ce-grid-copy,.ce-business-detail { color:#0A2342 !important; font-size:12px; line-height:1.5; }
 .ce-workflow-card { padding:6px 16px; }
@@ -110,7 +110,7 @@ st.markdown("""
 .ce-step small { display:block; color:#0A2342; font-size:11px; margin-top:3px; }
 .ce-empty-state { text-align:center; padding:30px 16px; color:#0A2342; }
 .ce-empty-icon { margin:0 auto 10px; display:flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:50%; background:#E8EDF5; color:#0A2342; font-size:22px; }
-.ce-grid-card { min-height:116px; margin-bottom:10px; border-top:3px solid #FFFFFF; }
+.ce-grid-card { min-height:116px; margin-bottom:10px; border-top:3px solid #D6A84F; background:linear-gradient(145deg,#FFFFFF 0%,#F6FBFF 70%,#E2F0F4 100%); }
 .ce-grid-number { color:#0A2342; font-size:11px; font-weight:900; letter-spacing:1px; margin-bottom:9px; }
 .ce-business-metric { min-height:126px; border-left:4px solid #FFFFFF; }
 .ce-business-value { color:#0A2342 !important; font-size:22px; font-weight:800; margin:10px 0 6px; }
@@ -1044,7 +1044,6 @@ INTERNAL_ONLY_PAGES = {
     "NeuroWave + Health", "EchoMap + Mobility", "BioLoop + Finance",
     "DreamGrid + Education", "EmoFlux + Shelter", "IdeaForge + Data",
     "QuantumLeap + Energy", "Cleaning Grid", "Shelter & Accommodation Grid",
-    "Energy & Utilities Grid", "AI Training & Data Operations",
     "Deposit QR & TIGERS", "Deposits & Withdrawals", "Reports & Referrals",
     "Admin Console", "Admin Studio", "Income & Revenue", "Finance Department",
     "40/60 Allocation Foundation", "HR Department", "Admin Noticeboard",
@@ -1905,6 +1904,31 @@ if page == "Dashboard":
                     st.rerun()
                 else:
                     st.warning("This destination is not currently registered in the workspace navigation.")
+
+    st.markdown('<div class="ce-section-label">EXPLORE THE BUSINESS GRIDS</div>', unsafe_allow_html=True)
+    st.markdown('<div style="color:#526579;font-size:12px;margin:0 0 10px">Choose a live business workspace. Availability, tasks and revenue are shown only when supported by verified records.</div>', unsafe_allow_html=True)
+    grid_items = [
+        ("01", "World Grid Marketplace", "Browse the connected business grid catalogue and service opportunities.", "🌐"),
+        ("02", "Cleaning Grid", "Property cleaning, turnover and service-delivery workflows.", "🧹"),
+        ("03", "Shelter & Accommodation Grid", "Accommodation and property-service listings with provider checks.", "🏠"),
+        ("04", "Energy & Utilities Grid", "Solar+, energy-efficiency and qualified provider services.", "⚡"),
+        ("05", "AI Training & Data Operations", "Human-reviewed data work, AI support and evidence-led tasks.", "🧠"),
+        ("06", "Robot Operations Dashboard", "Review robot grid readiness and safety gates; simulation is not hardware.", "🤖"),
+    ]
+    for row_start in range(0, len(grid_items), 3):
+        grid_cols = st.columns(3)
+        for grid_col, item in zip(grid_cols, grid_items[row_start:row_start + 3]):
+            with grid_col:
+                st.markdown(f'<div class="ce-grid-card"><div style="display:flex;align-items:center;gap:10px;margin-bottom:9px"><span style="font-size:23px">{item[3]}</span><span class="ce-grid-number">{item[0]} · BUSINESS GRID</span></div><div class="ce-grid-title">{item[1]}</div><div class="ce-grid-copy">{item[2]}</div></div>', unsafe_allow_html=True)
+                if st.button("Open grid", key="ce_dashboard_grid_" + item[1], use_container_width=True):
+                    destination = item[1]
+                    destination_group = next((group for group, group_pages in menu_groups.items() if destination in group_pages), None)
+                    if destination_group:
+                        st.session_state["ce_top_menu"] = destination_group
+                        st.session_state["ce_sub_menu"] = destination
+                        st.rerun()
+                    else:
+                        st.warning("This grid is not currently registered in the workspace navigation.")
     left, right = st.columns([1.5, 1])
     with left:
         st.markdown('<div class="ce-section-label">RECENT TASKS</div>', unsafe_allow_html=True)

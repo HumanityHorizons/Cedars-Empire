@@ -89,3 +89,24 @@ def test_dashboard_shows_grid_cards_and_uses_single_brand_shell():
         assert f'"{member_grid}"' not in internal
     assert "Your business at a glance" in source
     assert "CEDARS EMPIRE · BUSINESS OVERVIEW" in source
+
+
+def test_public_login_stays_separate_from_business_grid_workspace():
+    source = (ROOT / "app.py").read_text(encoding="utf-8")
+    login = source.split("def signup_page() -> None:", 1)[1].split("\nis_logged_in =", 1)[0]
+    assert "Public authentication screen only" in login
+    assert "Business workspace sign in" in login
+    assert "EXPLORE THE BUSINESS GRIDS" not in login
+    assert "Robot Operations Dashboard" not in login
+    assert "render_grid_marketplace()" not in login
+    assert "render_robot_dashboard()" not in login
+
+
+def test_dashboard_header_is_not_a_second_brand_header():
+    source = (ROOT / "app.py").read_text(encoding="utf-8")
+    assert source.count('with st.container(key="ce_locked_header")') == 1
+    dashboard = source.split('if page == "Dashboard":', 1)[1].split('\n# ', 1)[0]
+    assert "CEDARS EMPIRE · BUSINESS OVERVIEW" in dashboard
+    assert "ce-dashboard-hero" in dashboard
+    assert "st.title(" not in dashboard
+    assert "st.header(" not in dashboard

@@ -1043,7 +1043,7 @@ INTERNAL_ONLY_PAGES = {
     "AI Business Scenario Lab", "Business Opportunity Pipeline",
     "NeuroWave + Health", "EchoMap + Mobility", "BioLoop + Finance",
     "DreamGrid + Education", "EmoFlux + Shelter", "IdeaForge + Data",
-    "QuantumLeap + Energy", "Cleaning Grid", "Shelter & Accommodation Grid",
+    "QuantumLeap + Energy",
     "Deposit QR & TIGERS", "Deposits & Withdrawals", "Reports & Referrals",
     "Admin Console", "Admin Studio", "Income & Revenue", "Finance Department",
     "40/60 Allocation Foundation", "HR Department", "Admin Noticeboard",
@@ -1868,10 +1868,10 @@ if page == "Dashboard":
     published = len(db_all("SELECT id FROM noticeboard WHERE status=?", ("Published",)))
     st.markdown("""
     <div class="ce-dashboard-hero">
-      <div class="ce-eyebrow">PERSONAL WORKSPACE</div>
-      <div class="ce-hero-title">Welcome back</div>
-      <div class="ce-hero-subtitle">Your work, opportunities and delivery progress in one place.</div>
-      <div class="ce-hero-strip"><span>WORKSPACE OVERVIEW</span><span>LIVE RECORDS ONLY</span></div>
+      <div class="ce-eyebrow">CEDARS EMPIRE · BUSINESS OVERVIEW</div>
+      <div class="ce-hero-title">Your business at a glance</div>
+      <div class="ce-hero-subtitle">Grids, tasks and delivery progress in one workspace.</div>
+      <div class="ce-hero-strip"><span>BUSINESS GRIDS</span><span>VERIFIED RECORDS</span><span>CONTROLLED PAYMENTS</span></div>
     </div>
     """, unsafe_allow_html=True)
     st.markdown('<div class="ce-section-label">YOUR ACTIVITY</div>', unsafe_allow_html=True)

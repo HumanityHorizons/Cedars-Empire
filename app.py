@@ -1946,7 +1946,7 @@ if page == "Dashboard":
     in_progress = sum(1 for t in tasks if t["status"] == "In progress")
     completed = sum(1 for t in tasks if t["status"] == "Executed / completed")
     published = len(db_all("SELECT id FROM noticeboard WHERE status=?", ("Published",)))
-    st.markdown('<div class="ce-dashboard-intro"><div class="ce-dashboard-intro-title">Business overview</div><div class="ce-dashboard-intro-copy">Tasks, grids and delivery progress.</div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="ce-dashboard-intro"><div class="ce-dashboard-intro-title">Business overview</div><div class="ce-dashboard-intro-copy">Your business at a glance — tasks, grids and delivery progress.</div></div>', unsafe_allow_html=True)
     st.markdown('<div class="ce-section-label">YOUR ACTIVITY</div>', unsafe_allow_html=True)
     col1, col2, col3, col4 = st.columns(4)
     for col, kicker, value in [

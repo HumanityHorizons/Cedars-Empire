@@ -80,7 +80,7 @@ st.markdown("""
 .ce-hero-title { color:#fff !important; font-size:30px; line-height:1.2; font-weight:800; letter-spacing:-.6px; }
 .ce-hero-subtitle { color:#FFFFFF !important; margin-top:8px; font-size:14px; }
 .ce-hero-strip { display:flex; flex-wrap:wrap; gap:9px 22px; margin-top:22px; padding-top:14px; border-top:1px solid rgba(255,255,255,.18); color:#FFFFFF !important; font-size:10px; font-weight:700; letter-spacing:1px; }
-.ce-dashboard-intro { display:flex; flex-direction:column; gap:5px; margin:4px 0 14px; padding:0 0 12px; border-bottom:1px solid #DCE4ED; }
+.ce-login-heading { background:linear-gradient(110deg,#FFFFFF 0%,#F4F8FC 72%,#E8F1F8 100%); border-left:4px solid #D6A84F; border-radius:10px; padding:18px 20px; margin:0 0 14px; box-shadow:0 6px 18px rgba(10,35,66,.06); } .ce-dashboard-intro { display:flex; flex-direction:column; gap:5px; margin:4px 0 14px; padding:0 0 12px; border-bottom:1px solid #DCE4ED; }
 .ce-dashboard-intro .ce-eyebrow { color:#9A7621 !important; font-size:10px; font-weight:800; letter-spacing:1.5px; margin:0; }
 .ce-dashboard-intro-title { color:#0A2342 !important; font-size:23px; line-height:1.2; font-weight:800; letter-spacing:-.35px; }
 .ce-dashboard-intro-copy { color:#53657A !important; font-size:12px; line-height:1.4; }
@@ -769,7 +769,15 @@ def set_login(user: dict[str, Any], login_purpose: str = "") -> None:
 
 
 def signup_page() -> None:
-    # Keep the public login page focused on account access; workspace features appear after sign-in.
+    # Public authentication screen only: do not render business-grid cards, robot panels,
+    # member navigation, or dashboard components before successful sign-in.
+    st.markdown("""
+    <div class="ce-login-heading">
+      <div class="ce-eyebrow" style="color:#9A7621 !important">CEDARS EMPIRE</div>
+      <div style="font-size:25px;font-weight:800;letter-spacing:-.4px;color:#0A2342">Business workspace sign in</div>
+      <div style="font-size:13px;color:#53657A;margin-top:6px">Sign in or create an account to access business grids and tools.</div>
+    </div>
+    """, unsafe_allow_html=True)
     signin, signup, public, reset_request, reset_finish = st.tabs(
         ["Sign in", "Create account", "Public noticeboard", "Forgot password", "Set new password"])
     with signin:

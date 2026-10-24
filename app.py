@@ -20,6 +20,7 @@ from typing import Any
 
 import pandas as pd
 import streamlit as st
+import extra_streamlit_components as stx
 import pymupdf
 from docx import Document
 from hh_workspace_widgets import render_action_grid, render_calendar, render_document_exports
@@ -391,6 +392,10 @@ def init_db() -> None:
             b2b_purpose TEXT NOT NULL, followup_optin INTEGER NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL, last_login TEXT
         )""",
+        """CREATE TABLE IF NOT EXISTS auth_sessions (
+            token_hash TEXT PRIMARY KEY, user_email TEXT NOT NULL,
+            expires_at TEXT NOT NULL, created_at TEXT NOT NULL, revoked_at TEXT
+        )""",
         """CREATE TABLE IF NOT EXISTS tasks (
             id TEXT PRIMARY KEY, user_email TEXT NOT NULL, title TEXT NOT NULL,
             description TEXT, status TEXT NOT NULL, priority TEXT NOT NULL,
@@ -754,7 +759,63 @@ HH_STANDARDS_CHECKS = [
 # -----------------------------------------------------------------------------
 
 
+AUTH_COOKIE_NAME = "cedars_empire_session"
+AUTH_SESSION_DAYS = 7
+# The browser receives only a random opaque token; Neon stores only its SHA-256 hash.
+try:
+    auth_cookie_manager = stx.CookieManager(key="cedars_empire_auth_cookie_manager")
+except Exception:
+    auth_cookie_manager = None
+
+
+def issue_persistent_session(email: str) -> None:
+    token = secrets.token_urlsafe(32)
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    created = datetime.now(timezone.utc)
+    expires = created + timedelta(days=AUTH_SESSION_DAYS)
+    db_exec("INSERT INTO auth_sessions (token_hash,user_email,expires_at,created_at,revoked_at) VALUES (?,?,?,?,?)",
+            (token_hash, email.lower(), expires.isoformat(), created.isoformat(), None))
+    if auth_cookie_manager is None:
+        raise RuntimeError("Secure browser session storage is unavailable. Please reload and try signing in again.")
+    auth_cookie_manager.set(AUTH_COOKIE_NAME, token, expires_at=expires)
+
+
+def restore_persistent_session() -> None:
+    if st.session_state.get("user_email") or auth_cookie_manager is None:
+        return
+    try:
+        token = auth_cookie_manager.get(AUTH_COOKIE_NAME)
+        if not token or not isinstance(token, str):
+            return
+        token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+        sessions = db_all("SELECT * FROM auth_sessions WHERE token_hash=? AND revoked_at IS NULL", (token_hash,))
+        if not sessions:
+            return
+        session = sessions[0]
+        if datetime.fromisoformat(session["expires_at"]) <= datetime.now(timezone.utc):
+            db_exec("UPDATE auth_sessions SET revoked_at=? WHERE token_hash=?", (now_iso(), token_hash))
+            auth_cookie_manager.delete(AUTH_COOKIE_NAME)
+            return
+        users = db_all("SELECT * FROM users WHERE LOWER(email)=LOWER(?)", (session["user_email"],))
+        if not users:
+            db_exec("UPDATE auth_sessions SET revoked_at=? WHERE token_hash=?", (now_iso(), token_hash))
+            auth_cookie_manager.delete(AUTH_COOKIE_NAME)
+            return
+        user = users[0]
+        st.session_state.user_email = user["email"]
+        st.session_state.full_name = user["full_name"]
+        st.session_state.account_type = user.get("account_type", "Individual")
+        st.session_state.followup_optin = int(user.get("followup_optin", 0)) == 1
+        st.session_state.last_login = now_iso()
+        st.session_state.setdefault("ce_top_menu", "Overview")
+        st.session_state.setdefault("ce_sub_menu", "Dashboard")
+    except Exception as exc:
+        # Fail closed: if a cookie or DB lookup is invalid, require a fresh sign-in.
+        st.session_state.pop("user_email", None)
+
+
 def set_login(user: dict[str, Any], login_purpose: str = "") -> None:
+    issue_persistent_session(user["email"])
     st.session_state.user_email = user["email"]
     st.session_state.full_name = user["full_name"]
     st.session_state.account_type = user.get("account_type", "Individual")
@@ -937,6 +998,7 @@ def signup_page() -> None:
                 except Exception:
                     pass
 
+restore_persistent_session()
 is_logged_in = bool(st.session_state.get("user_email"))
 if not is_logged_in:
     signup_page()
@@ -1069,6 +1131,15 @@ with account_col:
 with signout_col:
     if st.button("Sign out", key="ce_sign_out"):
         record_event(USER_EMAIL, "sign_out")
+        try:
+            token = auth_cookie_manager.get(AUTH_COOKIE_NAME) if auth_cookie_manager else None
+            if token:
+                token_hash = hashlib.sha256(str(token).encode("utf-8")).hexdigest()
+                db_exec("UPDATE auth_sessions SET revoked_at=? WHERE token_hash=? AND revoked_at IS NULL", (now_iso(), token_hash))
+            if auth_cookie_manager:
+                auth_cookie_manager.delete(AUTH_COOKIE_NAME)
+        except Exception:
+            pass
         for key in ["user_email", "full_name", "account_type", "followup_optin", "last_login"]:
             st.session_state.pop(key, None)
         st.rerun()

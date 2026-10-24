@@ -100,33 +100,39 @@ st.markdown("""
 .ce-business-metric { min-height:126px; border-left:4px solid #D6A84F; }
 .ce-business-value { color:#0A2540 !important; font-size:22px; font-weight:800; margin:10px 0 6px; }
 
-/* CEDARS EMPIRE robot-workforce visual system */
-.ce-robot-stage { position:relative; overflow:hidden; isolation:isolate; background:radial-gradient(ellipse at 78% 22%,rgba(54,132,177,.42),transparent 34%),radial-gradient(ellipse at 88% 92%,rgba(214,168,79,.20),transparent 28%),linear-gradient(120deg,#07172B 0%,#0A2540 55%,#123E5B 100%); border:1px solid rgba(214,168,79,.48); border-radius:22px; padding:30px; margin:0 0 22px; color:#fff; box-shadow:0 16px 38px rgba(10,37,64,.18); }
-.ce-robot-stage:before { content:""; position:absolute; z-index:-1; right:-30px; top:-68px; width:330px; height:330px; border:1px solid rgba(167,210,235,.20); border-radius:50%; box-shadow:0 0 0 24px rgba(167,210,235,.035),0 0 0 52px rgba(167,210,235,.03),0 0 0 82px rgba(167,210,235,.025); }
-.ce-robot-stage:after { content:"AI  /  ROBOT WORKFORCE"; position:absolute; right:24px; bottom:17px; color:rgba(232,241,248,.22); font-size:10px; font-weight:800; letter-spacing:3px; }
-.ce-robot-layout { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(180px,.7fr); align-items:center; gap:24px; }
-.ce-robot-kicker { color:#E7C77D !important; font-size:11px; font-weight:800; letter-spacing:2px; margin-bottom:10px; }
-.ce-robot-title { color:#fff !important; font-size:clamp(28px,3.5vw,42px); line-height:1.08; font-weight:850; letter-spacing:-1px; margin:0 0 12px; }
-.ce-robot-copy { color:#DDE8F1 !important; font-size:15px; line-height:1.65; max-width:670px; }
-.ce-robot-visual { display:flex; align-items:center; justify-content:center; min-height:170px; position:relative; }
-.ce-robot-orb { width:156px; height:156px; border-radius:42px; display:flex; align-items:center; justify-content:center; font-size:78px; background:linear-gradient(145deg,rgba(255,255,255,.14),rgba(255,255,255,.035)); border:1px solid rgba(231,199,125,.55); box-shadow:inset 0 0 30px rgba(255,255,255,.05),0 0 45px rgba(61,150,202,.16); transform:rotate(-4deg); }
-.ce-robot-pills { display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
-.ce-robot-pill { border:1px solid rgba(221,232,241,.24); background:rgba(255,255,255,.07); border-radius:999px; padding:7px 11px; color:#F1F6FA !important; font-size:11px; font-weight:700; }
-.ce-robot-section-title { font-size:22px; font-weight:800; color:#0A2540; margin:24px 0 5px; }
-.ce-robot-section-copy { color:#526579; font-size:13px; margin-bottom:14px; }
-.ce-robot-card { background:linear-gradient(160deg,#fff 0%,#F8FAFC 100%); border:1px solid #D9E0E7; border-radius:15px; padding:17px; min-height:145px; box-shadow:0 6px 20px rgba(10,37,64,.055); border-top:3px solid #D6A84F; }
-.ce-robot-card-icon { font-size:25px; margin-bottom:10px; }
-.ce-robot-card-title { color:#0A2540 !important; font-size:14px; font-weight:800; margin-bottom:7px; }
-.ce-robot-card-copy { color:#526579 !important; font-size:12px; line-height:1.5; }
-.ce-robot-status { display:inline-block; margin-top:10px; border-radius:999px; background:#FFF3D8; color:#805800 !important; padding:5px 8px; font-size:10px; font-weight:800; letter-spacing:.35px; }
-.ce-landing-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin:14px 0 8px; }
-.ce-landing-card { background:#fff; border:1px solid #DCE4EC; border-radius:14px; padding:19px; min-height:132px; box-shadow:0 7px 20px rgba(10,37,64,.045); }
-.ce-landing-card:nth-child(2) { border-top:3px solid #D6A84F; }
-.ce-landing-card:nth-child(1),.ce-landing-card:nth-child(3) { border-top:3px solid #2C6F91; }
-.ce-landing-title { color:#0A2540 !important; font-size:14px; font-weight:800; margin-bottom:8px; }
-.ce-landing-copy { color:#526579 !important; font-size:12px; line-height:1.6; }
-@media(max-width:760px) { .ce-robot-stage { padding:22px 18px; } .ce-robot-layout { grid-template-columns:1fr; gap:8px; } .ce-robot-visual { min-height:105px; justify-content:flex-start; } .ce-robot-orb { width:95px; height:95px; font-size:48px; border-radius:27px; } .ce-landing-grid { grid-template-columns:1fr; } .ce-robot-stage:after { display:none; } }
-
+/* CEDARS EMPIRE premium robot + grids + treasury visual system */
+.ce-robot-stage{position:relative;overflow:hidden;isolation:isolate;background:radial-gradient(ellipse at 72% 35%,rgba(0,195,255,.34),transparent 26%),radial-gradient(ellipse at 90% 100%,rgba(255,190,55,.28),transparent 34%),linear-gradient(120deg,#020817 0%,#061B37 48%,#092C4B 76%,#101D36 100%);border:1px solid rgba(255,205,90,.72);border-radius:24px;padding:clamp(24px,4vw,48px);margin:0 0 24px;color:#fff;box-shadow:0 18px 55px rgba(2,8,23,.30),inset 0 1px rgba(255,255,255,.15)}
+.ce-robot-stage:before{content:"";position:absolute;z-index:-1;right:5%;top:-35%;width:440px;height:440px;border:1px solid rgba(82,209,255,.35);border-radius:50%;box-shadow:0 0 0 18px rgba(82,209,255,.045),0 0 0 42px rgba(82,209,255,.04),0 0 0 75px rgba(255,195,67,.035),0 0 90px rgba(0,190,255,.18)}
+.ce-robot-stage:after{content:"AI WORKFORCE  •  GLOBAL GRIDS  •  VERIFIED VALUE";position:absolute;right:22px;bottom:14px;color:rgba(255,221,145,.68);font-size:9px;font-weight:900;letter-spacing:2px}
+.ce-robot-layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(230px,.75fr);align-items:center;gap:20px}
+.ce-robot-kicker{color:#FFE09A!important;font-size:11px;font-weight:900;letter-spacing:3px;margin-bottom:14px;text-shadow:0 0 18px rgba(255,191,65,.32)}
+.ce-robot-title{color:#FFF5D7!important;background:linear-gradient(100deg,#FFF9D9 0%,#FFD66E 38%,#FFF1BD 62%,#E9A92E 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-size:clamp(36px,5vw,62px);line-height:1.02;font-weight:950;letter-spacing:-1.7px;margin:0 0 16px;filter:drop-shadow(0 5px 20px rgba(255,181,48,.15))}
+.ce-robot-copy{color:#E3F2FF!important;font-size:clamp(14px,1.5vw,17px);line-height:1.65;max-width:680px}
+.ce-robot-visual{display:flex;align-items:center;justify-content:center;min-height:230px;position:relative}
+.ce-robot-orb{width:208px;height:208px;border-radius:54px;display:flex;align-items:center;justify-content:center;font-size:112px;background:radial-gradient(circle at 32% 22%,rgba(255,255,255,.30),rgba(255,255,255,.055) 44%,rgba(0,9,27,.42) 100%);border:1px solid rgba(255,213,115,.8);box-shadow:inset 0 0 35px rgba(100,213,255,.17),0 0 28px rgba(0,184,255,.25),0 0 70px rgba(255,185,54,.12);transform:rotate(-3deg);animation:ce-robot-glow 4s ease-in-out infinite}
+@keyframes ce-robot-glow{0%,100%{box-shadow:inset 0 0 35px rgba(100,213,255,.17),0 0 28px rgba(0,184,255,.25),0 0 70px rgba(255,185,54,.12)}50%{box-shadow:inset 0 0 45px rgba(100,213,255,.26),0 0 42px rgba(0,184,255,.40),0 0 90px rgba(255,185,54,.20)}}
+.ce-robot-pills{display:flex;flex-wrap:wrap;gap:9px;margin-top:24px}
+.ce-robot-pill{border:1px solid rgba(125,214,255,.35);background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.035));border-radius:999px;padding:9px 13px;color:#F3FAFF!important;font-size:10px;font-weight:850;letter-spacing:.7px;box-shadow:inset 0 1px rgba(255,255,255,.10)}
+.ce-robot-section-title{font-size:25px;font-weight:900;color:#092443;margin:28px 0 5px;letter-spacing:-.5px}
+.ce-robot-section-copy{color:#526579;font-size:13px;line-height:1.55;margin-bottom:16px}
+.ce-robot-card{position:relative;overflow:hidden;background:linear-gradient(150deg,#fff 0%,#F8FBFF 62%,#EDF5FC 100%);border:1px solid #D5E1ED;border-radius:17px;padding:19px;min-height:166px;box-shadow:0 10px 26px rgba(5,29,57,.09),inset 0 1px #fff;border-top:3px solid #E5B544}
+.ce-robot-card:after{content:"";position:absolute;width:110px;height:110px;border-radius:50%;right:-55px;top:-55px;background:radial-gradient(circle,rgba(255,205,91,.18),transparent 72%);pointer-events:none}
+.ce-robot-card-icon{font-size:29px;margin-bottom:12px;filter:drop-shadow(0 3px 8px rgba(16,94,147,.18))}
+.ce-robot-card-title{color:#092443!important;font-size:15px;font-weight:900;margin-bottom:8px}
+.ce-robot-card-copy{color:#526579!important;font-size:12px;line-height:1.55}
+.ce-robot-status{display:inline-block;margin-top:12px;border-radius:999px;background:linear-gradient(90deg,#FFF1C9,#FFE3A0);color:#754D00!important;padding:6px 9px;font-size:9px;font-weight:900;letter-spacing:.65px}
+.ce-landing-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin:16px 0 10px}
+.ce-landing-card{position:relative;overflow:hidden;background:linear-gradient(150deg,#07162C 0%,#0A2A4B 100%);border:1px solid rgba(16,97,146,.5);border-radius:16px;padding:21px;min-height:145px;box-shadow:0 10px 28px rgba(5,29,57,.12),inset 0 1px rgba(255,255,255,.08)}
+.ce-landing-card:before{content:"";position:absolute;width:130px;height:130px;border-radius:50%;right:-60px;bottom:-70px;background:radial-gradient(circle,rgba(255,195,62,.20),transparent 72%)}
+.ce-landing-card:nth-child(2){border-top:3px solid #E8B94F}.ce-landing-card:nth-child(1),.ce-landing-card:nth-child(3){border-top:3px solid #38B8ED}
+.ce-landing-title{color:#FFE4A2!important;font-size:15px;font-weight:900;margin-bottom:9px}
+.ce-landing-copy{color:#E1EDF8!important;font-size:12px;line-height:1.65}
+.ce-grid-wall{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0 8px}
+.ce-grid-tile{background:linear-gradient(145deg,#07172D,#103657);color:#fff;border:1px solid rgba(72,174,222,.45);border-radius:13px;padding:14px 12px;min-height:92px;box-shadow:inset 0 1px rgba(255,255,255,.10),0 8px 18px rgba(5,29,57,.10)}
+.ce-grid-tile b{display:block;color:#FFE191;font-size:12px;margin:5px 0}.ce-grid-tile span{display:block;color:#D6E7F5;font-size:10px;line-height:1.45}
+.ce-money-strip{background:linear-gradient(110deg,#07162B,#0B3150);border:1px solid rgba(232,185,79,.72);border-radius:16px;padding:18px 20px;display:flex;gap:14px;align-items:center;color:#fff;box-shadow:0 10px 26px rgba(5,29,57,.12);margin:16px 0 8px}
+.ce-money-icon{font-size:34px;filter:drop-shadow(0 0 12px rgba(255,196,59,.4))}.ce-money-title{color:#FFE2A0!important;font-size:15px;font-weight:900}.ce-money-copy{color:#DCEAF6!important;font-size:12px;line-height:1.55}
+@media(max-width:760px){.ce-robot-stage{padding:22px 18px}.ce-robot-layout{grid-template-columns:1fr;gap:8px}.ce-robot-visual{min-height:135px;justify-content:flex-start}.ce-robot-orb{width:120px;height:120px;font-size:64px;border-radius:32px}.ce-landing-grid{grid-template-columns:1fr}.ce-grid-wall{grid-template-columns:repeat(2,minmax(0,1fr))}.ce-robot-stage:after{display:none}.ce-money-strip{align-items:flex-start}}
 @media(max-width:768px) { .ce-dashboard-hero { padding:22px 18px 16px; border-radius:13px; } .ce-hero-title { font-size:24px; } .ce-stat-card { min-height:84px; padding:9px; } .ce-stat-value { font-size:24px; } .ce-action-card,.ce-grid-card { padding:12px; } }
 [data-testid="stDataFrame"],[data-testid="stTable"],[data-testid="stForm"] { border:1px solid var(--ce-border) !important; border-radius:8px !important; background:var(--ce-card) !important; }
 [data-testid="stForm"] { padding:1rem !important; }
@@ -860,40 +866,57 @@ def set_login(user: dict[str, Any], login_purpose: str = "") -> None:
 
 def signup_page() -> None:
     st.markdown("""
-    <section class="ce-robot-stage">
-      <div class="ce-robot-layout">
-        <div>
-          <div class="ce-robot-kicker">GLOBAL AI BUSINESS PLATFORM</div>
-          <div class="ce-robot-title">CEDARS EMPIRE</div>
-          <div class="ce-robot-copy">A connected workspace for AI-assisted business operations, robot-workforce development, grid services, contracts and evidence-led financial controls.</div>
-          <div class="ce-robot-pills"><span class="ce-robot-pill">AI WORKFORCE</span><span class="ce-robot-pill">GRID MARKETPLACE</span><span class="ce-robot-pill">VERIFIABLE RECORDS</span><span class="ce-robot-pill">CONTROLLED PAYMENTS</span></div>
-        </div>
-        <div class="ce-robot-visual"><div class="ce-robot-orb" aria-label="Robot workforce visual">🤖</div></div>
-      </div>
-    </section>
+    <section class="ce-robot-stage"><div class="ce-robot-layout"><div>
+      <div class="ce-robot-kicker">REAL AI  ·  REAL BUSINESS  ·  VERIFIED VALUE</div>
+      <div class="ce-robot-title">CEDARS EMPIRE</div>
+      <div class="ce-robot-copy">Meet a bold new business workspace for AI-assisted operations, specialized grid services, robot-workforce development and transparent financial controls. Built for ambition. Designed for trust.</div>
+      <div class="ce-robot-pills"><span class="ce-robot-pill">✦ AI WORKFORCE</span><span class="ce-robot-pill">◈ GLOBAL GRIDS</span><span class="ce-robot-pill">✓ VERIFIED RECORDS</span><span class="ce-robot-pill">◇ CONTROLLED PAYMENTS</span></div>
+    </div><div class="ce-robot-visual"><div class="ce-robot-orb" aria-label="Robot workforce illustration">🤖</div></div></div></section>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="ce-robot-section-title">Robot Workforce & AI Grids</div>', unsafe_allow_html=True)
-    st.markdown('<div class="ce-robot-section-copy">The robot workspace is presented here as a development foundation. Task execution, evidence capture and paid-task settlement must be independently verified before any worker is marked live.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="ce-robot-section-title">A workforce of possibilities</div>', unsafe_allow_html=True)
+    st.markdown('<div class="ce-robot-section-copy">Explore the robot and grid workspace. Worker execution, task evidence and paid-task settlement remain subject to independent verification.</div>', unsafe_allow_html=True)
     robot_cols = st.columns(3)
     robot_cards = [
-        ("🤖", "Robot Command", "A single place to review worker status, assigned tasks and evidence checkpoints.", "FOUNDATION VIEW"),
-        ("🧩", "Grid Worker Network", "Enterprise, agriculture, energy, security, mobility, health, education and connectivity workstreams.", "GRID WORKSTREAMS"),
-        ("🛡️", "Evidence & Payment Gate", "Task completion requires evidence review; only independently verified receipts count as real revenue.", "VERIFICATION REQUIRED"),
+        ("🤖", "Robot Command", "A clear home for worker assignments, progress, task evidence and operational review.", "DEVELOPMENT FOUNDATION"),
+        ("🌐", "Global AI Grids", "Connected workstreams across enterprise, agriculture, energy, security, mobility, health, education and connectivity.", "8 GRID CATEGORIES"),
+        ("🛡️", "Trust & Verification", "Evidence-led task review, duplicate checks and controlled financial reconciliation.", "VERIFY BEFORE SETTLEMENT"),
     ]
     for col, (symbol, heading, detail, status) in zip(robot_cols, robot_cards):
         with col:
             st.markdown(f'<div class="ce-robot-card"><div class="ce-robot-card-icon">{symbol}</div><div class="ce-robot-card-title">{heading}</div><div class="ce-robot-card-copy">{detail}</div><span class="ce-robot-status">{status}</span></div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="ce-robot-section-title">Your business workspace</div>', unsafe_allow_html=True)
+    st.markdown('<div class="ce-robot-section-title">Explore the AI grids</div>', unsafe_allow_html=True)
     st.markdown("""
-    <div class="ce-landing-grid">
-      <div class="ce-landing-card"><div class="ce-landing-title">Business Operations</div><div class="ce-landing-copy">Manage customer records, calendar, tasks, contracts and reports in one workspace.</div></div>
-      <div class="ce-landing-card"><div class="ce-landing-title">AI Grid Marketplace</div><div class="ce-landing-copy">Explore service categories and submit activity with supporting evidence.</div></div>
-      <div class="ce-landing-card"><div class="ce-landing-title">Earnings & Controls</div><div class="ce-landing-copy">Review recorded credits and transaction history; finance controls remain role-restricted.</div></div>
+    <div class="ce-grid-wall">
+      <div class="ce-grid-tile">🏢<b>EnterpriseGrid</b><span>Business workflows & operations</span></div>
+      <div class="ce-grid-tile">🌱<b>AgriGrid</b><span>Agriculture & food systems</span></div>
+      <div class="ce-grid-tile">⚡<b>EnergyGrid</b><span>Solar & renewable energy</span></div>
+      <div class="ce-grid-tile">🔐<b>SecureGrid</b><span>Security & monitoring</span></div>
+      <div class="ce-grid-tile">🚘<b>MobilityGrid</b><span>Transport & logistics</span></div>
+      <div class="ce-grid-tile">🩺<b>HealthGrid</b><span>Healthcare & wellbeing</span></div>
+      <div class="ce-grid-tile">🎓<b>EduGrid</b><span>Education & skills</span></div>
+      <div class="ce-grid-tile">🌍<b>ConnectGrid</b><span>Connectivity & collaboration</span></div>
     </div>
     """, unsafe_allow_html=True)
-    st.caption("Only verified receipts and approved records can be reported as actual financial results. Displayed scenarios are not guaranteed returns.")
+
+    st.markdown("""
+    <div class="ce-money-strip"><div class="ce-money-icon">💎</div><div>
+      <div class="ce-money-title">Wallets, earnings & payments — built around evidence</div>
+      <div class="ce-money-copy">Deposit, withdrawal and transaction views are available after sign-in where enabled. Only confirmed, reconciled receipts should count as actual funds. No invented balances, revenue or guaranteed returns are displayed here.</div>
+    </div></div>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div class="ce-robot-section-title">Your business command deck</div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="ce-landing-grid">
+      <div class="ce-landing-card"><div class="ce-landing-title">✦ Business Operations</div><div class="ce-landing-copy">Manage customers, tasks, contracts, meetings and reports in one workspace.</div></div>
+      <div class="ce-landing-card"><div class="ce-landing-title">◈ AI Grid Marketplace</div><div class="ce-landing-copy">Discover specialized grid services and record activity with supporting evidence.</div></div>
+      <div class="ce-landing-card"><div class="ce-landing-title">◇ Earnings & Controls</div><div class="ce-landing-copy">Review stored transactions and role-restricted treasury records with clear verification states.</div></div>
+    </div>
+    """, unsafe_allow_html=True)
+    st.caption("Visual status is not proof of autonomous execution. Financial results must come from persistent, reconciled records.")
+
     signin, signup, public, reset_request, reset_finish = st.tabs(
         ["Sign in", "Create account", "Public noticeboard", "Forgot password", "Set new password"])
     with signin:

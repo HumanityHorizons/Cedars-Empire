@@ -1401,20 +1401,6 @@ if page in BUSINESS_PAGES:
         own_refs = db_all("SELECT referral_code,referred_email,status,reward_amount,reward_asset,evidence_ref,created_at FROM referral_records WHERE referrer_email=? ORDER BY created_at DESC", (USER_EMAIL,))
         if own_refs: render_bank_table(pd.DataFrame(own_refs), use_container_width=True, hide_index=True)
     elif page == "Business Dashboard":
-        # The shared locked navigation above is the only site header.
-        # Keep the dashboard start compact: no second oversized hero/header.
-        st.markdown("""
-        <div class="ce-dashboard-intro ce-dashboard-intro-layout">
-          <div class="ce-dashboard-intro-text">
-            <div class="ce-eyebrow">CEDARS EMPIRE · BUSINESS OVERVIEW</div>
-            <div class="ce-dashboard-intro-title">Business dashboard</div>
-            <div class="ce-dashboard-intro-copy">Operational grids, contract readiness and verified financial records.</div>
-          </div>
-          <div class="ce-dashboard-robot" aria-label="Robot visual simulation only">
-            <div class="ce-robot-orbit"></div><div class="ce-robot-avatar">🤖</div>
-          </div>
-        </div>
-        """, unsafe_allow_html=True)
         st.markdown('<div class="ce-section-label">FINANCIAL CONTROL</div>', unsafe_allow_html=True)
         cols = st.columns(3)
         for col, label, value, detail in [

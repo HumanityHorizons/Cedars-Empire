@@ -1045,7 +1045,7 @@ IS_ADMIN = USER_EMAIL.lower() in ADMIN_EMAILS
 # Compact top-level navigation with grouped submenus; internal finance stays admin-only.
 business_menu = {
     "Overview": ["Dashboard"],
-    "Business": ["Customer & Client Management", "Calendar & Events", "Live Studio", "Work & Contracts", "Client Services & Contracts", "Business Opportunity Pipeline"],
+    "Business": ["Customer & Client Management", "Calendar & Events", "Live Studio", "Work & Contracts", "Client Services & Contracts"],
     "Earnings": ["Earnings & Wallet", "Deposit & Packages", "Withdrawals & Full KYC", "Staking & Compounding", "Referral Program"],
     "Grids": ["World Grid Marketplace", "Cleaning Grid", "Shelter & Accommodation Grid", "Energy & Utilities Grid", "AI Training & Data Operations", "Robot Operations Dashboard"],
     "AI & Reports": ["Business Reports"],
@@ -1053,6 +1053,7 @@ business_menu = {
 }
 admin_menu = {
     **business_menu,
+    "Business": ["Customer & Client Management", "Calendar & Events", "Live Studio", "Work & Contracts", "Client Services & Contracts", "Business Opportunity Pipeline"],
     "AI & Reports": ["AI Business Scenario Lab", "Business Reports"],
     "Command & Finance": ["Executive Command Center", "Treasury Management", "Real Money Engines", "Payments & Treasury", "Blockchain & Treasury", "Payment Operations"],
     "Automation & Admin": ["Daily Crediting", "Reports & Referrals", "AI Operations", "Branding Settings", "Admin Console"],
@@ -1455,8 +1456,9 @@ if page in BUSINESS_PAGES:
                         None,
                     )
                     if target_group is not None:
-                        st.session_state["ce_top_menu"] = target_group
-                        st.session_state["ce_sub_menu"] = target_page
+                        # Defer widget-key updates until the next run, before the nav widgets exist.
+                        st.session_state["ce_pending_top_menu"] = target_group
+                        st.session_state["ce_pending_sub_menu"] = target_page
                         st.rerun()
                     else:
                         st.info("This grid is not currently available in your navigation.")

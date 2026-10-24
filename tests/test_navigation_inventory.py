@@ -118,7 +118,9 @@ def test_navigation_buttons_defer_widget_state_updates_until_before_widget_creat
     source = (ROOT / "app.py").read_text(encoding="utf-8")
     apply_pending = source.index('_pending_group = st.session_state.pop("ce_pending_top_menu", None)')
     create_menu = source.index('key="ce_top_menu"')
+    create_submenu = source.index('key="ce_sub_menu"')
     assert apply_pending < create_menu
+    assert apply_pending < create_submenu
     assert 'st.session_state["ce_pending_top_menu"] = destination_group' in source
     assert 'st.session_state["ce_pending_sub_menu"] = destination' in source
     assert 'st.session_state["ce_top_menu"] = destination_group' not in source

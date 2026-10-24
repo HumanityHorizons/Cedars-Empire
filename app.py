@@ -78,7 +78,11 @@ st.markdown("""
 .ce-hero-title { color:#fff !important; font-size:30px; line-height:1.2; font-weight:800; letter-spacing:-.6px; }
 .ce-hero-subtitle { color:#FFFFFF !important; margin-top:8px; font-size:14px; }
 .ce-hero-strip { display:flex; flex-wrap:wrap; gap:9px 22px; margin-top:22px; padding-top:14px; border-top:1px solid rgba(255,255,255,.18); color:#FFFFFF !important; font-size:10px; font-weight:700; letter-spacing:1px; }
-.ce-section-label { color:#0A2342 !important; font-size:11px; font-weight:800; letter-spacing:1.4px; margin:18px 0 10px; }
+.ce-dashboard-intro { display:flex; flex-direction:column; gap:5px; margin:4px 0 14px; padding:0 0 12px; border-bottom:1px solid #DCE4ED; }
+.ce-dashboard-intro .ce-eyebrow { color:#9A7621 !important; font-size:10px; font-weight:800; letter-spacing:1.5px; margin:0; }
+.ce-dashboard-intro-title { color:#0A2342 !important; font-size:23px; line-height:1.2; font-weight:800; letter-spacing:-.35px; }
+.ce-dashboard-intro-copy { color:#53657A !important; font-size:12px; line-height:1.4; }
+.ce-section-label { color:#0A2342 !important; font-size:11px; font-weight:800; letter-spacing:1.4px; margin:14px 0 8px; }
 .ce-stat-card { background:linear-gradient(145deg,#FFFFFF 0%,#FFFFFF 72%,#EEF1F5 100%); border:1px solid #DCE4ED; border-top:3px solid #FFFFFF; border-radius:12px; padding:10px 14px 5px; min-height:100px; box-shadow:0 5px 16px rgba(10,35,66,.055), inset 0 1px 0 rgba(255,255,255,1); }
 .ce-stat-kicker { color:#0A2342 !important; font-size:10px; font-weight:800; letter-spacing:1px; margin-bottom:6px; }
 .ce-stat-value { color:#0A2342 !important; font-size:30px; line-height:1.15; font-weight:800; margin:10px 0 5px; } .ce-stat-foot { color:#0A2342 !important; font-size:10px; }
@@ -975,7 +979,7 @@ with st.container(key="ce_locked_header"):
         with brand_col:
             st.markdown('<div class="ce-brand-title">CEDARS EMPIRE</div>', unsafe_allow_html=True)
     with header_status_col:
-        st.markdown('<div class="ce-header-right">DIE RICH OR DIE TRYING</div>', unsafe_allow_html=True)
+        st.markdown('<div class="ce-header-right">BUSINESS WORKSPACE</div>', unsafe_allow_html=True)
     nav_cols = st.columns([1.0, 1.65, 1.2], vertical_alignment="center")
     with nav_cols[0]:
         menu_keys = list(menu_groups)
@@ -1292,12 +1296,13 @@ if page in BUSINESS_PAGES:
         own_refs = db_all("SELECT referral_code,referred_email,status,reward_amount,reward_asset,evidence_ref,created_at FROM referral_records WHERE referrer_email=? ORDER BY created_at DESC", (USER_EMAIL,))
         if own_refs: render_bank_table(pd.DataFrame(own_refs), use_container_width=True, hide_index=True)
     elif page == "Business Dashboard":
+        # The shared locked navigation above is the only site header.
+        # Keep the dashboard start compact: no second oversized hero/header.
         st.markdown("""
-        <div class="ce-dashboard-hero ce-business-hero">
-          <div class="ce-eyebrow">REAL MONEY BUSINESS</div>
-          <div class="ce-hero-title">Business Command Overview</div>
-          <div class="ce-hero-subtitle">Monitor service grids, customer activity, contract readiness and reconciled receipts.</div>
-          <div class="ce-hero-strip"><span>GLOBAL OPERATIONS</span><span>CONTROLLED PAYMENTS</span><span>VERIFIED RECORDS</span></div>
+        <div class="ce-dashboard-intro">
+          <div class="ce-eyebrow">CEDARS EMPIRE · BUSINESS OVERVIEW</div>
+          <div class="ce-dashboard-intro-title">Business dashboard</div>
+          <div class="ce-dashboard-intro-copy">Operational grids, contract readiness and verified financial records.</div>
         </div>
         """, unsafe_allow_html=True)
         st.markdown('<div class="ce-section-label">FINANCIAL CONTROL</div>', unsafe_allow_html=True)

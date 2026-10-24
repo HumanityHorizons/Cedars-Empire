@@ -24,7 +24,7 @@ import extra_streamlit_components as stx
 import pymupdf
 from docx import Document
 from hh_workspace_widgets import render_action_grid, render_calendar, render_document_exports
-from hh_grid_marketplace import render_grid_marketplace
+from hh_grid_marketplace import render_grid_marketplace, GRID_CATALOG
 from hh_robot_dashboard import render_robot_dashboard
 from hh_real_payments import (
     ensure_payment_tables, render_deposit_page, render_cashout_page,
@@ -1237,8 +1237,11 @@ if page in BUSINESS_PAGES:
     elif page == "Real Money Engines":
         st.header("Real Money Engines")
         st.write("Each engine should have a verified provider, evidence of customer demand, agreed service terms, delivery proof, itemized costs and reconciled receipts.")
-        engines = ["Cleaning services", "Shelter & accommodation", "Energy & utilities", "AI training & data operations", "World Grid marketplace", "Client services & contracts"]
-        chosen_engine = st.selectbox("Choose an engine", engines)
+        # Use the canonical grid registry so every registered grid can track its own operating evidence.
+        # This expands coverage only; it does not mark a grid live or claim that it has earned money.
+        engines = sorted(set([item["name"] for item in GRID_CATALOG] + ["Cleaning services", "Shelter & accommodation", "Energy & utilities", "AI training & data operations", "World Grid marketplace", "Client services & contracts"]))
+        chosen_engine = st.selectbox("Choose a grid / engine", engines)
+        st.caption("Record demand, delivery, costs and receipt evidence for the selected grid. A saved amount or self-declared status is not verified revenue; reconciliation remains a separate control.")
         with st.form("engine_record_form"):
             record_type = st.selectbox("Record type", ["Provider verification", "Customer demand", "Service delivery", "Operating cost", "Receipt / settlement", "Risk / incident"])
             title = st.text_input("Record title / service reference")

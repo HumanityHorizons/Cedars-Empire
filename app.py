@@ -1047,11 +1047,12 @@ business_menu = {
     "Business": ["Customer & Client Management", "Calendar & Events", "Live Studio", "Work & Contracts", "Client Services & Contracts", "Business Opportunity Pipeline"],
     "Earnings": ["Earnings & Wallet", "Deposit & Packages", "Withdrawals & Full KYC", "Staking & Compounding", "Referral Program"],
     "Grids": ["World Grid Marketplace", "Cleaning Grid", "Shelter & Accommodation Grid", "Energy & Utilities Grid", "AI Training & Data Operations", "Robot Operations Dashboard"],
-    "AI & Reports": ["AI Business Scenario Lab", "Business Reports"],
+    "AI & Reports": ["Business Reports"],
     "Account": ["My Work & Wallet", "My Tasks"],
 }
 admin_menu = {
     **business_menu,
+    "AI & Reports": ["AI Business Scenario Lab", "Business Reports"],
     "Command & Finance": ["Executive Command Center", "Treasury Management", "Real Money Engines", "Payments & Treasury", "Blockchain & Treasury", "Payment Operations"],
     "Automation & Admin": ["Daily Crediting", "Reports & Referrals", "AI Operations", "Branding Settings", "Admin Console"],
 }

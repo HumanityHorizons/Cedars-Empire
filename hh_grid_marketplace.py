@@ -293,6 +293,13 @@ GRID_CATALOG = [
         "unit": "accepted installation, measured service or subscription", "proof": "Meter/inverter evidence, written agreement, customer acceptance and reconciliation",
         "equipment": "Verified energy provider, compatible inverter/meter APIs and qualified installers",
     },
+    {
+        "id": "power", "name": "PowerGrid", "sector": "Energy",
+        "tasks": ["Grid connection inspection", "Power quality monitoring", "Outage reporting", "Meter verification"],
+        "unit": "verified inspection or completed service",
+        "proof": "Authorized utility work order, calibrated measurement evidence and customer acceptance",
+        "equipment": "Qualified electrical personnel and approved, safety-rated instruments",
+    },
 
 ]
 

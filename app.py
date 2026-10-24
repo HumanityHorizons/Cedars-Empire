@@ -1028,7 +1028,7 @@ IS_ADMIN = USER_EMAIL.lower() in ADMIN_EMAILS
 # CEDARS EMPIRE is a business-only platform. NGO workspace is permanently retired.
 # Compact top-level navigation with grouped submenus; internal finance stays admin-only.
 business_menu = {
-    "Overview": ["Dashboard", "Investor Landing"],
+    "Overview": ["Dashboard"],
     "Business": ["Customer & Client Management", "Calendar & Events", "Live Studio", "Work & Contracts", "Client Services & Contracts", "Business Opportunity Pipeline"],
     "Earnings": ["Earnings & Wallet", "Deposit & Packages", "Withdrawals & Full KYC", "Staking & Compounding", "Referral Program"],
     "Grids": ["World Grid Marketplace", "Cleaning Grid", "Shelter & Accommodation Grid", "Energy & Utilities Grid", "AI Training & Data Operations", "Robot Operations Dashboard"],
@@ -1172,7 +1172,6 @@ with signout_col:
             st.session_state.pop(key, None)
         st.rerun()
 st.divider()
-st.caption("AI: connected" if OPENAI_API_KEY else "AI: local structured mode (API key not configured)")
 
 # Cedars Empire: real-business scenario workspace.
 # NGO operations pages remain in the codebase but are intentionally inaccessible from this business-only navigation.
@@ -1196,9 +1195,12 @@ if page in BUSINESS_PAGES:
     if media.get("page_image:" + page):
         try: st.image(io.BytesIO(__import__("base64").b64decode(media["page_image:" + page])), use_container_width=True)
         except Exception: pass
-    # Shared branded header above already displays CEDARS EMPIRE; avoid a duplicate page title.
-    st.caption("AI Real Business Scenarios")
-    st.info("Integrity rule: scenarios, leads, estimates and planned contracts are not revenue. Record income only after a verifiable payment is received and reconciled. No earnings or contract is guaranteed.")
+    # AI diagnostics and revenue-integrity guidance belong only on the AI scenario page,
+    # never on the dashboard or every other business page.
+    if page == "AI Business Scenario Lab":
+        st.caption("AI: connected" if OPENAI_API_KEY else "AI: local structured mode (API key not configured)")
+        st.caption("AI Real Business Scenarios")
+        st.info("Integrity rule: scenarios, leads, estimates and planned contracts are not revenue. Record income only after a verifiable payment is received and reconciled. No earnings or contract is guaranteed.")
     MERGED_GRID_CATALOG = {
         "NeuroWave + Health": {"service":"Workplace wellbeing education and opt-in, non-clinical wellbeing workshops", "buyer":"Employers, universities, care-service operators and wellbeing providers", "revenue":"Fixed-fee workshops, organization subscriptions, and vetted non-clinical care/wellbeing service referrals", "proof":"Written client scope, qualified facilitator/provider, participant consent, safeguarding plan and delivery sign-off", "guardrail":"Do not diagnose, claim clinical outcomes, collect mental-health histories for resale or sell identifiable/sensitive health data.", "integrated_streams":["Care services (non-clinical, safeguarding-led)","Corporate wellbeing workshops","Education and training partnerships"]},
         "EchoMap + Mobility": {"service":"Licensed soundscape design and accessible audio experiences for journeys, delivery routes and venues", "buyer":"Transport operators, delivery businesses, hotels, tourism operators and mobility apps", "revenue":"Licensed content packages, integration fees, business subscriptions, and verified mobility/delivery service referrals", "proof":"Rights-cleared audio assets, accessibility testing, signed license, qualified provider agreements and delivery/usage records", "guardrail":"Do not sell individual location histories. Collect only necessary, consented, aggregated usage metrics.", "integrated_streams":["Mobility and delivery services","Travel soundscapes and audio guides","World Grid Marketplace provider listings"]},

@@ -31,7 +31,7 @@
 | Finance | Withdrawals & Full KYC | KYC review and withdrawal requests; a request is not a completed payout |
 | Finance | Staking & Compounding | Unavailable or informational unless the underlying compliant service is implemented and verified |
 | Growth | Referral Program | No reward is credited without a defined, auditable qualifying event |
-| Business | AI Business Scenario Lab | Scenario planning only; estimates are not revenue |
+| Administrator workspace | AI Business Scenario Lab | Admin-only scenario planning; estimates are not revenue |
 | Business | Business Reports | Reports derived from stored records, with source and verification status |
 
 ## Administrator workspace

@@ -777,6 +777,9 @@ def issue_persistent_session(email: str) -> None:
             (token_hash, email.lower(), expires.isoformat(), created.isoformat(), None))
     if auth_cookie_manager is None:
         raise RuntimeError("Secure browser session storage is unavailable. Please reload and try signing in again.")
+    # Initialize the browser cookie component before writing. Its first render can
+    # otherwise race with the login rerun and leave the cookie unavailable on refresh.
+    auth_cookie_manager.get_all()
     auth_cookie_manager.set(AUTH_COOKIE_NAME, token, expires_at=expires)
 
 
@@ -784,7 +787,12 @@ def restore_persistent_session() -> None:
     if st.session_state.get("user_email") or auth_cookie_manager is None:
         return
     try:
-        token = auth_cookie_manager.get(AUTH_COOKIE_NAME)
+        # CookieManager's browser component must be initialized before reading an
+        # individual cookie; get_all() also avoids depending on a stale first-run value.
+        cookies = auth_cookie_manager.get_all()
+        token = cookies.get(AUTH_COOKIE_NAME) if isinstance(cookies, dict) else None
+        if not token:
+            token = auth_cookie_manager.get(AUTH_COOKIE_NAME)
         if not token or not isinstance(token, str):
             return
         token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()

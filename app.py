@@ -99,6 +99,34 @@ st.markdown("""
 .ce-grid-number { color:#A86400; font-size:11px; font-weight:900; letter-spacing:1px; margin-bottom:9px; }
 .ce-business-metric { min-height:126px; border-left:4px solid #D6A84F; }
 .ce-business-value { color:#0A2540 !important; font-size:22px; font-weight:800; margin:10px 0 6px; }
+
+/* CEDARS EMPIRE robot-workforce visual system */
+.ce-robot-stage { position:relative; overflow:hidden; isolation:isolate; background:radial-gradient(ellipse at 78% 22%,rgba(54,132,177,.42),transparent 34%),radial-gradient(ellipse at 88% 92%,rgba(214,168,79,.20),transparent 28%),linear-gradient(120deg,#07172B 0%,#0A2540 55%,#123E5B 100%); border:1px solid rgba(214,168,79,.48); border-radius:22px; padding:30px; margin:0 0 22px; color:#fff; box-shadow:0 16px 38px rgba(10,37,64,.18); }
+.ce-robot-stage:before { content:""; position:absolute; z-index:-1; right:-30px; top:-68px; width:330px; height:330px; border:1px solid rgba(167,210,235,.20); border-radius:50%; box-shadow:0 0 0 24px rgba(167,210,235,.035),0 0 0 52px rgba(167,210,235,.03),0 0 0 82px rgba(167,210,235,.025); }
+.ce-robot-stage:after { content:"AI  /  ROBOT WORKFORCE"; position:absolute; right:24px; bottom:17px; color:rgba(232,241,248,.22); font-size:10px; font-weight:800; letter-spacing:3px; }
+.ce-robot-layout { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(180px,.7fr); align-items:center; gap:24px; }
+.ce-robot-kicker { color:#E7C77D !important; font-size:11px; font-weight:800; letter-spacing:2px; margin-bottom:10px; }
+.ce-robot-title { color:#fff !important; font-size:clamp(28px,3.5vw,42px); line-height:1.08; font-weight:850; letter-spacing:-1px; margin:0 0 12px; }
+.ce-robot-copy { color:#DDE8F1 !important; font-size:15px; line-height:1.65; max-width:670px; }
+.ce-robot-visual { display:flex; align-items:center; justify-content:center; min-height:170px; position:relative; }
+.ce-robot-orb { width:156px; height:156px; border-radius:42px; display:flex; align-items:center; justify-content:center; font-size:78px; background:linear-gradient(145deg,rgba(255,255,255,.14),rgba(255,255,255,.035)); border:1px solid rgba(231,199,125,.55); box-shadow:inset 0 0 30px rgba(255,255,255,.05),0 0 45px rgba(61,150,202,.16); transform:rotate(-4deg); }
+.ce-robot-pills { display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
+.ce-robot-pill { border:1px solid rgba(221,232,241,.24); background:rgba(255,255,255,.07); border-radius:999px; padding:7px 11px; color:#F1F6FA !important; font-size:11px; font-weight:700; }
+.ce-robot-section-title { font-size:22px; font-weight:800; color:#0A2540; margin:24px 0 5px; }
+.ce-robot-section-copy { color:#526579; font-size:13px; margin-bottom:14px; }
+.ce-robot-card { background:linear-gradient(160deg,#fff 0%,#F8FAFC 100%); border:1px solid #D9E0E7; border-radius:15px; padding:17px; min-height:145px; box-shadow:0 6px 20px rgba(10,37,64,.055); border-top:3px solid #D6A84F; }
+.ce-robot-card-icon { font-size:25px; margin-bottom:10px; }
+.ce-robot-card-title { color:#0A2540 !important; font-size:14px; font-weight:800; margin-bottom:7px; }
+.ce-robot-card-copy { color:#526579 !important; font-size:12px; line-height:1.5; }
+.ce-robot-status { display:inline-block; margin-top:10px; border-radius:999px; background:#FFF3D8; color:#805800 !important; padding:5px 8px; font-size:10px; font-weight:800; letter-spacing:.35px; }
+.ce-landing-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin:14px 0 8px; }
+.ce-landing-card { background:#fff; border:1px solid #DCE4EC; border-radius:14px; padding:19px; min-height:132px; box-shadow:0 7px 20px rgba(10,37,64,.045); }
+.ce-landing-card:nth-child(2) { border-top:3px solid #D6A84F; }
+.ce-landing-card:nth-child(1),.ce-landing-card:nth-child(3) { border-top:3px solid #2C6F91; }
+.ce-landing-title { color:#0A2540 !important; font-size:14px; font-weight:800; margin-bottom:8px; }
+.ce-landing-copy { color:#526579 !important; font-size:12px; line-height:1.6; }
+@media(max-width:760px) { .ce-robot-stage { padding:22px 18px; } .ce-robot-layout { grid-template-columns:1fr; gap:8px; } .ce-robot-visual { min-height:105px; justify-content:flex-start; } .ce-robot-orb { width:95px; height:95px; font-size:48px; border-radius:27px; } .ce-landing-grid { grid-template-columns:1fr; } .ce-robot-stage:after { display:none; } }
+
 @media(max-width:768px) { .ce-dashboard-hero { padding:22px 18px 16px; border-radius:13px; } .ce-hero-title { font-size:24px; } .ce-stat-card { min-height:84px; padding:9px; } .ce-stat-value { font-size:24px; } .ce-action-card,.ce-grid-card { padding:12px; } }
 [data-testid="stDataFrame"],[data-testid="stTable"],[data-testid="stForm"] { border:1px solid var(--ce-border) !important; border-radius:8px !important; background:var(--ce-card) !important; }
 [data-testid="stForm"] { padding:1rem !important; }
@@ -832,23 +860,39 @@ def set_login(user: dict[str, Any], login_purpose: str = "") -> None:
 
 def signup_page() -> None:
     st.markdown("""
-    <div class="ce-dashboard-hero ce-business-hero">
-      <div class="ce-eyebrow">GLOBAL BUSINESS PLATFORM</div>
-      <div class="ce-hero-title">CEDARS EMPIRE</div>
-      <div class="ce-hero-subtitle">Business operations, customer services, contracts, Grid marketplace and evidence-led financial controls.</div>
-      <div class="ce-hero-strip"><span>ONE WORKSPACE</span><span>VERIFIABLE RECORDS</span><span>CONTROLLED PAYMENTS</span></div>
+    <section class="ce-robot-stage">
+      <div class="ce-robot-layout">
+        <div>
+          <div class="ce-robot-kicker">GLOBAL AI BUSINESS PLATFORM</div>
+          <div class="ce-robot-title">CEDARS EMPIRE</div>
+          <div class="ce-robot-copy">A connected workspace for AI-assisted business operations, robot-workforce development, grid services, contracts and evidence-led financial controls.</div>
+          <div class="ce-robot-pills"><span class="ce-robot-pill">AI WORKFORCE</span><span class="ce-robot-pill">GRID MARKETPLACE</span><span class="ce-robot-pill">VERIFIABLE RECORDS</span><span class="ce-robot-pill">CONTROLLED PAYMENTS</span></div>
+        </div>
+        <div class="ce-robot-visual"><div class="ce-robot-orb" aria-label="Robot workforce visual">🤖</div></div>
+      </div>
+    </section>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div class="ce-robot-section-title">Robot Workforce & AI Grids</div>', unsafe_allow_html=True)
+    st.markdown('<div class="ce-robot-section-copy">The robot workspace is presented here as a development foundation. Task execution, evidence capture and paid-task settlement must be independently verified before any worker is marked live.</div>', unsafe_allow_html=True)
+    robot_cols = st.columns(3)
+    robot_cards = [
+        ("🤖", "Robot Command", "A single place to review worker status, assigned tasks and evidence checkpoints.", "FOUNDATION VIEW"),
+        ("🧩", "Grid Worker Network", "Enterprise, agriculture, energy, security, mobility, health, education and connectivity workstreams.", "GRID WORKSTREAMS"),
+        ("🛡️", "Evidence & Payment Gate", "Task completion requires evidence review; only independently verified receipts count as real revenue.", "VERIFICATION REQUIRED"),
+    ]
+    for col, (symbol, heading, detail, status) in zip(robot_cols, robot_cards):
+        with col:
+            st.markdown(f'<div class="ce-robot-card"><div class="ce-robot-card-icon">{symbol}</div><div class="ce-robot-card-title">{heading}</div><div class="ce-robot-card-copy">{detail}</div><span class="ce-robot-status">{status}</span></div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="ce-robot-section-title">Your business workspace</div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="ce-landing-grid">
+      <div class="ce-landing-card"><div class="ce-landing-title">Business Operations</div><div class="ce-landing-copy">Manage customer records, calendar, tasks, contracts and reports in one workspace.</div></div>
+      <div class="ce-landing-card"><div class="ce-landing-title">AI Grid Marketplace</div><div class="ce-landing-copy">Explore service categories and submit activity with supporting evidence.</div></div>
+      <div class="ce-landing-card"><div class="ce-landing-title">Earnings & Controls</div><div class="ce-landing-copy">Review recorded credits and transaction history; finance controls remain role-restricted.</div></div>
     </div>
     """, unsafe_allow_html=True)
-    st.markdown("### Business workspace")
-    landing_cols = st.columns(3)
-    landing_items = [
-        ("Business operations", "Customer records, calendar, tasks, contracts and reports."),
-        ("Grid marketplace", "Explore service categories and submit evidence-backed activity."),
-        ("Earnings & controls", "Review recorded credits and transaction history; finance controls are role-restricted."),
-    ]
-    for col, (heading, detail) in zip(landing_cols, landing_items):
-        with col:
-            st.markdown(f'<div class="ce-business-metric"><div class="ce-stat-kicker">{heading.upper()}</div><div class="ce-business-detail">{detail}</div></div>', unsafe_allow_html=True)
     st.caption("Only verified receipts and approved records can be reported as actual financial results. Displayed scenarios are not guaranteed returns.")
     signin, signup, public, reset_request, reset_finish = st.tabs(
         ["Sign in", "Create account", "Public noticeboard", "Forgot password", "Set new password"])

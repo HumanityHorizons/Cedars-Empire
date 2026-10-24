@@ -7,6 +7,7 @@ from __future__ import annotations
 import streamlit as st
 from hh_grid_marketplace import GRID_CATALOG
 from hh_robotics import robot_grid_catalog
+from hh_grid_readiness import evaluate_catalog_readiness
 
 WORKER_TARGET = 250_000_000
 PACKAGES = [
@@ -51,8 +52,8 @@ def render_robot_dashboard() -> None:
     st.caption("VISUAL SIMULATION ONLY · NO HARDWARE CONNECTED")
     st.caption("The 250,000,000 figure is a long-term target, not the number of deployed workers. Catalogue counts are not live worker counts or revenue.")
 
-    fleet_tab, grids_tab, packages_tab, money_tab, checks_tab = st.tabs(
-        ["ROBOT FLEET", "BUSINESS GRIDS", "PACKAGES", "REAL MONEY FLOW", "SYSTEM CHECKS"]
+    fleet_tab, grids_tab, readiness_tab, packages_tab, money_tab, checks_tab = st.tabs(
+        ["ROBOT FLEET", "BUSINESS GRIDS", "COMMERCIAL READINESS", "PACKAGES", "REAL MONEY FLOW", "SYSTEM CHECKS"]
     )
 
     with fleet_tab:
@@ -88,6 +89,26 @@ def render_robot_dashboard() -> None:
                         st.button("OPEN GRID", key="ce_grid_" + str(item.get("name", start)), use_container_width=True, disabled=True)
         else:
             st.info("No matching grids.")
+
+    with readiness_tab:
+        readiness = evaluate_catalog_readiness(GRID_CATALOG)
+        r1, r2, r3 = st.columns(3)
+        r1.metric("GRIDS REVIEWED", len(readiness))
+        r2.metric("PILOT-READY GRIDS", sum(row["status"] == "Ready for controlled commercial pilot" for row in readiness))
+        r3.metric("GRIDS NEEDING EVIDENCE", sum(row["status"] != "Ready for controlled commercial pilot" for row in readiness))
+        st.dataframe([
+            {
+                "GRID": row["grid"],
+                "SECTOR": row["sector"],
+                "READINESS": f'{row["readiness_percent"]}%',
+                "GATES PASSED": f'{row["gates_passed"]}/{row["gates_total"]}',
+                "STATUS": row["status"],
+                "MISSING GATES": ", ".join(row["missing_gates"]),
+            }
+            for row in readiness
+        ], use_container_width=True, hide_index=True)
+        st.caption("Readiness is fail-closed. No gate is counted as passed until evidence is recorded and reviewed. Current view has no persisted gate evidence.")
+        st.info("A completed checklist qualifies a grid for a controlled pilot only; it does not certify global readiness or authorize unrestricted operations.")
 
     with packages_tab:
         cols = st.columns(3)

@@ -51,3 +51,11 @@ def test_registry_does_not_claim_unverified_live_operations():
     assert "Discovery only" in statuses
     assert "Live — evidence verified" in statuses
     assert "Paused" in statuses
+
+
+def test_real_money_engines_cover_the_canonical_grid_registry():
+    from pathlib import Path
+    source = (Path(__file__).resolve().parents[1] / "app.py").read_text(encoding="utf-8")
+    assert "from hh_grid_marketplace import render_grid_marketplace, GRID_CATALOG" in source
+    assert '[item["name"] for item in GRID_CATALOG]' in source
+    assert "A saved amount or self-declared status is not verified revenue" in source

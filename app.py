@@ -961,6 +961,8 @@ admin_menu = {
     "Automation": ["Daily Crediting", "Reports & Referrals", "AI Operations"],
 }
 menu_groups = admin_menu if IS_ADMIN else business_menu
+# Flatten visible navigation groups for page checks and admin branding controls.
+pages = [page for group_pages in menu_groups.values() for page in group_pages]
 with st.container(key="ce_locked_header"):
     logo_bytes = None
     try:

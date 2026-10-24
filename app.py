@@ -804,9 +804,9 @@ def signup_page() -> None:
             email = st.text_input("Email address").strip().lower()
             password = st.text_input("Create password (at least 10 characters)", type="password")
             password2 = st.text_input("Confirm password", type="password")
-            account_type = st.selectbox("Account type", ["Individual / job seeker", "NGO / civil society organization", "Business / private sector", "Public institution", "Donor / funder", "Research / academic", "Other"])
+            account_type = st.selectbox("Account type", ["Individual", "Business / private sector", "Public institution", "Research / academic", "Other"])
             organization = st.text_input("Organization (optional for individuals)")
-            sector = st.selectbox("Main sector", ["Select…", "Education", "Health", "Climate / environment", "Livelihoods / economic inclusion", "Gender / protection", "Governance / peacebuilding", "Humanitarian response", "Agriculture / food security", "Digital / technology", "Research / evaluation", "Multiple sectors", "Other"])
+            sector = st.selectbox("Main sector", ["Select…", "Energy & utilities", "AI & data services", "Cleaning & property services", "Accommodation", "Mobility & logistics", "Education & training", "Business services", "Health & wellbeing services", "Agriculture", "Digital technology", "Multiple sectors", "Other"])
             purpose = st.text_area("B2B / workspace purpose — how will you use Cedars Empire?", placeholder="Example: identify grants, draft proposals and monitor a youth employment project.")
             followup = st.checkbox("I opt in to follow-up emails and identifiable attendance records. Optional; I can opt out later.")
             agree = st.checkbox("I agree to the Cedars Empire platform terms and privacy notice. I understand that outputs are decision-support drafts and do not guarantee funding, employment or compliance outcomes.")
@@ -946,7 +946,7 @@ business_menu = {
     "Earnings": ["Earnings & Wallet", "Deposit & Packages", "Withdrawals & Full KYC", "Staking & Compounding", "Referral Program"],
     "Grids": ["World Grid Marketplace", "Cleaning Grid", "Shelter & Accommodation Grid", "Energy & Utilities Grid", "AI Training & Data Operations", "Robot Operations Dashboard"],
     "AI & Reports": ["AI Business Scenario Lab", "Business Reports"],
-    "Account": ["My Work & Wallet"],
+    "Account": ["My Work & Wallet", "My Tasks"],
 }
 admin_menu = {
     **business_menu,
@@ -998,7 +998,7 @@ with st.container(key="ce_locked_header"):
         matches = [p for group in menu_groups.values() for p in group if quick_search.strip().lower() in p.lower()]
         st.caption("Matching pages: " + (" · ".join(matches) if matches else "None"))
 page_routes = {
-    "Dashboard": "Business Dashboard",
+    "Dashboard": "Dashboard",
     "Earnings & Wallet": "Earnings & Wallet",
     "Studio": "Live Studio",
     "Customer & Client Management": "Customer & Client Management",
@@ -1888,20 +1888,23 @@ if page == "Dashboard":
     st.markdown('<div class="ce-section-label">QUICK ACCESS</div>', unsafe_allow_html=True)
     quick = st.columns(4)
     quick_items = [
-        ("Find opportunities", "Opportunity Analysis", "Review eligibility and requirements"),
-        ("Build a proposal", "Proposal Studio", "Draft and check a funding application"),
-        ("Manage tasks", "My Tasks", "Update work and due dates"),
-        ("Impact and SDGs", "SDG Navigator", "Connect activities to impact goals"),
+        ("Explore business grids", "World Grid Marketplace", "Review services, providers and evidence requirements"),
+        ("Manage earnings", "Earnings & Wallet", "Review account-scoped wallet and transaction status"),
+        ("Manage tasks", "My Tasks", "Track work, priority and due dates"),
+        ("Business reports", "Business Reports", "Review operational records and evidence status"),
     ]
     for col, item in zip(quick, quick_items):
         with col:
             st.markdown(f'<div class="ce-action-card"><div class="ce-action-title">{item[0]}</div><div class="ce-action-copy">{item[2]}</div></div>', unsafe_allow_html=True)
             if st.button("Open", key="ce_quick_" + item[1], use_container_width=True):
-                if item[1] in pages:
-                    st.session_state["ce_header_menu"] = item[1]
+                destination = item[1]
+                destination_group = next((group for group, group_pages in menu_groups.items() if destination in group_pages), None)
+                if destination_group:
+                    st.session_state["ce_top_menu"] = destination_group
+                    st.session_state["ce_sub_menu"] = destination
                     st.rerun()
                 else:
-                    st.info("Switch to NGO Operations in the top menu to open this page.")
+                    st.warning("This destination is not currently registered in the workspace navigation.")
     left, right = st.columns([1.5, 1])
     with left:
         st.markdown('<div class="ce-section-label">RECENT TASKS</div>', unsafe_allow_html=True)
@@ -1910,11 +1913,13 @@ if page == "Dashboard":
         else:
             st.markdown('<div class="ce-empty-state"><div class="ce-empty-icon">✓</div><b>No tasks yet</b><div>Create your first task to start tracking delivery.</div></div>', unsafe_allow_html=True)
             if st.button("Create your first task", key="ce_create_first_task", type="primary"):
-                if "My Tasks" in pages:
-                    st.session_state["ce_header_menu"] = "My Tasks"
+                destination_group = next((group for group, group_pages in menu_groups.items() if "My Tasks" in group_pages), None)
+                if destination_group:
+                    st.session_state["ce_top_menu"] = destination_group
+                    st.session_state["ce_sub_menu"] = "My Tasks"
                     st.rerun()
                 else:
-                    st.info("Switch to NGO Operations to manage tasks.")
+                    st.warning("Task management is not currently registered in the workspace navigation.")
     with right:
         st.markdown('<div class="ce-section-label">WORKFLOW</div>', unsafe_allow_html=True)
         st.markdown('<div class="ce-workflow-card"><div class="ce-step"><span>01</span><div><b>Discover</b><small>Review an opportunity</small></div></div><div class="ce-step"><span>02</span><div><b>Prepare</b><small>Check requirements and draft</small></div></div><div class="ce-step"><span>03</span><div><b>Deliver</b><small>Track tasks and evidence</small></div></div><div class="ce-step"><span>04</span><div><b>Report</b><small>Measure results and learning</small></div></div></div>', unsafe_allow_html=True)

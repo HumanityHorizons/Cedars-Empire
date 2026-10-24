@@ -91,7 +91,7 @@ class RobotTask:
             self.accepted_by = actor
         if target == TaskStatus.PAYMENT_RECONCILED:
             if not self.payment_verified or not self.payment_tx_hash:
-                raise ValueError("Payment cannot be reconciled without verified transaction evidence")
+                raise ValueError("Payment cannot be reconciled without a verified transaction hash and evidence")
         self.status = target
         self.audit_events.append({
             "status": target.value,

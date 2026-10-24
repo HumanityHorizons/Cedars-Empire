@@ -392,9 +392,10 @@ def init_db() -> None:
             b2b_purpose TEXT NOT NULL, followup_optin INTEGER NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL, last_login TEXT
         )""",
-        """CREATE TABLE IF NOT EXISTS auth_sessions (
+        """CREATE TABLE IF NOT EXISTS login_sessions (
             token_hash TEXT PRIMARY KEY, user_email TEXT NOT NULL,
-            expires_at TEXT NOT NULL, created_at TEXT NOT NULL, revoked_at TEXT
+            expires_at TEXT NOT NULL, revoked_at TEXT,
+            created_at TEXT NOT NULL, last_seen_at TEXT NOT NULL
         )""",
         """CREATE TABLE IF NOT EXISTS tasks (
             id TEXT PRIMARY KEY, user_email TEXT NOT NULL, title TEXT NOT NULL,
@@ -760,94 +761,90 @@ HH_STANDARDS_CHECKS = [
 
 
 AUTH_COOKIE_NAME = "cedars_empire_session"
-AUTH_SESSION_DAYS = 7
-# The browser receives only a random opaque token; Neon stores only its SHA-256 hash.
-try:
-    auth_cookie_manager = stx.CookieManager(key="cedars_empire_auth_cookie_manager")
-except Exception:
-    auth_cookie_manager = None
+AUTH_SESSION_DAYS = 14
+AUTH_COOKIE_MANAGER = stx.CookieManager(key="ce_auth_cookie_manager")
 
 
-def issue_persistent_session(email: str) -> None:
-    token = secrets.token_urlsafe(32)
-    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
-    created = datetime.now(timezone.utc)
-    expires = created + timedelta(days=AUTH_SESSION_DAYS)
-    db_exec("INSERT INTO auth_sessions (token_hash,user_email,expires_at,created_at,revoked_at) VALUES (?,?,?,?,?)",
-            (token_hash, email.lower(), expires.isoformat(), created.isoformat(), None))
-    if auth_cookie_manager is None:
-        raise RuntimeError("Secure browser session storage is unavailable. Please reload and try signing in again.")
-    # Do not call get_all() here: restore_persistent_session() already renders
-    # this component earlier in the same Streamlit run. Calling get_all() again
-    # during sign-in reuses its element key and raises StreamlitDuplicateElementKey.
-    # Write the cookie directly; restoration reads it on the next app run.
-    auth_cookie_manager.set(AUTH_COOKIE_NAME, token, expires_at=expires)
+def _issue_persistent_session(email: str) -> None:
+    """Issue a random, expiring database-backed login session for refresh recovery."""
+    raw_token = secrets.token_urlsafe(32)
+    token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+    created = datetime.now(timezone.utc).replace(microsecond=0)
+    expires = (created + timedelta(days=AUTH_SESSION_DAYS)).isoformat()
+    db_exec(
+        "INSERT INTO login_sessions (token_hash,user_email,expires_at,revoked_at,created_at,last_seen_at) VALUES (?,?,?,?,?,?)",
+        (token_hash, email, expires, None, created.isoformat(), created.isoformat()),
+    )
+    AUTH_COOKIE_MANAGER.set(
+        AUTH_COOKIE_NAME, raw_token,
+        expires_at=created.replace(tzinfo=None) + timedelta(days=AUTH_SESSION_DAYS),
+        secure=True,
+        same_site="lax",
+        key="ce_auth_cookie_issue",
+    )
 
 
-def restore_persistent_session() -> None:
-    if st.session_state.get("user_email") or auth_cookie_manager is None:
+def _restore_persistent_session() -> None:
+    """Restore a login only when a valid unrevoked token exists in durable storage."""
+    if st.session_state.get("user_email"):
         return
     try:
-        # CookieManager's browser component must be initialized before reading an
-        # individual cookie; get_all() also avoids depending on a stale first-run value.
-        cookies = auth_cookie_manager.get_all()
-        token = cookies.get(AUTH_COOKIE_NAME) if isinstance(cookies, dict) else None
-        if not token:
-            token = auth_cookie_manager.get(AUTH_COOKIE_NAME)
-        if not token or not isinstance(token, str):
+        cookies = AUTH_COOKIE_MANAGER.get_all()
+        raw_token = cookies.get(AUTH_COOKIE_NAME) if isinstance(cookies, dict) else None
+        if not raw_token:
+            raw_token = AUTH_COOKIE_MANAGER.get(AUTH_COOKIE_NAME)
+    except Exception:
+        raw_token = None
+    if not isinstance(raw_token, str) or len(raw_token) < 32:
+        return
+    token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+    sessions = db_all(
+        "SELECT user_email,expires_at FROM login_sessions WHERE token_hash=? AND revoked_at IS NULL",
+        (token_hash,),
+    )
+    if not sessions:
+        return
+    try:
+        expires = datetime.fromisoformat(sessions[0]["expires_at"])
+        if expires.tzinfo is None:
+            expires = expires.replace(tzinfo=timezone.utc)
+        if expires <= datetime.now(timezone.utc):
+            db_exec("UPDATE login_sessions SET revoked_at=? WHERE token_hash=?", (now_iso(), token_hash))
+            AUTH_COOKIE_MANAGER.delete(AUTH_COOKIE_NAME, key="ce_auth_cookie_expire")
             return
-        token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
-        sessions = db_all("SELECT * FROM auth_sessions WHERE token_hash=? AND revoked_at IS NULL", (token_hash,))
-        if not sessions:
-            return
-        session = sessions[0]
-        # Normalize TEXT and datetime-like expiry values returned by database
-        # adapters before comparing; this avoids silently dropping valid sessions
-        # if a hosted PostgreSQL schema/driver returns a different representation.
-        expires_value = session["expires_at"]
-        if isinstance(expires_value, datetime):
-            expires_at = expires_value
-        else:
-            expires_at = datetime.fromisoformat(str(expires_value).replace("Z", "+00:00"))
-        if expires_at.tzinfo is None:
-            expires_at = expires_at.replace(tzinfo=timezone.utc)
-        else:
-            expires_at = expires_at.astimezone(timezone.utc)
-        if expires_at <= datetime.now(timezone.utc):
-            db_exec("UPDATE auth_sessions SET revoked_at=? WHERE token_hash=?", (now_iso(), token_hash))
-            auth_cookie_manager.delete(AUTH_COOKIE_NAME)
-            return
-        users = db_all("SELECT * FROM users WHERE LOWER(email)=LOWER(?)", (session["user_email"],))
-        if not users:
-            db_exec("UPDATE auth_sessions SET revoked_at=? WHERE token_hash=?", (now_iso(), token_hash))
-            auth_cookie_manager.delete(AUTH_COOKIE_NAME)
-            return
-        user = users[0]
-        st.session_state.user_email = user["email"]
-        st.session_state.full_name = user["full_name"]
-        st.session_state.account_type = user.get("account_type", "Individual")
-        st.session_state.followup_optin = int(user.get("followup_optin", 0)) == 1
-        st.session_state.last_login = now_iso()
-        st.session_state.setdefault("ce_top_menu", "Overview")
-        st.session_state.setdefault("ce_sub_menu", "Dashboard")
-    except Exception as exc:
-        # Fail closed but retain a safe diagnostic category. Never log cookies,
-        # passwords, email addresses, or database connection strings.
-        import logging
-        logging.exception("CEDARS_SESSION_RESTORE_FAILED error_type=%s", type(exc).__name__)
-        st.session_state.pop("user_email", None)
-
-
-def set_login(user: dict[str, Any], login_purpose: str = "") -> None:
-    issue_persistent_session(user["email"])
+    except (TypeError, ValueError, KeyError):
+        db_exec("UPDATE login_sessions SET revoked_at=? WHERE token_hash=?", (now_iso(), token_hash))
+        AUTH_COOKIE_MANAGER.delete(AUTH_COOKIE_NAME, key="ce_auth_cookie_invalid")
+        return
+    users = db_all("SELECT * FROM users WHERE email=?", (sessions[0]["user_email"],))
+    if not users:
+        db_exec("UPDATE login_sessions SET revoked_at=? WHERE token_hash=?", (now_iso(), token_hash))
+        AUTH_COOKIE_MANAGER.delete(AUTH_COOKIE_NAME, key="ce_auth_cookie_orphan")
+        return
+    user = users[0]
     st.session_state.user_email = user["email"]
     st.session_state.full_name = user["full_name"]
     st.session_state.account_type = user.get("account_type", "Individual")
     st.session_state.followup_optin = int(user.get("followup_optin", 0)) == 1
     st.session_state.last_login = now_iso()
-    # Always open the authenticated workspace on its landing dashboard.
-    st.session_state["ce_top_menu"] = "Overview"
-    st.session_state["ce_sub_menu"] = "Dashboard"
+    db_exec("UPDATE login_sessions SET last_seen_at=? WHERE token_hash=?", (now_iso(), token_hash))
+
+
+def set_login(user: dict[str, Any], login_purpose: str = "") -> None:
+    st.session_state.user_email = user["email"]
+    st.session_state.full_name = user["full_name"]
+    st.session_state.account_type = user.get("account_type", "Individual")
+    st.session_state.followup_optin = int(user.get("followup_optin", 0)) == 1
+    st.session_state.last_login = now_iso()
+    # Replace the prior browser session so sign-in rotates the bearer token.
+    try:
+        old_token = AUTH_COOKIE_MANAGER.get(AUTH_COOKIE_NAME)
+        if isinstance(old_token, str) and len(old_token) >= 32:
+            old_hash = hashlib.sha256(old_token.encode("utf-8")).hexdigest()
+            db_exec("UPDATE login_sessions SET revoked_at=? WHERE token_hash=? AND revoked_at IS NULL", (now_iso(), old_hash))
+    except Exception:
+        pass
+    _issue_persistent_session(user["email"])
     db_exec("UPDATE users SET last_login=? WHERE email=?", (now_iso(), user["email"]))
     log_attendance("member_sign_in", user["email"], bool(user.get("followup_optin", 0)), "follow-up attendance opt-in controls identifiable attendance")
     record_event(user["email"], "sign_in", login_purpose.strip() or None)
@@ -867,31 +864,20 @@ def signup_page() -> None:
         ["Sign in", "Create account", "Public noticeboard", "Forgot password", "Set new password"])
     with signin:
         st.subheader("Welcome back")
-        st.caption("Each sign-in records your stated B2B/workspace purpose for the session. This is not a payment request.")
+        st.caption("Sign in with the email and password used when you created your account.")
         with st.form("signin_form"):
             email = st.text_input("Email address", key="signin_email").strip().lower()
             password = st.text_input("Password", type="password", key="signin_password")
-            signin_purpose = st.text_input("B2B / business purpose for this session", placeholder="e.g. review a climate grant and plan proposal activities")
-            confirm_profile = st.checkbox("I confirm my B2B purpose is accurate and I have read the privacy notice.")
+            signin_purpose = st.text_input("Session purpose (optional)", placeholder="Optional")
             submit = st.form_submit_button("Sign in", type="primary")
         if submit:
-            if len(signin_purpose.strip()) < 8:
-                st.error("Enter your B2B / business purpose for this session (at least 8 characters).")
-            elif not confirm_profile:
-                st.error("Please confirm your B2B profile and privacy notice to continue.")
-            elif not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+            if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
                 st.error("Enter a valid email address.")
+            elif not password:
+                st.error("Enter your password.")
             else:
-                users = db_all("SELECT * FROM users WHERE LOWER(email)=LOWER(?)", (email,))
-                if not users:
-                    # Test-branch diagnostic only: do not log email addresses or credentials.
-                    import logging
-                    logging.warning("CEDARS_SIGNIN_REJECTED reason=account_lookup_miss")
-                    st.error("Email or password is incorrect.")
-                elif not verify_password(password, users[0]["password_salt"], users[0]["password_hash"]):
-                    # Keep the public error generic; write only the failure category to app logs.
-                    import logging
-                    logging.warning("CEDARS_SIGNIN_REJECTED reason=password_hash_mismatch")
+                users = db_all("SELECT * FROM users WHERE email=?", (email,))
+                if not users or not verify_password(password, users[0]["password_salt"], users[0]["password_hash"]):
                     st.error("Email or password is incorrect.")
                 else:
                     set_login(users[0], signin_purpose.strip())
@@ -1030,7 +1016,7 @@ def signup_page() -> None:
                 except Exception:
                     pass
 
-restore_persistent_session()
+_restore_persistent_session()
 is_logged_in = bool(st.session_state.get("user_email"))
 if not is_logged_in:
     signup_page()
@@ -1176,12 +1162,11 @@ with signout_col:
     if st.button("Sign out", key="ce_sign_out"):
         record_event(USER_EMAIL, "sign_out")
         try:
-            token = auth_cookie_manager.get(AUTH_COOKIE_NAME) if auth_cookie_manager else None
-            if token:
-                token_hash = hashlib.sha256(str(token).encode("utf-8")).hexdigest()
-                db_exec("UPDATE auth_sessions SET revoked_at=? WHERE token_hash=? AND revoked_at IS NULL", (now_iso(), token_hash))
-            if auth_cookie_manager:
-                auth_cookie_manager.delete(AUTH_COOKIE_NAME)
+            token = AUTH_COOKIE_MANAGER.get(AUTH_COOKIE_NAME)
+            if isinstance(token, str) and len(token) >= 32:
+                token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+                db_exec("UPDATE login_sessions SET revoked_at=? WHERE token_hash=? AND revoked_at IS NULL", (now_iso(), token_hash))
+            AUTH_COOKIE_MANAGER.delete(AUTH_COOKIE_NAME, key="ce_auth_cookie_logout")
         except Exception:
             pass
         for key in ["user_email", "full_name", "account_type", "followup_optin", "last_login"]:
@@ -1445,14 +1430,18 @@ if page in BUSINESS_PAGES:
             with col:
                 st.markdown(f'<div class="ce-grid-card"><div class="ce-grid-number">{item[0]}</div><div class="ce-grid-title">{item[1]}</div><div class="ce-grid-copy">{item[2]}</div></div>', unsafe_allow_html=True)
                 if st.button("Open grid", key="ce_business_grid_" + item[3], use_container_width=True):
-                    if item[3] in pages:
-                        destination_group = next((group for group, group_pages in menu_groups.items() if item[3] in group_pages), None)
-                        if destination_group:
-                            st.session_state["ce_pending_top_menu"] = destination_group
-                            st.session_state["ce_pending_sub_menu"] = item[3]
+                    target_page = item[3]
+                    target_group = next(
+                        (group_name for group_name, group_pages in menu_groups.items()
+                         if target_page in group_pages),
+                        None,
+                    )
+                    if target_group is not None:
+                        st.session_state["ce_top_menu"] = target_group
+                        st.session_state["ce_sub_menu"] = target_page
                         st.rerun()
                     else:
-                        st.info("This grid is available through the Real Money Business navigation.")
+                        st.info("This grid is not currently available in your navigation.")
 
     elif page == "AI Business Scenario Lab":
         st.header("AI Business Scenario Lab")

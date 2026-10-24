@@ -56,6 +56,7 @@ def render_robot_dashboard() -> None:
     c2.metric("Configured grid catalogue", len(GRID_CATALOG))
     c3.metric("Robot grid entries", len(robots))
     c4.metric("Connected robot grids", connected)
+    st.caption("VISUAL SIMULATION ONLY · NO HARDWARE CONNECTED — runtime connection must be independently verified.")
     st.caption(
         "The 25,000,000 figure is a long-term target, not the number of deployed workers. "
         "These counts describe configured catalogue entries, not active hardware or verified revenue."

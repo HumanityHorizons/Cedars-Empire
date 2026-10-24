@@ -29,4 +29,4 @@ jobs:
       - name: Install test dependencies
         run: python -m pip install pytest pandas streamlit
       - name: Test grid registry, dashboard theme and robot safety state machine
-        run: python -m pytest -q tests/test_robotics.py tests/test_grid_marketplace.py tests/test_navigation_inventory.py tests/test_dashboard_theme.py
+        run: python -m pytest -q tests/test_robotics.py tests/test_grid_marketplace.py tests/test_navigation_inventory.py tests/test_dashboard_theme.py tests/test_grid_readiness.py tests/test_site_assembly_plan.py

@@ -1006,7 +1006,7 @@ with st.container(key="ce_locked_header"):
         matches = [p for group in menu_groups.values() for p in group if quick_search.strip().lower() in p.lower()]
         st.caption("Matching pages: " + (" · ".join(matches) if matches else "None"))
 page_routes = {
-    "Dashboard": "Dashboard",
+    "Dashboard": "Business Dashboard",
     "Earnings & Wallet": "Earnings & Wallet",
     "Studio": "Live Studio",
     "Customer & Client Management": "Customer & Client Management",
@@ -1333,6 +1333,7 @@ if page in BUSINESS_PAGES:
             ("04", "AI Training & Data", "Scoped work · quality checks · approvals", "AI Training & Data Operations"),
             ("05", "World Grid Marketplace", "Listings · demand · provider verification", "World Grid Marketplace"),
             ("06", "Client Services & Contracts", "Buyers · deliverables · written terms", "Client Services & Contracts"),
+            ("07", "Robot Operations", "Readiness checks · safe standby · simulation only", "Robot Operations Dashboard"),
         ]
         for col, item in zip(grid_cols * 2, grid_items):
             with col:

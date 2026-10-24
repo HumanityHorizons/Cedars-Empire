@@ -785,49 +785,58 @@ def _issue_persistent_session(email: str) -> None:
 
 
 def _restore_persistent_session() -> None:
-    """Restore a login only when a valid unrevoked token exists in durable storage."""
     if st.session_state.get("user_email"):
         return
     try:
+        # CookieManager's browser component must be initialized before reading an
+        # individual cookie; get_all() also avoids depending on a stale first-run value.
         cookies = AUTH_COOKIE_MANAGER.get_all()
-        raw_token = cookies.get(AUTH_COOKIE_NAME) if isinstance(cookies, dict) else None
-        if not raw_token:
-            raw_token = AUTH_COOKIE_MANAGER.get(AUTH_COOKIE_NAME)
-    except Exception:
-        raw_token = None
-    if not isinstance(raw_token, str) or len(raw_token) < 32:
-        return
-    token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
-    sessions = db_all(
-        "SELECT user_email,expires_at FROM login_sessions WHERE token_hash=? AND revoked_at IS NULL",
-        (token_hash,),
-    )
-    if not sessions:
-        return
-    try:
-        expires = datetime.fromisoformat(sessions[0]["expires_at"])
-        if expires.tzinfo is None:
-            expires = expires.replace(tzinfo=timezone.utc)
-        if expires <= datetime.now(timezone.utc):
-            db_exec("UPDATE login_sessions SET revoked_at=? WHERE token_hash=?", (now_iso(), token_hash))
-            AUTH_COOKIE_MANAGER.delete(AUTH_COOKIE_NAME, key="ce_auth_cookie_expire")
+        token = cookies.get(AUTH_COOKIE_NAME) if isinstance(cookies, dict) else None
+        if not token:
+            token = AUTH_COOKIE_MANAGER.get(AUTH_COOKIE_NAME)
+        if not token or not isinstance(token, str):
             return
-    except (TypeError, ValueError, KeyError):
-        db_exec("UPDATE login_sessions SET revoked_at=? WHERE token_hash=?", (now_iso(), token_hash))
-        AUTH_COOKIE_MANAGER.delete(AUTH_COOKIE_NAME, key="ce_auth_cookie_invalid")
-        return
-    users = db_all("SELECT * FROM users WHERE email=?", (sessions[0]["user_email"],))
-    if not users:
-        db_exec("UPDATE login_sessions SET revoked_at=? WHERE token_hash=?", (now_iso(), token_hash))
-        AUTH_COOKIE_MANAGER.delete(AUTH_COOKIE_NAME, key="ce_auth_cookie_orphan")
-        return
-    user = users[0]
-    st.session_state.user_email = user["email"]
-    st.session_state.full_name = user["full_name"]
-    st.session_state.account_type = user.get("account_type", "Individual")
-    st.session_state.followup_optin = int(user.get("followup_optin", 0)) == 1
-    st.session_state.last_login = now_iso()
-    db_exec("UPDATE login_sessions SET last_seen_at=? WHERE token_hash=?", (now_iso(), token_hash))
+        token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+        sessions = db_all("SELECT * FROM login_sessions WHERE token_hash=? AND revoked_at IS NULL", (token_hash,))
+        if not sessions:
+            return
+        session = sessions[0]
+        # Normalize TEXT and datetime-like expiry values returned by database
+        # adapters before comparing; this avoids silently dropping valid sessions
+        # if a hosted PostgreSQL schema/driver returns a different representation.
+        expires_value = session["expires_at"]
+        if isinstance(expires_value, datetime):
+            expires_at = expires_value
+        else:
+            expires_at = datetime.fromisoformat(str(expires_value).replace("Z", "+00:00"))
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        else:
+            expires_at = expires_at.astimezone(timezone.utc)
+        if expires_at <= datetime.now(timezone.utc):
+            db_exec("UPDATE login_sessions SET revoked_at=? WHERE token_hash=?", (now_iso(), token_hash))
+            AUTH_COOKIE_MANAGER.delete(AUTH_COOKIE_NAME)
+            return
+        users = db_all("SELECT * FROM users WHERE LOWER(email)=LOWER(?)", (session["user_email"],))
+        if not users:
+            db_exec("UPDATE login_sessions SET revoked_at=? WHERE token_hash=?", (now_iso(), token_hash))
+            AUTH_COOKIE_MANAGER.delete(AUTH_COOKIE_NAME)
+            return
+        user = users[0]
+        st.session_state.user_email = user["email"]
+        st.session_state.full_name = user["full_name"]
+        st.session_state.account_type = user.get("account_type", "Individual")
+        st.session_state.followup_optin = int(user.get("followup_optin", 0)) == 1
+        st.session_state.last_login = now_iso()
+        st.session_state.setdefault("ce_top_menu", "Overview")
+        st.session_state.setdefault("ce_sub_menu", "Dashboard")
+        db_exec("UPDATE login_sessions SET last_seen_at=? WHERE token_hash=?", (now_iso(), token_hash))
+    except Exception as exc:
+        # Fail closed but retain a safe diagnostic category. Never log cookies,
+        # passwords, email addresses, or database connection strings.
+        import logging
+        logging.exception("CEDARS_SESSION_RESTORE_FAILED error_type=%s", type(exc).__name__)
+        st.session_state.pop("user_email", None)
 
 
 def set_login(user: dict[str, Any], login_purpose: str = "") -> None:
@@ -876,8 +885,14 @@ def signup_page() -> None:
             elif not password:
                 st.error("Enter your password.")
             else:
-                users = db_all("SELECT * FROM users WHERE email=?", (email,))
-                if not users or not verify_password(password, users[0]["password_salt"], users[0]["password_hash"]):
+                users = db_all("SELECT * FROM users WHERE LOWER(email)=LOWER(?)", (email,))
+                if not users:
+                    import logging
+                    logging.warning("CEDARS_SIGNIN_REJECTED reason=account_lookup_miss")
+                    st.error("Email or password is incorrect.")
+                elif not verify_password(password, users[0]["password_salt"], users[0]["password_hash"]):
+                    import logging
+                    logging.warning("CEDARS_SIGNIN_REJECTED reason=password_hash_mismatch")
                     st.error("Email or password is incorrect.")
                 else:
                     set_login(users[0], signin_purpose.strip())

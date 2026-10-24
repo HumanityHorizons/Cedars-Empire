@@ -760,31 +760,16 @@ def set_login(user: dict[str, Any], login_purpose: str = "") -> None:
     st.session_state.account_type = user.get("account_type", "Individual")
     st.session_state.followup_optin = int(user.get("followup_optin", 0)) == 1
     st.session_state.last_login = now_iso()
+    # Always open the authenticated workspace on its landing dashboard.
+    st.session_state["ce_top_menu"] = "Overview"
+    st.session_state["ce_sub_menu"] = "Dashboard"
     db_exec("UPDATE users SET last_login=? WHERE email=?", (now_iso(), user["email"]))
     log_attendance("member_sign_in", user["email"], bool(user.get("followup_optin", 0)), "follow-up attendance opt-in controls identifiable attendance")
     record_event(user["email"], "sign_in", login_purpose.strip() or None)
 
 
 def signup_page() -> None:
-    st.markdown("""
-    <div class="ce-dashboard-hero ce-business-hero">
-      <div class="ce-eyebrow">GLOBAL BUSINESS PLATFORM</div>
-      <div class="ce-hero-title">CEDARS EMPIRE</div>
-      <div class="ce-hero-subtitle">Business operations, customer services, contracts, Grid marketplace and evidence-led financial controls.</div>
-      <div class="ce-hero-strip"><span>ONE WORKSPACE</span><span>VERIFIABLE RECORDS</span><span>CONTROLLED PAYMENTS</span></div>
-    </div>
-    """, unsafe_allow_html=True)
-    st.markdown("### Business workspace")
-    landing_cols = st.columns(3)
-    landing_items = [
-        ("Business operations", "Customer records, calendar, tasks, contracts and reports."),
-        ("Grid marketplace", "Explore service categories and submit evidence-backed activity."),
-        ("Earnings & controls", "Review recorded credits and transaction history; finance controls are role-restricted."),
-    ]
-    for col, (heading, detail) in zip(landing_cols, landing_items):
-        with col:
-            st.markdown(f'<div class="ce-business-metric"><div class="ce-stat-kicker">{heading.upper()}</div><div class="ce-business-detail">{detail}</div></div>', unsafe_allow_html=True)
-    st.caption("Only verified receipts and approved records can be reported as actual financial results. Displayed scenarios are not guaranteed returns.")
+    # Keep the public login page focused on account access; workspace features appear after sign-in.
     signin, signup, public, reset_request, reset_finish = st.tabs(
         ["Sign in", "Create account", "Public noticeboard", "Forgot password", "Set new password"])
     with signin:
@@ -946,10 +931,6 @@ def signup_page() -> None:
 
 is_logged_in = bool(st.session_state.get("user_email"))
 if not is_logged_in:
-    with st.sidebar:
-        st.subheader("Workspace access")
-        st.write("Sign in or create an account to save your work, manage tasks and use the personal tools.")
-        st.caption("Administrator tools are enabled only for addresses explicitly configured in Streamlit secrets.")
     signup_page()
     st.stop()
 

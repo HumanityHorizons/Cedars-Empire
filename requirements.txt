@@ -8,3 +8,4 @@ openai>=1.66
 qrcode[pil]>=7.4
 requests>=2.32,<3.0
 reportlab>=4.2,<5.0
+extra-streamlit-components>=0.1.71,<0.2

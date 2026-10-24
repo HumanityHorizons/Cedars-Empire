@@ -1043,6 +1043,17 @@ admin_menu = {
 menu_groups = admin_menu if IS_ADMIN else business_menu
 # Flatten visible navigation groups for page checks and admin branding controls.
 pages = [page for group_pages in menu_groups.values() for page in group_pages]
+
+# Apply navigation requests before creating widgets that own these session-state keys.
+# Button handlers below write only to pending keys, then rerun; this avoids
+# StreamlitWidgetAlreadyInstantiatedError for ce_top_menu / ce_sub_menu.
+_pending_group = st.session_state.pop("ce_pending_top_menu", None)
+_pending_page = st.session_state.pop("ce_pending_sub_menu", None)
+if _pending_group in menu_groups:
+    st.session_state["ce_top_menu"] = _pending_group
+    if _pending_page in menu_groups[_pending_group]:
+        st.session_state["ce_sub_menu"] = _pending_page
+
 with st.container(key="ce_locked_header"):
     logo_bytes = None
     try:
@@ -1428,8 +1439,10 @@ if page in BUSINESS_PAGES:
                 st.markdown(f'<div class="ce-grid-card"><div class="ce-grid-number">{item[0]}</div><div class="ce-grid-title">{item[1]}</div><div class="ce-grid-copy">{item[2]}</div></div>', unsafe_allow_html=True)
                 if st.button("Open grid", key="ce_business_grid_" + item[3], use_container_width=True):
                     if item[3] in pages:
-                        st.session_state["ce_top_menu"] = "Grids"
-                        st.session_state["ce_sub_menu"] = item[3]
+                        destination_group = next((group for group, group_pages in menu_groups.items() if item[3] in group_pages), None)
+                        if destination_group:
+                            st.session_state["ce_pending_top_menu"] = destination_group
+                            st.session_state["ce_pending_sub_menu"] = item[3]
                         st.rerun()
                     else:
                         st.info("This grid is available through the Real Money Business navigation.")
@@ -1989,8 +2002,8 @@ if page == "Dashboard":
                 destination = item[1]
                 destination_group = next((group for group, group_pages in menu_groups.items() if destination in group_pages), None)
                 if destination_group:
-                    st.session_state["ce_top_menu"] = destination_group
-                    st.session_state["ce_sub_menu"] = destination
+                    st.session_state["ce_pending_top_menu"] = destination_group
+                    st.session_state["ce_pending_sub_menu"] = destination
                     st.rerun()
                 else:
                     st.warning("This destination is not currently registered in the workspace navigation.")
@@ -2029,8 +2042,8 @@ if page == "Dashboard":
             if st.button("Create your first task", key="ce_create_first_task", type="primary"):
                 destination_group = next((group for group, group_pages in menu_groups.items() if "My Tasks" in group_pages), None)
                 if destination_group:
-                    st.session_state["ce_top_menu"] = destination_group
-                    st.session_state["ce_sub_menu"] = "My Tasks"
+                    st.session_state["ce_pending_top_menu"] = destination_group
+                    st.session_state["ce_pending_sub_menu"] = "My Tasks"
                     st.rerun()
                 else:
                     st.warning("Task management is not currently registered in the workspace navigation.")

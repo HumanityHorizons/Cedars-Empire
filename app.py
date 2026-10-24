@@ -23,6 +23,8 @@ import streamlit as st
 import pymupdf
 from docx import Document
 from hh_workspace_widgets import render_action_grid, render_calendar, render_document_exports
+from hh_grid_marketplace import render_grid_marketplace
+from hh_robot_dashboard import render_robot_dashboard
 from hh_real_payments import (
     ensure_payment_tables, render_deposit_page, render_cashout_page,
     render_payment_ops_page, render_user_treasury_overview_page,
@@ -948,17 +950,17 @@ IS_ADMIN = USER_EMAIL.lower() in ADMIN_EMAILS
 # CEDARS EMPIRE is a business-only platform. NGO workspace is permanently retired.
 # Compact top-level navigation with grouped submenus; internal finance stays admin-only.
 business_menu = {
-    "Overview": ["Dashboard", "Studio"],
-    "Business": ["Customer & Client Management", "Calendar & Events", "Work & Contracts", "Business Reports"],
-    "Earnings": ["Earnings & Wallet", "Deposit", "Withdraw", "Refer"],
-    "Grids": ["Grid Marketplace"],
-    "Account": ["Account"],
+    "Overview": ["Dashboard", "Investor Landing"],
+    "Business": ["Customer & Client Management", "Calendar & Events", "Live Studio", "Work & Contracts", "Client Services & Contracts", "Business Opportunity Pipeline"],
+    "Earnings": ["Earnings & Wallet", "Deposit & Packages", "Withdrawals & Full KYC", "Staking & Compounding", "Referral Program"],
+    "Grids": ["World Grid Marketplace", "Cleaning Grid", "Shelter & Accommodation Grid", "Energy & Utilities Grid", "AI Training & Data Operations", "Robot Operations Dashboard"],
+    "AI & Reports": ["AI Business Scenario Lab", "Business Reports"],
+    "Account": ["My Work & Wallet"],
 }
 admin_menu = {
     **business_menu,
-    "Executive": ["Executive Command Center", "Treasury Management", "Real Money Engines"],
-    "Payments": ["Payments & Treasury", "Blockchain & Treasury", "Payment Operations"],
-    "Automation": ["Daily Crediting", "Reports & Referrals", "AI Operations"],
+    "Command & Finance": ["Executive Command Center", "Treasury Management", "Real Money Engines", "Payments & Treasury", "Blockchain & Treasury", "Payment Operations"],
+    "Automation & Admin": ["Daily Crediting", "Reports & Referrals", "AI Operations", "Branding Settings", "Admin Console"],
 }
 menu_groups = admin_menu if IS_ADMIN else business_menu
 # Flatten visible navigation groups for page checks and admin branding controls.
@@ -988,8 +990,8 @@ with st.container(key="ce_locked_header"):
         current_group = st.session_state.get("ce_top_menu", menu_keys[0])
         if current_group not in menu_keys:
             current_group = menu_keys[0]
-        top_menu = st.selectbox("Menu", menu_keys, index=menu_keys.index(current_group),
-                                key="ce_top_menu", label_visibility="collapsed")
+        top_menu = st.radio("Menu", menu_keys, index=menu_keys.index(current_group),
+                           key="ce_top_menu", horizontal=True, label_visibility="collapsed")
     with nav_cols[1]:
         submenu_options = menu_groups[top_menu]
         current_submenu = st.session_state.get("ce_sub_menu", submenu_options[0])
@@ -1014,6 +1016,7 @@ page_routes = {
     "Refer": "Referral Program",
     "Account": "Payments & Treasury",
     "Grid Marketplace": "World Grid Marketplace",
+    "Robot Operations Dashboard": "Robot Operations Dashboard",
     "Work & Contracts": "Client Services & Contracts",
     "Payments & Treasury": "Blockchain & Treasury",
     "Payment Operations": "Payment Operations",
@@ -1369,7 +1372,11 @@ if page in BUSINESS_PAGES:
         st.header("AI Training & Data Operations")
         st.write("Validate buyer identity, written scope, data rights, privacy/security requirements, participant consent, age eligibility and payment terms before work begins.")
         render_engine_dashboard("AI training & data operations")
-    elif page == "World Grid Marketplace":
+    elif page in {"World Grid Marketplace", "Real Work & Robot Grid Marketplace"}:
+        render_grid_marketplace()
+    elif page == "Robot Operations Dashboard":
+        render_robot_dashboard()
+    elif page == "World Grid Marketplace__OLD":
         st.header("World Grid Marketplace")
         st.write("A marketplace operations dashboard for provider checks, customer demand, delivery, costs and receipt reconciliation.")
         st.caption("Listings remain unverified until supporting evidence is reviewed. No marketplace transaction or income is implied by a saved record.")

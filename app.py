@@ -1185,8 +1185,11 @@ BUSINESS_PAGES = {
     "Business Reports", "Live Studio", "Customer & Client Management", "Calendar & Events", "Executive Command Center", "Treasury Management", "Grid Marketplace", "Work & Contracts",
     "Payments & Treasury", "Deposits & Withdrawals", "Payment Operations", "Deposit & Packages", "Withdraw / Cash Out", "Reports & Referrals", "AI Operations"
 }
+# Fail closed: retired or unknown handlers cannot render from stale routes.
+if page not in BUSINESS_PAGES:
+    page = "Business Dashboard"
 if page in BUSINESS_PAGES:
-    # Internal 360-degree command oversight; keep public-facing branding clean and never print "360" in UI.
+    # Internal command oversight; keep public-facing branding clean.
     media_rows = db_all("SELECT setting_key,setting_value FROM app_settings WHERE setting_key IN (?,?)",
                         ("site_logo", "page_image:" + page))
     media = {row["setting_key"]: row["setting_value"] for row in media_rows}

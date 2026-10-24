@@ -63,6 +63,66 @@ input, textarea, [data-baseweb="select"] input {
   color: #1F2937 !important; background-color: #FFFFFF !important;
 }
 .hh-small { font-size: .88rem; color: #526579 !important; }
+
+/* Dashboard polish pass: deeper contrast, richer grid tiles, controlled motion */
+.ce-robot-stage{min-height:300px;padding:clamp(30px,4.4vw,54px);border-radius:28px;background:radial-gradient(ellipse at 78% 42%,rgba(0,209,255,.34),transparent 23%),radial-gradient(ellipse at 95% 90%,rgba(255,190,55,.24),transparent 30%),linear-gradient(122deg,#020714 0%,#06152E 42%,#0B3455 72%,#071A32 100%);box-shadow:0 24px 60px rgba(2,12,31,.28),inset 0 1px rgba(255,255,255,.16)}
+.ce-robot-stage:before{right:4%;top:50%;transform:translateY(-50%);width:clamp(280px,34vw,420px);height:clamp(280px,34vw,420px);animation:ce-stage-orbit 18s linear infinite;box-shadow:0 0 0 18px rgba(82,209,255,.055),0 0 0 43px rgba(82,209,255,.035),0 0 0 76px rgba(255,195,67,.025),0 0 90px rgba(0,190,255,.19)}
+.ce-robot-kicker{font-size:10px;letter-spacing:3px;color:#FFE19A!important;font-weight:900}
+.ce-robot-title{font-size:clamp(36px,5.1vw,62px);line-height:.98;letter-spacing:-1.7px;font-weight:950;background:linear-gradient(100deg,#FFF8DC 0%,#FFD36C 40%,#FFFDF5 66%,#71DFFF 100%);background-clip:text;-webkit-background-clip:text;color:transparent!important;text-shadow:0 8px 35px rgba(255,195,70,.12);margin:10px 0 16px}
+.ce-robot-copy{max-width:650px;font-size:14px;line-height:1.75;color:#E1EFFB!important}
+.ce-robot-visual{min-height:260px}
+.ce-robot-orb{position:relative;z-index:1;width:220px;height:220px;border-radius:50%;font-size:120px;background:radial-gradient(circle at 34% 24%,rgba(255,255,255,.30),rgba(15,64,99,.38) 45%,rgba(0,8,25,.78) 100%);border:1px solid rgba(255,218,129,.9);box-shadow:inset 0 0 35px rgba(100,213,255,.22),0 0 32px rgba(0,184,255,.32),0 0 80px rgba(255,185,54,.17);animation:ce-robot-glow 3.6s ease-in-out infinite,ce-robot-hover 4.2s ease-in-out infinite}
+.ce-robot-visual:before,.ce-robot-visual:after{content:"";position:absolute;width:250px;height:250px;border-radius:50%;border:1px solid rgba(74,213,255,.7);box-shadow:0 0 24px rgba(0,190,255,.16);animation:ce-stage-orbit 14s linear infinite}
+.ce-robot-visual:after{width:280px;height:280px;border-style:dashed;border-color:rgba(255,205,91,.62);animation-duration:22s;animation-direction:reverse}
+.ce-robot-card{min-height:190px;padding:22px;background:linear-gradient(150deg,#FFFFFF 0%,#F5FAFF 56%,#E9F4FC 100%);border:1px solid #D6E5F0;border-top:3px solid #EBC15A;border-radius:20px;box-shadow:0 12px 30px rgba(5,29,57,.09),inset 0 1px #fff;transition:transform .25s ease,box-shadow .25s ease}
+.ce-robot-card:nth-child(2){border-top-color:#40C9F4}.ce-robot-card:nth-child(3){border-top-color:#63D6B1}
+.ce-robot-card:hover{transform:translateY(-6px);box-shadow:0 20px 36px rgba(5,29,57,.16)}
+.ce-robot-card-icon{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:15px;background:linear-gradient(145deg,#E6F7FF,#FFF4D4);font-size:25px;margin-bottom:15px}
+.ce-robot-card-title{font-size:16px;letter-spacing:-.2px}
+.ce-robot-card-copy{font-size:13px;line-height:1.7}
+.ce-robot-section-title{font-size:clamp(21px,2.5vw,28px);font-weight:900;letter-spacing:-.6px;color:#092443!important;margin:28px 0 7px}
+.ce-robot-section-copy{font-size:13px;line-height:1.65;color:#61758A!important;margin-bottom:15px}
+.ce-grid-wall{gap:13px;margin:18px 0 12px}
+.ce-grid-tile{position:relative;overflow:hidden;min-height:124px;padding:18px 15px;border-radius:17px;background:radial-gradient(circle at 100% 0%,rgba(0,199,255,.23),transparent 42%),linear-gradient(145deg,#06152B 0%,#0B2D4C 62%,#10415A 100%);border:1px solid rgba(81,190,232,.4);box-shadow:inset 0 1px rgba(255,255,255,.12),0 10px 24px rgba(5,29,57,.14);transition:transform .24s ease,border-color .24s ease,box-shadow .24s ease}
+.ce-grid-tile:after{content:"";position:absolute;width:100px;height:100px;right:-45px;bottom:-52px;border:1px solid rgba(255,210,107,.35);border-radius:50%;box-shadow:0 0 0 10px rgba(255,210,107,.035);pointer-events:none}
+.ce-grid-tile:hover{transform:translateY(-5px);border-color:#F4CF73;box-shadow:0 17px 30px rgba(5,29,57,.2)}
+.ce-grid-tile b{font-size:13px;color:#FFE29A;margin:9px 0 7px;letter-spacing:.15px}
+.ce-grid-tile span{font-size:11px;line-height:1.55;color:#E0EEF8}
+.ce-money-strip{padding:22px 24px;border-radius:20px;background:radial-gradient(circle at 0% 50%,rgba(0,193,255,.19),transparent 34%),linear-gradient(110deg,#061327,#0B3150 68%,#123D52);box-shadow:0 15px 35px rgba(5,29,57,.16)}
+.ce-money-icon{font-size:34px;filter:drop-shadow(0 0 12px rgba(255,207,91,.45))}
+.ce-landing-card{border-radius:18px;padding:21px;background:linear-gradient(145deg,#FFFFFF,#F0F7FC);border:1px solid #D7E4EE;box-shadow:0 10px 26px rgba(5,29,57,.08);transition:transform .22s ease,box-shadow .22s ease}
+.ce-landing-card:hover{transform:translateY(-4px);box-shadow:0 16px 32px rgba(5,29,57,.14)}
+@keyframes ce-robot-hover{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-10px) rotate(2deg)}}
+@keyframes ce-stage-orbit{to{transform:rotate(360deg)}}
+@media(max-width:760px){.ce-robot-stage{min-height:0;padding:25px 20px}.ce-robot-title{font-size:38px}.ce-robot-visual{min-height:175px;justify-content:center}.ce-robot-orb{width:145px;height:145px;font-size:78px}.ce-robot-visual:before{width:175px;height:175px}.ce-robot-visual:after{width:195px;height:195px}.ce-grid-wall{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.ce-grid-tile{min-height:112px;padding:14px 12px}.ce-robot-card{min-height:0}}
+@media(prefers-reduced-motion:reduce){.ce-robot-stage:before,.ce-robot-orb,.ce-robot-visual:before,.ce-robot-visual:after,.ce-robot-card,.ce-grid-tile,.ce-landing-card{animation:none!important;transition:none!important}}
+
+
+/* Final cascade override: keep premium landing styles after legacy declarations */
+.ce-robot-stage{min-height:300px!important;padding:clamp(30px,4.4vw,54px)!important;border-radius:28px!important;background:radial-gradient(ellipse at 78% 42%,rgba(0,209,255,.34),transparent 23%),radial-gradient(ellipse at 95% 90%,rgba(255,190,55,.24),transparent 30%),linear-gradient(122deg,#020714 0%,#06152E 42%,#0B3455 72%,#071A32 100%)!important;box-shadow:0 24px 60px rgba(2,12,31,.28),inset 0 1px rgba(255,255,255,.16)!important}
+.ce-robot-stage:before{right:4%!important;top:50%!important;transform:translateY(-50%);width:clamp(280px,34vw,420px)!important;height:clamp(280px,34vw,420px)!important;animation:ce-stage-orbit 18s linear infinite;box-shadow:0 0 0 18px rgba(82,209,255,.055),0 0 0 43px rgba(82,209,255,.035),0 0 0 76px rgba(255,195,67,.025),0 0 90px rgba(0,190,255,.19)!important}
+.ce-robot-title{font-size:clamp(36px,5.1vw,62px)!important;line-height:.98!important;letter-spacing:-1.7px!important;background:linear-gradient(100deg,#FFF8DC 0%,#FFD36C 40%,#FFFDF5 66%,#71DFFF 100%)!important;background-clip:text!important;-webkit-background-clip:text!important;-webkit-text-fill-color:transparent!important;filter:drop-shadow(0 5px 20px rgba(255,181,48,.15))}
+.ce-robot-visual{min-height:260px!important}
+.ce-robot-orb{position:relative;width:220px!important;height:220px!important;border-radius:50%!important;font-size:120px!important;box-shadow:inset 0 0 35px rgba(100,213,255,.22),0 0 32px rgba(0,184,255,.32),0 0 80px rgba(255,185,54,.17)!important;animation:ce-robot-glow 3.6s ease-in-out infinite,ce-robot-hover 4.2s ease-in-out infinite!important}
+.ce-robot-visual:before,.ce-robot-visual:after{content:"";position:absolute;width:250px;height:250px;border-radius:50%;border:1px solid rgba(74,213,255,.7);box-shadow:0 0 24px rgba(0,190,255,.16);animation:ce-stage-orbit 14s linear infinite}
+.ce-robot-visual:after{width:280px;height:280px;border-style:dashed;border-color:rgba(255,205,91,.62);animation-duration:22s;animation-direction:reverse}
+.ce-robot-card{min-height:190px!important;padding:22px!important;border-radius:20px!important;box-shadow:0 12px 30px rgba(5,29,57,.09),inset 0 1px #fff!important;transition:transform .25s ease,box-shadow .25s ease!important}
+.ce-robot-card:nth-child(2){border-top-color:#40C9F4!important}.ce-robot-card:nth-child(3){border-top-color:#63D6B1!important}
+.ce-robot-card:hover,.ce-landing-card:hover{transform:translateY(-5px);box-shadow:0 20px 36px rgba(5,29,57,.16)!important}
+.ce-robot-card-icon{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:15px;background:linear-gradient(145deg,#E6F7FF,#FFF4D4);font-size:25px;margin-bottom:15px}
+.ce-robot-card-title{font-size:16px!important}.ce-robot-card-copy{font-size:13px!important;line-height:1.7!important}
+.ce-robot-section-title{font-size:clamp(21px,2.5vw,28px)!important;font-weight:900!important;letter-spacing:-.6px!important;margin:28px 0 7px!important}
+.ce-grid-wall{gap:13px!important;margin:18px 0 12px!important}
+.ce-grid-tile{position:relative;overflow:hidden;min-height:124px!important;padding:18px 15px!important;border-radius:17px!important;background:radial-gradient(circle at 100% 0%,rgba(0,199,255,.23),transparent 42%),linear-gradient(145deg,#06152B 0%,#0B2D4C 62%,#10415A 100%)!important;border:1px solid rgba(81,190,232,.4)!important;box-shadow:inset 0 1px rgba(255,255,255,.12),0 10px 24px rgba(5,29,57,.14)!important;transition:transform .24s ease,border-color .24s ease,box-shadow .24s ease!important}
+.ce-grid-tile:hover{transform:translateY(-5px);border-color:#F4CF73!important;box-shadow:0 17px 30px rgba(5,29,57,.2)!important}
+.ce-grid-tile b{font-size:13px!important;color:#FFE29A!important;margin:9px 0 7px!important}.ce-grid-tile span{font-size:11px!important;line-height:1.55!important;color:#E0EEF8!important}
+.ce-money-strip{padding:22px 24px!important;border-radius:20px!important;background:radial-gradient(circle at 0% 50%,rgba(0,193,255,.19),transparent 34%),linear-gradient(110deg,#061327,#0B3150 68%,#123D52)!important;box-shadow:0 15px 35px rgba(5,29,57,.16)!important}
+.ce-landing-card{border-radius:18px!important;padding:21px!important;background:linear-gradient(145deg,#07162C,#0A2A4B)!important;transition:transform .22s ease,box-shadow .22s ease!important}
+@keyframes ce-robot-hover{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-10px) rotate(2deg)}}
+@keyframes ce-stage-orbit{to{rotate:360deg}}
+@media(max-width:760px){.ce-robot-stage{min-height:0!important;padding:25px 20px!important}.ce-robot-title{font-size:38px!important}.ce-robot-layout{grid-template-columns:1fr!important;gap:8px!important}.ce-robot-visual{min-height:175px!important;justify-content:center!important}.ce-robot-orb{width:145px!important;height:145px!important;font-size:78px!important}.ce-robot-visual:before{width:175px;height:175px}.ce-robot-visual:after{width:195px;height:195px}.ce-grid-wall{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}.ce-grid-tile{min-height:112px!important;padding:14px 12px!important}.ce-robot-card{min-height:0!important}}
+@media(prefers-reduced-motion:reduce){.ce-robot-stage:before,.ce-robot-orb,.ce-robot-visual:before,.ce-robot-visual:after,.ce-robot-card,.ce-grid-tile,.ce-landing-card{animation:none!important;transition:none!important}}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -99,6 +159,60 @@ st.markdown("""
 .ce-grid-number { color:#A86400; font-size:11px; font-weight:900; letter-spacing:1px; margin-bottom:9px; }
 .ce-business-metric { min-height:126px; border-left:4px solid #D6A84F; }
 .ce-business-value { color:#0A2540 !important; font-size:22px; font-weight:800; margin:10px 0 6px; }
+
+/* CEDARS EMPIRE premium robot + grids + treasury visual system */
+
+/* Premium signed-in command hero: animated robot + energy rings */
+.ce-command-hero{position:relative;isolation:isolate;overflow:hidden;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(210px,.65fr);align-items:center;gap:20px;padding:clamp(24px,4vw,42px);margin:8px 0 22px;border:1px solid rgba(255,211,105,.75);border-radius:24px;color:#fff!important;background:radial-gradient(ellipse at 78% 38%,rgba(0,199,255,.26),transparent 28%),radial-gradient(ellipse at 92% 92%,rgba(255,183,47,.22),transparent 32%),linear-gradient(118deg,#030A19 0%,#071B38 48%,#0B3656 100%);box-shadow:0 18px 50px rgba(3,17,39,.22),inset 0 1px rgba(255,255,255,.13)}
+.ce-command-hero:before{content:"";position:absolute;z-index:-1;width:330px;height:330px;right:4%;top:50%;transform:translateY(-50%);border:1px solid rgba(67,211,255,.35);border-radius:50%;box-shadow:0 0 0 18px rgba(67,211,255,.055),0 0 0 42px rgba(67,211,255,.035),0 0 70px rgba(0,185,255,.15);animation:ce-orbit-pulse 5s ease-in-out infinite}
+.ce-command-eyebrow{font-size:10px;letter-spacing:3px;font-weight:900;color:#FFE19A!important;margin-bottom:12px}
+.ce-command-title{font-size:clamp(30px,4vw,48px);line-height:1.05;font-weight:950;letter-spacing:-1px;color:#FFF0C5!important;margin:0 0 12px;text-shadow:0 0 24px rgba(255,191,63,.16)}
+.ce-command-copy{font-size:14px;line-height:1.65;color:#D9EBFA!important;max-width:640px}
+.ce-command-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.ce-command-tag{font-size:9px;font-weight:900;letter-spacing:.8px;border:1px solid rgba(117,218,255,.35);border-radius:999px;padding:8px 11px;background:rgba(255,255,255,.07);color:#F4FAFF!important}
+.ce-command-robot{height:210px;display:flex;align-items:center;justify-content:center;position:relative;font-size:105px;filter:drop-shadow(0 0 22px rgba(0,195,255,.35));animation:ce-bot-float 3.4s ease-in-out infinite}
+.ce-command-robot:before{content:"";position:absolute;width:155px;height:155px;border-radius:50%;border:2px solid rgba(255,205,91,.72);box-shadow:0 0 28px rgba(0,191,255,.24),inset 0 0 28px rgba(0,191,255,.16);animation:ce-bot-spin 12s linear infinite}
+.ce-command-robot:after{content:"";position:absolute;width:190px;height:190px;border-radius:50%;border:1px dashed rgba(83,210,255,.62);animation:ce-bot-spin 18s linear infinite reverse}
+.ce-business-metric,.ce-grid-card,.ce-action-card{border-radius:16px!important;box-shadow:0 9px 26px rgba(5,29,57,.075),inset 0 1px #fff!important;transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
+.ce-business-metric:hover,.ce-grid-card:hover,.ce-action-card:hover{transform:translateY(-4px);box-shadow:0 16px 32px rgba(5,29,57,.14)!important;border-color:#D6A84F!important}
+@keyframes ce-bot-float{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-11px) rotate(3deg)}}
+@keyframes ce-bot-spin{to{transform:rotate(360deg)}}
+@keyframes ce-orbit-pulse{0%,100%{opacity:.65;scale:1}50%{opacity:1;scale:1.035}}
+@media(max-width:760px){.ce-command-hero{grid-template-columns:1fr;padding:23px 18px}.ce-command-robot{height:150px;font-size:72px;justify-content:flex-start;padding-left:25px}.ce-command-robot:before{width:112px;height:112px}.ce-command-robot:after{width:138px;height:138px}}
+@media(prefers-reduced-motion:reduce){.ce-command-hero:before,.ce-command-robot,.ce-command-robot:before,.ce-command-robot:after{animation:none!important}.ce-business-metric,.ce-grid-card,.ce-action-card{transition:none!important}}
+
+.ce-robot-stage{position:relative;overflow:hidden;isolation:isolate;background:radial-gradient(ellipse at 72% 35%,rgba(0,195,255,.34),transparent 26%),radial-gradient(ellipse at 90% 100%,rgba(255,190,55,.28),transparent 34%),linear-gradient(120deg,#020817 0%,#061B37 48%,#092C4B 76%,#101D36 100%);border:1px solid rgba(255,205,90,.72);border-radius:24px;padding:clamp(24px,4vw,48px);margin:0 0 24px;color:#fff;box-shadow:0 18px 55px rgba(2,8,23,.30),inset 0 1px rgba(255,255,255,.15)}
+.ce-robot-stage:before{content:"";position:absolute;z-index:-1;right:5%;top:-35%;width:440px;height:440px;border:1px solid rgba(82,209,255,.35);border-radius:50%;box-shadow:0 0 0 18px rgba(82,209,255,.045),0 0 0 42px rgba(82,209,255,.04),0 0 0 75px rgba(255,195,67,.035),0 0 90px rgba(0,190,255,.18)}
+.ce-robot-stage:after{content:"AI WORKFORCE  •  GLOBAL GRIDS  •  VERIFIED VALUE";position:absolute;right:22px;bottom:14px;color:rgba(255,221,145,.68);font-size:9px;font-weight:900;letter-spacing:2px}
+.ce-robot-layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(230px,.75fr);align-items:center;gap:20px}
+.ce-robot-kicker{color:#FFE09A!important;font-size:11px;font-weight:900;letter-spacing:3px;margin-bottom:14px;text-shadow:0 0 18px rgba(255,191,65,.32)}
+.ce-robot-title{color:#FFF5D7!important;background:linear-gradient(100deg,#FFF9D9 0%,#FFD66E 38%,#FFF1BD 62%,#E9A92E 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-size:clamp(36px,5vw,62px);line-height:1.02;font-weight:950;letter-spacing:-1.7px;margin:0 0 16px;filter:drop-shadow(0 5px 20px rgba(255,181,48,.15))}
+.ce-robot-copy{color:#E3F2FF!important;font-size:clamp(14px,1.5vw,17px);line-height:1.65;max-width:680px}
+.ce-robot-visual{display:flex;align-items:center;justify-content:center;min-height:230px;position:relative}
+.ce-robot-orb{width:208px;height:208px;border-radius:54px;display:flex;align-items:center;justify-content:center;font-size:112px;background:radial-gradient(circle at 32% 22%,rgba(255,255,255,.30),rgba(255,255,255,.055) 44%,rgba(0,9,27,.42) 100%);border:1px solid rgba(255,213,115,.8);box-shadow:inset 0 0 35px rgba(100,213,255,.17),0 0 28px rgba(0,184,255,.25),0 0 70px rgba(255,185,54,.12);transform:rotate(-3deg);animation:ce-robot-glow 4s ease-in-out infinite}
+@keyframes ce-robot-glow{0%,100%{box-shadow:inset 0 0 35px rgba(100,213,255,.17),0 0 28px rgba(0,184,255,.25),0 0 70px rgba(255,185,54,.12)}50%{box-shadow:inset 0 0 45px rgba(100,213,255,.26),0 0 42px rgba(0,184,255,.40),0 0 90px rgba(255,185,54,.20)}}
+.ce-robot-pills{display:flex;flex-wrap:wrap;gap:9px;margin-top:24px}
+.ce-robot-pill{border:1px solid rgba(125,214,255,.35);background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.035));border-radius:999px;padding:9px 13px;color:#F3FAFF!important;font-size:10px;font-weight:850;letter-spacing:.7px;box-shadow:inset 0 1px rgba(255,255,255,.10)}
+.ce-robot-section-title{font-size:25px;font-weight:900;color:#092443;margin:28px 0 5px;letter-spacing:-.5px}
+.ce-robot-section-copy{color:#526579;font-size:13px;line-height:1.55;margin-bottom:16px}
+.ce-robot-card{position:relative;overflow:hidden;background:linear-gradient(150deg,#fff 0%,#F8FBFF 62%,#EDF5FC 100%);border:1px solid #D5E1ED;border-radius:17px;padding:19px;min-height:166px;box-shadow:0 10px 26px rgba(5,29,57,.09),inset 0 1px #fff;border-top:3px solid #E5B544}
+.ce-robot-card:after{content:"";position:absolute;width:110px;height:110px;border-radius:50%;right:-55px;top:-55px;background:radial-gradient(circle,rgba(255,205,91,.18),transparent 72%);pointer-events:none}
+.ce-robot-card-icon{font-size:29px;margin-bottom:12px;filter:drop-shadow(0 3px 8px rgba(16,94,147,.18))}
+.ce-robot-card-title{color:#092443!important;font-size:15px;font-weight:900;margin-bottom:8px}
+.ce-robot-card-copy{color:#526579!important;font-size:12px;line-height:1.55}
+.ce-robot-status{display:inline-block;margin-top:12px;border-radius:999px;background:linear-gradient(90deg,#FFF1C9,#FFE3A0);color:#754D00!important;padding:6px 9px;font-size:9px;font-weight:900;letter-spacing:.65px}
+.ce-landing-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin:16px 0 10px}
+.ce-landing-card{position:relative;overflow:hidden;background:linear-gradient(150deg,#07162C 0%,#0A2A4B 100%);border:1px solid rgba(16,97,146,.5);border-radius:16px;padding:21px;min-height:145px;box-shadow:0 10px 28px rgba(5,29,57,.12),inset 0 1px rgba(255,255,255,.08)}
+.ce-landing-card:before{content:"";position:absolute;width:130px;height:130px;border-radius:50%;right:-60px;bottom:-70px;background:radial-gradient(circle,rgba(255,195,62,.20),transparent 72%)}
+.ce-landing-card:nth-child(2){border-top:3px solid #E8B94F}.ce-landing-card:nth-child(1),.ce-landing-card:nth-child(3){border-top:3px solid #38B8ED}
+.ce-landing-title{color:#FFE4A2!important;font-size:15px;font-weight:900;margin-bottom:9px}
+.ce-landing-copy{color:#E1EDF8!important;font-size:12px;line-height:1.65}
+.ce-grid-wall{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0 8px}
+.ce-grid-tile{background:linear-gradient(145deg,#07172D,#103657);color:#fff;border:1px solid rgba(72,174,222,.45);border-radius:13px;padding:14px 12px;min-height:92px;box-shadow:inset 0 1px rgba(255,255,255,.10),0 8px 18px rgba(5,29,57,.10)}
+.ce-grid-tile b{display:block;color:#FFE191;font-size:12px;margin:5px 0}.ce-grid-tile span{display:block;color:#D6E7F5;font-size:10px;line-height:1.45}
+.ce-money-strip{background:linear-gradient(110deg,#07162B,#0B3150);border:1px solid rgba(232,185,79,.72);border-radius:16px;padding:18px 20px;display:flex;gap:14px;align-items:center;color:#fff;box-shadow:0 10px 26px rgba(5,29,57,.12);margin:16px 0 8px}
+.ce-money-icon{font-size:34px;filter:drop-shadow(0 0 12px rgba(255,196,59,.4))}.ce-money-title{color:#FFE2A0!important;font-size:15px;font-weight:900}.ce-money-copy{color:#DCEAF6!important;font-size:12px;line-height:1.55}
+@media(max-width:760px){.ce-robot-stage{padding:22px 18px}.ce-robot-layout{grid-template-columns:1fr;gap:8px}.ce-robot-visual{min-height:135px;justify-content:flex-start}.ce-robot-orb{width:120px;height:120px;font-size:64px;border-radius:32px}.ce-landing-grid{grid-template-columns:1fr}.ce-grid-wall{grid-template-columns:repeat(2,minmax(0,1fr))}.ce-robot-stage:after{display:none}.ce-money-strip{align-items:flex-start}}
 @media(max-width:768px) { .ce-dashboard-hero { padding:22px 18px 16px; border-radius:13px; } .ce-hero-title { font-size:24px; } .ce-stat-card { min-height:84px; padding:9px; } .ce-stat-value { font-size:24px; } .ce-action-card,.ce-grid-card { padding:12px; } }
 [data-testid="stDataFrame"],[data-testid="stTable"],[data-testid="stForm"] { border:1px solid var(--ce-border) !important; border-radius:8px !important; background:var(--ce-card) !important; }
 [data-testid="stForm"] { padding:1rem !important; }
@@ -110,6 +224,32 @@ div.stButton > button:not([kind="primary"]),[data-testid="stDownloadButton"] but
 [data-testid="stAlert"] { border-radius:8px !important; }
 [data-testid="stMainBlockContainer"] { max-width:1440px; }
 @media (max-width:768px) { [data-testid="stMainBlockContainer"] { padding-left:.8rem !important; padding-right:.8rem !important; } [data-testid="stForm"] { padding:.65rem !important; } }
+
+/* LAST-WINS landing-page override */
+.ce-robot-stage{min-height:300px!important;padding:clamp(30px,4.4vw,54px)!important;border-radius:28px!important;background:radial-gradient(ellipse at 78% 42%,rgba(0,209,255,.34),transparent 23%),radial-gradient(ellipse at 95% 90%,rgba(255,190,55,.24),transparent 30%),linear-gradient(122deg,#020714 0%,#06152E 42%,#0B3455 72%,#071A32 100%)!important;box-shadow:0 24px 60px rgba(2,12,31,.28),inset 0 1px rgba(255,255,255,.16)!important}
+.ce-robot-stage:before{right:4%!important;top:50%!important;transform:translateY(-50%);width:clamp(280px,34vw,420px)!important;height:clamp(280px,34vw,420px)!important;animation:ce-stage-orbit 18s linear infinite;box-shadow:0 0 0 18px rgba(82,209,255,.055),0 0 0 43px rgba(82,209,255,.035),0 0 0 76px rgba(255,195,67,.025),0 0 90px rgba(0,190,255,.19)!important}
+.ce-robot-title{font-size:clamp(36px,5.1vw,62px)!important;line-height:.98!important;letter-spacing:-1.7px!important;background:linear-gradient(100deg,#FFF8DC 0%,#FFD36C 40%,#FFFDF5 66%,#71DFFF 100%)!important;background-clip:text!important;-webkit-background-clip:text!important;-webkit-text-fill-color:transparent!important}
+.ce-robot-visual{min-height:260px!important}
+.ce-robot-orb{position:relative;width:220px!important;height:220px!important;border-radius:50%!important;font-size:120px!important;box-shadow:inset 0 0 35px rgba(100,213,255,.22),0 0 32px rgba(0,184,255,.32),0 0 80px rgba(255,185,54,.17)!important;animation:ce-robot-glow 3.6s ease-in-out infinite,ce-robot-hover 4.2s ease-in-out infinite!important}
+.ce-robot-visual:before,.ce-robot-visual:after{content:"";position:absolute;width:250px;height:250px;border-radius:50%;border:1px solid rgba(74,213,255,.7);box-shadow:0 0 24px rgba(0,190,255,.16);animation:ce-stage-orbit 14s linear infinite}
+.ce-robot-visual:after{width:280px;height:280px;border-style:dashed;border-color:rgba(255,205,91,.62);animation-duration:22s;animation-direction:reverse}
+.ce-robot-card{min-height:190px!important;padding:22px!important;border-radius:20px!important;box-shadow:0 12px 30px rgba(5,29,57,.09),inset 0 1px #fff!important;transition:transform .25s ease,box-shadow .25s ease!important}
+.ce-robot-card:nth-child(2){border-top-color:#40C9F4!important}.ce-robot-card:nth-child(3){border-top-color:#63D6B1!important}
+.ce-robot-card:hover,.ce-landing-card:hover{transform:translateY(-5px);box-shadow:0 20px 36px rgba(5,29,57,.16)!important}
+.ce-robot-card-icon{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:15px;background:linear-gradient(145deg,#E6F7FF,#FFF4D4);font-size:25px;margin-bottom:15px}
+.ce-robot-card-title{font-size:16px!important}.ce-robot-card-copy{font-size:13px!important;line-height:1.7!important}
+.ce-robot-section-title{font-size:clamp(21px,2.5vw,28px)!important;font-weight:900!important;letter-spacing:-.6px!important;margin:28px 0 7px!important}
+.ce-grid-wall{gap:13px!important;margin:18px 0 12px!important}
+.ce-grid-tile{position:relative;overflow:hidden;min-height:124px!important;padding:18px 15px!important;border-radius:17px!important;background:radial-gradient(circle at 100% 0%,rgba(0,199,255,.23),transparent 42%),linear-gradient(145deg,#06152B 0%,#0B2D4C 62%,#10415A 100%)!important;border:1px solid rgba(81,190,232,.4)!important;box-shadow:inset 0 1px rgba(255,255,255,.12),0 10px 24px rgba(5,29,57,.14)!important;transition:transform .24s ease,border-color .24s ease,box-shadow .24s ease!important}
+.ce-grid-tile:hover{transform:translateY(-5px);border-color:#F4CF73!important;box-shadow:0 17px 30px rgba(5,29,57,.2)!important}
+.ce-grid-tile b{font-size:13px!important;color:#FFE29A!important;margin:9px 0 7px!important}.ce-grid-tile span{font-size:11px!important;line-height:1.55!important;color:#E0EEF8!important}
+.ce-money-strip{padding:22px 24px!important;border-radius:20px!important;background:radial-gradient(circle at 0% 50%,rgba(0,193,255,.19),transparent 34%),linear-gradient(110deg,#061327,#0B3150 68%,#123D52)!important;box-shadow:0 15px 35px rgba(5,29,57,.16)!important}
+.ce-landing-card{border-radius:18px!important;padding:21px!important;transition:transform .22s ease,box-shadow .22s ease!important}
+@keyframes ce-robot-hover{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-10px) rotate(2deg)}}
+@keyframes ce-stage-orbit{to{rotate:360deg}}
+@media(max-width:760px){.ce-robot-stage{min-height:0!important;padding:25px 20px!important}.ce-robot-title{font-size:38px!important}.ce-robot-layout{grid-template-columns:1fr!important;gap:8px!important}.ce-robot-visual{min-height:175px!important;justify-content:center!important}.ce-robot-orb{width:145px!important;height:145px!important;font-size:78px!important}.ce-robot-visual:before{width:175px;height:175px}.ce-robot-visual:after{width:195px;height:195px}.ce-grid-wall{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}.ce-grid-tile{min-height:112px!important;padding:14px 12px!important}.ce-robot-card{min-height:0!important}}
+@media(prefers-reduced-motion:reduce){.ce-robot-stage:before,.ce-robot-orb,.ce-robot-visual:before,.ce-robot-visual:after,.ce-robot-card,.ce-grid-tile,.ce-landing-card{animation:none!important;transition:none!important}}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -832,24 +972,57 @@ def set_login(user: dict[str, Any], login_purpose: str = "") -> None:
 
 def signup_page() -> None:
     st.markdown("""
-    <div class="ce-dashboard-hero ce-business-hero">
-      <div class="ce-eyebrow">GLOBAL BUSINESS PLATFORM</div>
-      <div class="ce-hero-title">CEDARS EMPIRE</div>
-      <div class="ce-hero-subtitle">Business operations, customer services, contracts, Grid marketplace and evidence-led financial controls.</div>
-      <div class="ce-hero-strip"><span>ONE WORKSPACE</span><span>VERIFIABLE RECORDS</span><span>CONTROLLED PAYMENTS</span></div>
+    <section class="ce-robot-stage"><div class="ce-robot-layout"><div>
+      <div class="ce-robot-kicker">REAL AI  ·  REAL BUSINESS  ·  VERIFIED VALUE</div>
+      <div class="ce-robot-title">CEDARS EMPIRE</div>
+      <div class="ce-robot-copy">Meet a bold new business workspace for AI-assisted operations, specialized grid services, robot-workforce development and transparent financial controls. Built for ambition. Designed for trust.</div>
+      <div class="ce-robot-pills"><span class="ce-robot-pill">✦ AI WORKFORCE</span><span class="ce-robot-pill">◈ GLOBAL GRIDS</span><span class="ce-robot-pill">✓ VERIFIED RECORDS</span><span class="ce-robot-pill">◇ CONTROLLED PAYMENTS</span></div>
+    </div><div class="ce-robot-visual"><div class="ce-robot-orb" aria-label="Robot workforce illustration">🤖</div></div></div></section>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div class="ce-robot-section-title">A workforce of possibilities</div>', unsafe_allow_html=True)
+    st.markdown('<div class="ce-robot-section-copy">Explore the robot and grid workspace. Worker execution, task evidence and paid-task settlement remain subject to independent verification.</div>', unsafe_allow_html=True)
+    robot_cols = st.columns(3)
+    robot_cards = [
+        ("🤖", "Robot Command", "A clear home for worker assignments, progress, task evidence and operational review.", "DEVELOPMENT FOUNDATION"),
+        ("🌐", "Global AI Grids", "Connected workstreams across enterprise, agriculture, energy, security, mobility, health, education and connectivity.", "8 GRID CATEGORIES"),
+        ("🛡️", "Trust & Verification", "Evidence-led task review, duplicate checks and controlled financial reconciliation.", "VERIFY BEFORE SETTLEMENT"),
+    ]
+    for col, (symbol, heading, detail, status) in zip(robot_cols, robot_cards):
+        with col:
+            st.markdown(f'<div class="ce-robot-card"><div class="ce-robot-card-icon">{symbol}</div><div class="ce-robot-card-title">{heading}</div><div class="ce-robot-card-copy">{detail}</div><span class="ce-robot-status">{status}</span></div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="ce-robot-section-title">Explore the AI grids</div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="ce-grid-wall">
+      <div class="ce-grid-tile">🏢<b>EnterpriseGrid</b><span>Business workflows & operations</span></div>
+      <div class="ce-grid-tile">🌱<b>AgriGrid</b><span>Agriculture & food systems</span></div>
+      <div class="ce-grid-tile">⚡<b>EnergyGrid</b><span>Solar & renewable energy</span></div>
+      <div class="ce-grid-tile">🔐<b>SecureGrid</b><span>Security & monitoring</span></div>
+      <div class="ce-grid-tile">🚘<b>MobilityGrid</b><span>Transport & logistics</span></div>
+      <div class="ce-grid-tile">🩺<b>HealthGrid</b><span>Healthcare & wellbeing</span></div>
+      <div class="ce-grid-tile">🎓<b>EduGrid</b><span>Education & skills</span></div>
+      <div class="ce-grid-tile">🌍<b>ConnectGrid</b><span>Connectivity & collaboration</span></div>
     </div>
     """, unsafe_allow_html=True)
-    st.markdown("### Business workspace")
-    landing_cols = st.columns(3)
-    landing_items = [
-        ("Business operations", "Customer records, calendar, tasks, contracts and reports."),
-        ("Grid marketplace", "Explore service categories and submit evidence-backed activity."),
-        ("Earnings & controls", "Review recorded credits and transaction history; finance controls are role-restricted."),
-    ]
-    for col, (heading, detail) in zip(landing_cols, landing_items):
-        with col:
-            st.markdown(f'<div class="ce-business-metric"><div class="ce-stat-kicker">{heading.upper()}</div><div class="ce-business-detail">{detail}</div></div>', unsafe_allow_html=True)
-    st.caption("Only verified receipts and approved records can be reported as actual financial results. Displayed scenarios are not guaranteed returns.")
+
+    st.markdown("""
+    <div class="ce-money-strip"><div class="ce-money-icon">💎</div><div>
+      <div class="ce-money-title">Wallets, earnings & payments — built around evidence</div>
+      <div class="ce-money-copy">Deposit, withdrawal and transaction views are available after sign-in where enabled. Only confirmed, reconciled receipts should count as actual funds. No invented balances, revenue or guaranteed returns are displayed here.</div>
+    </div></div>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div class="ce-robot-section-title">Your business command deck</div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="ce-landing-grid">
+      <div class="ce-landing-card"><div class="ce-landing-title">✦ Business Operations</div><div class="ce-landing-copy">Manage customers, tasks, contracts, meetings and reports in one workspace.</div></div>
+      <div class="ce-landing-card"><div class="ce-landing-title">◈ AI Grid Marketplace</div><div class="ce-landing-copy">Discover specialized grid services and record activity with supporting evidence.</div></div>
+      <div class="ce-landing-card"><div class="ce-landing-title">◇ Earnings & Controls</div><div class="ce-landing-copy">Review stored transactions and role-restricted treasury records with clear verification states.</div></div>
+    </div>
+    """, unsafe_allow_html=True)
+    st.caption("Visual status is not proof of autonomous execution. Financial results must come from persistent, reconciled records.")
+
     signin, signup, public, reset_request, reset_finish = st.tabs(
         ["Sign in", "Create account", "Public noticeboard", "Forgot password", "Set new password"])
     with signin:
@@ -1056,8 +1229,7 @@ with st.container(key="ce_locked_header"):
                 st.markdown('<div class="ce-brand-mark">C</div>', unsafe_allow_html=True)
         with brand_col:
             st.markdown('<div class="ce-brand-title">CEDARS EMPIRE</div>', unsafe_allow_html=True)
-    with header_status_col:
-        st.markdown('<div class="ce-header-right">DIE RICH OR DIE TRYING</div>', unsafe_allow_html=True)
+    # Keep the locked company header clean: no extra slogan/tagline.
     nav_cols = st.columns([1.0, 1.65, 1.2], vertical_alignment="center")
     with nav_cols[0]:
         menu_keys = list(menu_groups)
@@ -1386,12 +1558,15 @@ if page in BUSINESS_PAGES:
         if own_refs: render_bank_table(pd.DataFrame(own_refs), use_container_width=True, hide_index=True)
     elif page == "Business Dashboard":
         st.markdown("""
-        <div class="ce-dashboard-hero ce-business-hero">
-          <div class="ce-eyebrow">REAL MONEY BUSINESS</div>
-          <div class="ce-hero-title">Business Command Overview</div>
-          <div class="ce-hero-subtitle">Monitor service grids, customer activity, contract readiness and reconciled receipts.</div>
-          <div class="ce-hero-strip"><span>GLOBAL OPERATIONS</span><span>CONTROLLED PAYMENTS</span><span>VERIFIED RECORDS</span></div>
-        </div>
+        <section class="ce-command-hero">
+          <div>
+            <div class="ce-command-eyebrow">CEDARS EMPIRE · AI BUSINESS COMMAND</div>
+            <div class="ce-command-title">Your business.<br>Powered by intelligent grids.</div>
+            <div class="ce-command-copy">Coordinate service operations, robot-workforce development and customer delivery from one polished command deck. Financial totals remain evidence-led and appear only when the underlying records are verified.</div>
+            <div class="ce-command-tags"><span class="ce-command-tag">✦ AI WORKFORCE</span><span class="ce-command-tag">◈ 8 GLOBAL GRIDS</span><span class="ce-command-tag">✓ VERIFIED VALUE</span></div>
+          </div>
+          <div class="ce-command-robot" role="img" aria-label="Animated robot command visual">🤖</div>
+        </section>
         """, unsafe_allow_html=True)
         st.markdown('<div class="ce-section-label">FINANCIAL CONTROL</div>', unsafe_allow_html=True)
         cols = st.columns(3)

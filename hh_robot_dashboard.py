@@ -1,10 +1,23 @@
-"""Robot-first operations dashboard for CEDARS EMPIRE.
+"""Unified CEDARS EMPIRE AI workforce, grid and package dashboard.
 
-This is an honest readiness dashboard. It displays the registered robot grids in
-standby; it does not imply live hardware connectivity, stored tasks, or payments.
+Shows the long-term worker target and configured catalogues without fabricating
+active workers, customer orders, revenue, or payment confirmations.
 """
+from __future__ import annotations
+
 import streamlit as st
+from hh_grid_marketplace import GRID_CATALOG
 from hh_robotics import robot_grid_catalog
+
+WORKER_TARGET = 25_000_000
+PACKAGES = [
+    {"name": "Cedars Seed", "amount": 300, "purpose": "Entry services, basic dashboard and training"},
+    {"name": "Cedars Root", "amount": 1_000, "purpose": "Expanded services, reporting and business planning"},
+    {"name": "Cedars Branch", "amount": 2_500, "purpose": "Advanced analytics, mentorship and eligible opportunities"},
+    {"name": "Cedars Grove", "amount": 5_000, "purpose": "Business acceleration and advanced reporting"},
+    {"name": "Cedars Forest", "amount": 10_000, "purpose": "Advanced services, reporting and eligible leadership programs"},
+    {"name": "Cedars Empire", "amount": 25_000, "purpose": "Premium services and eligible executive programs"},
+]
 
 STATUS = {
     "standby": ("🟠", "STANDBY"),
@@ -14,72 +27,122 @@ STATUS = {
     "blocked": ("🔴", "BLOCKED"),
 }
 
+
 def render_robot_dashboard() -> None:
+    """Render the unified AI worker, grid, package and money-control overview."""
     st.markdown("""
     <style>
-    .robot-hero{background:linear-gradient(120deg,#071D33,#123D60 68%,#1B5B66);
+    .ce-unify-hero{background:linear-gradient(120deg,#071D33,#123D60 68%,#1B5B66);
       border:1px solid #244E68;border-bottom:4px solid #D6A84F;border-radius:16px;
-      padding:26px;margin-bottom:18px;color:#fff}
-    .robot-hero h1{color:#fff!important;margin:0;font-size:30px}
-    .robot-hero p{color:#DCEAF3!important;margin:8px 0 0}
-    .robot-card{background:#fff;border:1px solid #D9E0E7;border-top:3px solid #D6A84F;
-      border-radius:12px;padding:16px;min-height:130px;margin-bottom:10px}
-    .robot-name{font-size:16px;font-weight:800;color:#0A2540}
-    .robot-state{font-size:11px;font-weight:800;letter-spacing:.7px;margin-top:10px}
-    .robot-meta{font-size:12px;color:#526579;margin-top:8px}
-    .robot-motion-stage{display:flex;align-items:center;justify-content:center;min-height:150px;
-      background:radial-gradient(circle at 50% 45%,rgba(214,168,79,.18),rgba(7,29,51,.96) 68%);
-      border:1px solid #244E68;border-radius:14px;overflow:hidden;position:relative}
-    .robot-orbit{position:absolute;width:118px;height:118px;border:1px solid rgba(214,168,79,.6);
-      border-radius:50%;animation:ce-orbit 8s linear infinite}
-    .robot-orbit:before{content:"";position:absolute;top:12px;left:17px;width:8px;height:8px;
-      border-radius:50%;background:#D6A84F;box-shadow:0 0 12px #D6A84F}
-    .robot-avatar{font-size:72px;filter:drop-shadow(0 0 15px rgba(90,196,255,.35));
-      animation:ce-robot-float 2.8s ease-in-out infinite;z-index:1}
-    .robot-scan{position:absolute;left:12%;right:12%;height:2px;background:#60D5FF;
-      box-shadow:0 0 12px #60D5FF;opacity:.6;animation:ce-scan 3s ease-in-out infinite}
-    @keyframes ce-robot-float{0%,100%{transform:translateY(4px) rotate(-2deg)}50%{transform:translateY(-8px) rotate(2deg)}}
-    @keyframes ce-orbit{to{transform:rotate(360deg)}}
-    @keyframes ce-scan{0%,100%{top:22%;opacity:.15}50%{top:76%;opacity:.8}}
-    .robot-live-label{position:absolute;bottom:10px;left:12px;color:#DCEAF3;font-size:9px;letter-spacing:1.2px;font-weight:800}
+      padding:24px;margin-bottom:18px;color:#fff}
+    .ce-unify-hero h1{color:#fff!important;margin:0;font-size:29px}
+    .ce-unify-hero p{color:#DCEAF3!important;margin:8px 0 0}
+    .ce-unify-card{background:var(--secondary-background-color);border:1px solid rgba(128,128,128,.28);
+      border-top:3px solid #D6A84F;border-radius:12px;padding:14px;min-height:112px;margin-bottom:8px}
+    .ce-unify-name{font-size:16px;font-weight:800}
+    .ce-unify-meta{font-size:12px;opacity:.78;margin-top:7px}
     </style>
-    <div class="robot-hero">
-      <div style="font-size:11px;letter-spacing:2px;font-weight:800;color:#E7C77D">CEDARS EMPIRE · ROBOTICS</div>
-      <div style="font-size:22px;font-weight:850;color:#fff;margin-top:5px">Robot Operations</div>
-      <p>Animated simulation view · evidence-led tasks · safety-gated activation</p>
-    </div>
-    <div class="robot-motion-stage" aria-label="Robot motion simulation">
-      <div class="robot-orbit"></div><div class="robot-scan"></div>
-      <div class="robot-avatar">🤖</div>
-      <div class="robot-live-label">VISUAL SIMULATION ONLY · NO HARDWARE CONNECTED</div>
+    <div class="ce-unify-hero">
+      <div style="font-size:11px;letter-spacing:2px;font-weight:800;color:#E7C77D">CEDARS EMPIRE · UNIFIED OPERATIONS</div>
+      <h1>AI Workforce, Grids & Packages</h1>
+      <p>One operating view for worker readiness, real-work grids, customer packages and evidence-backed money flows.</p>
     </div>
     """, unsafe_allow_html=True)
-    catalog = robot_grid_catalog()
-    connected = sum(1 for item in catalog if item["status"] == "connected")
-    c1,c2,c3,c4 = st.columns(4)
-    c1.metric("Robot grids", len(catalog))
-    c2.metric("Connected", connected)
-    c3.metric("Standby", sum(1 for item in catalog if item["status"] == "standby"))
-    c4.metric("Verified payments", "Not connected")
-    st.caption("Readiness only. No physical robot is connected and no income or payment is claimed by this dashboard.")
-    st.subheader("Robot grid register")
-    cards = st.columns(2)
-    for index, item in enumerate(catalog):
-        emoji, label = STATUS.get(item["status"], ("⚪","NOT CONFIGURED"))
-        with cards[index % 2]:
-            st.markdown(f"""
-            <div class="robot-card">
-              <div class="robot-name">{item["name"]}</div>
-              <div class="robot-state">{emoji} {label}</div>
-              <div class="robot-meta">Hardware verification: pending<br>Safety review: pending<br>Task persistence: not configured</div>
-            </div>
-            """, unsafe_allow_html=True)
-    st.subheader("Activation gates")
+
+    robots = robot_grid_catalog()
+    connected = sum(1 for item in robots if item.get("status") == "connected")
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Long-term AI worker target", f"{WORKER_TARGET:,}")
+    c2.metric("Configured grid catalogue", len(GRID_CATALOG))
+    c3.metric("Robot grid entries", len(robots))
+    c4.metric("Connected robot grids", connected)
+    st.caption(
+        "The 25,000,000 figure is a long-term target, not the number of deployed workers. "
+        "These counts describe configured catalogue entries, not active hardware or verified revenue."
+    )
+
+    st.subheader("1 · AI worker fleet")
+    st.write(
+        "Workers should be registered with a unique identity, capability, assigned grid, "
+        "permission scope, task history, cost limit and health state. A worker counts as active "
+        "only after a real runtime heartbeat is integrated and verified."
+    )
+    worker_cols = st.columns(3)
+    worker_cols[0].metric("Runtime-connected workers", "Not connected")
+    worker_cols[1].metric("Persisted task queue", "Not verified")
+    worker_cols[2].metric("Verified task completions", "Not connected")
+    st.info(
+        "Activation gate: verify worker runtime, safe permissions, durable task storage, "
+        "completion evidence and cost controls before reporting operational worker counts."
+    )
+
+    st.subheader("2 · Business grid catalogue")
+    query = st.text_input("Find a grid or service", placeholder="Search energy, data, mobility…", key="ce_unified_grid_search")
+    filtered = [
+        item for item in GRID_CATALOG
+        if not query.strip() or query.lower() in (
+            str(item.get("name", "")) + " " + str(item.get("sector", "")) + " "
+            + " ".join(item.get("tasks", []))
+        ).lower()
+    ]
+    if filtered:
+        for start in range(0, len(filtered), 3):
+            cols = st.columns(3)
+            for col, item in zip(cols, filtered[start:start + 3]):
+                with col:
+                    st.markdown('<div class="ce-unify-card">', unsafe_allow_html=True)
+                    st.markdown(f"**{item.get('name', 'Unnamed grid')}**")
+                    st.caption(str(item.get("sector", "Sector not specified")))
+                    tasks = item.get("tasks", [])
+                    st.write(", ".join(tasks[:3]) if tasks else "Service definition pending")
+                    st.caption("Proof: " + str(item.get("proof", "Evidence requirements pending")))
+                    st.markdown("</div>", unsafe_allow_html=True)
+    else:
+        st.warning("No grids match that search.")
+    st.caption(
+        "A listed grid is a business-service definition, not proof of a connected robot, "
+        "available supplier, paying customer or completed transaction."
+    )
+
+    st.subheader("3 · Cedars Growth Ladder packages")
+    st.write(
+        "Packages define customer services and entitlements. A package purchase is not "
+        "automatically profit, staking yield or a guaranteed earning."
+    )
+    package_cols = st.columns(3)
+    for index, package in enumerate(PACKAGES):
+        with package_cols[index % 3]:
+            st.markdown('<div class="ce-unify-card">', unsafe_allow_html=True)
+            st.markdown(f"**{package['name']}**")
+            st.markdown(f"### ${package['amount']:,} USD")
+            st.write(package["purpose"])
+            st.caption("Contract terms, eligibility and refund obligations must be confirmed.")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+    st.subheader("4 · How work becomes real money")
+    stages = [
+        ("01 · Customer order", "A real buyer, agreed scope, price and payment terms."),
+        ("02 · Worker assignment", "Permission-checked worker and grid assignment within a cost limit."),
+        ("03 · Delivery evidence", "Saved work product, task ID and customer acceptance."),
+        ("04 · Invoice and payment", "Invoice linked to the task; payment independently checked."),
+        ("05 · Reconciliation", "Fees, costs, refunds and customer obligations accounted for."),
+        ("06 · Sustainable reinvestment", "Use only available, reconciled funds under approved budgets."),
+    ]
+    for title, description in stages:
+        st.markdown(f"**{title}** — {description}")
+    st.warning(
+        "Financial integrity: leads, forecasts, package balances, unconfirmed transfers and "
+        "self-entered statuses must not be counted as verified revenue. Never credit the same "
+        "task or transaction twice."
+    )
+
+    st.subheader("5 · Readiness gates")
     st.dataframe([
-        {"Gate":"Hardware identity and firmware","Status":"Pending"},
-        {"Gate":"Emergency stop and safe-stop validation","Status":"Pending"},
-        {"Gate":"Operator permissions and site acceptance","Status":"Pending"},
-        {"Gate":"Durable task and evidence storage","Status":"Pending"},
-        {"Gate":"Independent payment verification","Status":"Pending"},
+        {"Gate": "Worker runtime and identity", "Status": "Not verified"},
+        {"Gate": "Grid provider and customer evidence", "Status": "Must be verified per service"},
+        {"Gate": "Package contracts and entitlements", "Status": "Requires contract validation"},
+        {"Gate": "PostgreSQL persistence across refresh/restart", "Status": "Must be tested"},
+        {"Gate": "Authentication and role boundaries", "Status": "Must be tested"},
+        {"Gate": "Independent payment verification and reconciliation", "Status": "Must be tested"},
+        {"Gate": "One end-to-end paid commercial task", "Status": "Not yet evidenced here"},
     ], use_container_width=True, hide_index=True)
-    st.info("Grid indicators remain on standby until the corresponding checks are implemented, recorded and independently verified.")

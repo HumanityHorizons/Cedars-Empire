@@ -101,6 +101,26 @@ st.markdown("""
 .ce-business-value { color:#0A2540 !important; font-size:22px; font-weight:800; margin:10px 0 6px; }
 
 /* CEDARS EMPIRE premium robot + grids + treasury visual system */
+
+/* Premium signed-in command hero: animated robot + energy rings */
+.ce-command-hero{position:relative;isolation:isolate;overflow:hidden;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(210px,.65fr);align-items:center;gap:20px;padding:clamp(24px,4vw,42px);margin:8px 0 22px;border:1px solid rgba(255,211,105,.75);border-radius:24px;color:#fff!important;background:radial-gradient(ellipse at 78% 38%,rgba(0,199,255,.26),transparent 28%),radial-gradient(ellipse at 92% 92%,rgba(255,183,47,.22),transparent 32%),linear-gradient(118deg,#030A19 0%,#071B38 48%,#0B3656 100%);box-shadow:0 18px 50px rgba(3,17,39,.22),inset 0 1px rgba(255,255,255,.13)}
+.ce-command-hero:before{content:"";position:absolute;z-index:-1;width:330px;height:330px;right:4%;top:50%;transform:translateY(-50%);border:1px solid rgba(67,211,255,.35);border-radius:50%;box-shadow:0 0 0 18px rgba(67,211,255,.055),0 0 0 42px rgba(67,211,255,.035),0 0 70px rgba(0,185,255,.15);animation:ce-orbit-pulse 5s ease-in-out infinite}
+.ce-command-eyebrow{font-size:10px;letter-spacing:3px;font-weight:900;color:#FFE19A!important;margin-bottom:12px}
+.ce-command-title{font-size:clamp(30px,4vw,48px);line-height:1.05;font-weight:950;letter-spacing:-1px;color:#FFF0C5!important;margin:0 0 12px;text-shadow:0 0 24px rgba(255,191,63,.16)}
+.ce-command-copy{font-size:14px;line-height:1.65;color:#D9EBFA!important;max-width:640px}
+.ce-command-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.ce-command-tag{font-size:9px;font-weight:900;letter-spacing:.8px;border:1px solid rgba(117,218,255,.35);border-radius:999px;padding:8px 11px;background:rgba(255,255,255,.07);color:#F4FAFF!important}
+.ce-command-robot{height:210px;display:flex;align-items:center;justify-content:center;position:relative;font-size:105px;filter:drop-shadow(0 0 22px rgba(0,195,255,.35));animation:ce-bot-float 3.4s ease-in-out infinite}
+.ce-command-robot:before{content:"";position:absolute;width:155px;height:155px;border-radius:50%;border:2px solid rgba(255,205,91,.72);box-shadow:0 0 28px rgba(0,191,255,.24),inset 0 0 28px rgba(0,191,255,.16);animation:ce-bot-spin 12s linear infinite}
+.ce-command-robot:after{content:"";position:absolute;width:190px;height:190px;border-radius:50%;border:1px dashed rgba(83,210,255,.62);animation:ce-bot-spin 18s linear infinite reverse}
+.ce-business-metric,.ce-grid-card,.ce-action-card{border-radius:16px!important;box-shadow:0 9px 26px rgba(5,29,57,.075),inset 0 1px #fff!important;transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
+.ce-business-metric:hover,.ce-grid-card:hover,.ce-action-card:hover{transform:translateY(-4px);box-shadow:0 16px 32px rgba(5,29,57,.14)!important;border-color:#D6A84F!important}
+@keyframes ce-bot-float{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-11px) rotate(3deg)}}
+@keyframes ce-bot-spin{to{transform:rotate(360deg)}}
+@keyframes ce-orbit-pulse{0%,100%{opacity:.65;scale:1}50%{opacity:1;scale:1.035}}
+@media(max-width:760px){.ce-command-hero{grid-template-columns:1fr;padding:23px 18px}.ce-command-robot{height:150px;font-size:72px;justify-content:flex-start;padding-left:25px}.ce-command-robot:before{width:112px;height:112px}.ce-command-robot:after{width:138px;height:138px}}
+@media(prefers-reduced-motion:reduce){.ce-command-hero:before,.ce-command-robot,.ce-command-robot:before,.ce-command-robot:after{animation:none!important}.ce-business-metric,.ce-grid-card,.ce-action-card{transition:none!important}}
+
 .ce-robot-stage{position:relative;overflow:hidden;isolation:isolate;background:radial-gradient(ellipse at 72% 35%,rgba(0,195,255,.34),transparent 26%),radial-gradient(ellipse at 90% 100%,rgba(255,190,55,.28),transparent 34%),linear-gradient(120deg,#020817 0%,#061B37 48%,#092C4B 76%,#101D36 100%);border:1px solid rgba(255,205,90,.72);border-radius:24px;padding:clamp(24px,4vw,48px);margin:0 0 24px;color:#fff;box-shadow:0 18px 55px rgba(2,8,23,.30),inset 0 1px rgba(255,255,255,.15)}
 .ce-robot-stage:before{content:"";position:absolute;z-index:-1;right:5%;top:-35%;width:440px;height:440px;border:1px solid rgba(82,209,255,.35);border-radius:50%;box-shadow:0 0 0 18px rgba(82,209,255,.045),0 0 0 42px rgba(82,209,255,.04),0 0 0 75px rgba(255,195,67,.035),0 0 90px rgba(0,190,255,.18)}
 .ce-robot-stage:after{content:"AI WORKFORCE  •  GLOBAL GRIDS  •  VERIFIED VALUE";position:absolute;right:22px;bottom:14px;color:rgba(255,221,145,.68);font-size:9px;font-weight:900;letter-spacing:2px}
@@ -1451,8 +1471,17 @@ if page in BUSINESS_PAGES:
         own_refs = db_all("SELECT referral_code,referred_email,status,reward_amount,reward_asset,evidence_ref,created_at FROM referral_records WHERE referrer_email=? ORDER BY created_at DESC", (USER_EMAIL,))
         if own_refs: render_bank_table(pd.DataFrame(own_refs), use_container_width=True, hide_index=True)
     elif page == "Business Dashboard":
-        st.subheader("Business Command Overview")
-        st.caption("Monitor service grids, customer activity, contract readiness and reconciled receipts.")
+        st.markdown("""
+        <section class="ce-command-hero">
+          <div>
+            <div class="ce-command-eyebrow">CEDARS EMPIRE · AI BUSINESS COMMAND</div>
+            <div class="ce-command-title">Your business.<br>Powered by intelligent grids.</div>
+            <div class="ce-command-copy">Coordinate service operations, robot-workforce development and customer delivery from one polished command deck. Financial totals remain evidence-led and appear only when the underlying records are verified.</div>
+            <div class="ce-command-tags"><span class="ce-command-tag">✦ AI WORKFORCE</span><span class="ce-command-tag">◈ 8 GLOBAL GRIDS</span><span class="ce-command-tag">✓ VERIFIED VALUE</span></div>
+          </div>
+          <div class="ce-command-robot" role="img" aria-label="Animated robot command visual">🤖</div>
+        </section>
+        """, unsafe_allow_html=True)
         st.markdown('<div class="ce-section-label">FINANCIAL CONTROL</div>', unsafe_allow_html=True)
         cols = st.columns(3)
         for col, label, value, detail in [

@@ -801,7 +801,19 @@ def restore_persistent_session() -> None:
         if not sessions:
             return
         session = sessions[0]
-        if datetime.fromisoformat(session["expires_at"]) <= datetime.now(timezone.utc):
+        # Normalize TEXT and datetime-like expiry values returned by database
+        # adapters before comparing; this avoids silently dropping valid sessions
+        # if a hosted PostgreSQL schema/driver returns a different representation.
+        expires_value = session["expires_at"]
+        if isinstance(expires_value, datetime):
+            expires_at = expires_value
+        else:
+            expires_at = datetime.fromisoformat(str(expires_value).replace("Z", "+00:00"))
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        else:
+            expires_at = expires_at.astimezone(timezone.utc)
+        if expires_at <= datetime.now(timezone.utc):
             db_exec("UPDATE auth_sessions SET revoked_at=? WHERE token_hash=?", (now_iso(), token_hash))
             auth_cookie_manager.delete(AUTH_COOKIE_NAME)
             return
@@ -819,7 +831,10 @@ def restore_persistent_session() -> None:
         st.session_state.setdefault("ce_top_menu", "Overview")
         st.session_state.setdefault("ce_sub_menu", "Dashboard")
     except Exception as exc:
-        # Fail closed: if a cookie or DB lookup is invalid, require a fresh sign-in.
+        # Fail closed but retain a safe diagnostic category. Never log cookies,
+        # passwords, email addresses, or database connection strings.
+        import logging
+        logging.exception("CEDARS_SESSION_RESTORE_FAILED error_type=%s", type(exc).__name__)
         st.session_state.pop("user_email", None)
 
 
@@ -871,12 +886,12 @@ def signup_page() -> None:
                 if not users:
                     # Test-branch diagnostic only: do not log email addresses or credentials.
                     import logging
-                    logging.warning("CEDARS_SIGNIN_REJECTED reason=account_lookup_miss branch=test")
+                    logging.warning("CEDARS_SIGNIN_REJECTED reason=account_lookup_miss")
                     st.error("Email or password is incorrect.")
                 elif not verify_password(password, users[0]["password_salt"], users[0]["password_hash"]):
                     # Keep the public error generic; write only the failure category to app logs.
                     import logging
-                    logging.warning("CEDARS_SIGNIN_REJECTED reason=password_hash_mismatch branch=test")
+                    logging.warning("CEDARS_SIGNIN_REJECTED reason=password_hash_mismatch")
                     st.error("Email or password is incorrect.")
                 else:
                     set_login(users[0], signin_purpose.strip())

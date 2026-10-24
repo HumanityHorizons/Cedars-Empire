@@ -47,6 +47,7 @@ def test_each_grid_has_task_evidence_and_equipment_requirements():
 
 def test_registry_does_not_claim_unverified_live_operations():
     # Live claims must come from separate verified provider/task/payment records.
-    assert all("Live — evidence verified" in status for status in __import__(
-        "hh_grid_marketplace"
-    ).GRID_STATUSES)
+    statuses = __import__("hh_grid_marketplace").GRID_STATUSES
+    assert "Discovery only" in statuses
+    assert "Live — evidence verified" in statuses
+    assert "Paused" in statuses

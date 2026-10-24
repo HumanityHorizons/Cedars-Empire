@@ -97,6 +97,32 @@ input, textarea, [data-baseweb="select"] input {
 @media(max-width:760px){.ce-robot-stage{min-height:0;padding:25px 20px}.ce-robot-title{font-size:38px}.ce-robot-visual{min-height:175px;justify-content:center}.ce-robot-orb{width:145px;height:145px;font-size:78px}.ce-robot-visual:before{width:175px;height:175px}.ce-robot-visual:after{width:195px;height:195px}.ce-grid-wall{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.ce-grid-tile{min-height:112px;padding:14px 12px}.ce-robot-card{min-height:0}}
 @media(prefers-reduced-motion:reduce){.ce-robot-stage:before,.ce-robot-orb,.ce-robot-visual:before,.ce-robot-visual:after,.ce-robot-card,.ce-grid-tile,.ce-landing-card{animation:none!important;transition:none!important}}
 
+
+/* Final cascade override: keep premium landing styles after legacy declarations */
+.ce-robot-stage{min-height:300px!important;padding:clamp(30px,4.4vw,54px)!important;border-radius:28px!important;background:radial-gradient(ellipse at 78% 42%,rgba(0,209,255,.34),transparent 23%),radial-gradient(ellipse at 95% 90%,rgba(255,190,55,.24),transparent 30%),linear-gradient(122deg,#020714 0%,#06152E 42%,#0B3455 72%,#071A32 100%)!important;box-shadow:0 24px 60px rgba(2,12,31,.28),inset 0 1px rgba(255,255,255,.16)!important}
+.ce-robot-stage:before{right:4%!important;top:50%!important;transform:translateY(-50%);width:clamp(280px,34vw,420px)!important;height:clamp(280px,34vw,420px)!important;animation:ce-stage-orbit 18s linear infinite;box-shadow:0 0 0 18px rgba(82,209,255,.055),0 0 0 43px rgba(82,209,255,.035),0 0 0 76px rgba(255,195,67,.025),0 0 90px rgba(0,190,255,.19)!important}
+.ce-robot-title{font-size:clamp(36px,5.1vw,62px)!important;line-height:.98!important;letter-spacing:-1.7px!important;background:linear-gradient(100deg,#FFF8DC 0%,#FFD36C 40%,#FFFDF5 66%,#71DFFF 100%)!important;background-clip:text!important;-webkit-background-clip:text!important;-webkit-text-fill-color:transparent!important;filter:drop-shadow(0 5px 20px rgba(255,181,48,.15))}
+.ce-robot-visual{min-height:260px!important}
+.ce-robot-orb{position:relative;width:220px!important;height:220px!important;border-radius:50%!important;font-size:120px!important;box-shadow:inset 0 0 35px rgba(100,213,255,.22),0 0 32px rgba(0,184,255,.32),0 0 80px rgba(255,185,54,.17)!important;animation:ce-robot-glow 3.6s ease-in-out infinite,ce-robot-hover 4.2s ease-in-out infinite!important}
+.ce-robot-visual:before,.ce-robot-visual:after{content:"";position:absolute;width:250px;height:250px;border-radius:50%;border:1px solid rgba(74,213,255,.7);box-shadow:0 0 24px rgba(0,190,255,.16);animation:ce-stage-orbit 14s linear infinite}
+.ce-robot-visual:after{width:280px;height:280px;border-style:dashed;border-color:rgba(255,205,91,.62);animation-duration:22s;animation-direction:reverse}
+.ce-robot-card{min-height:190px!important;padding:22px!important;border-radius:20px!important;box-shadow:0 12px 30px rgba(5,29,57,.09),inset 0 1px #fff!important;transition:transform .25s ease,box-shadow .25s ease!important}
+.ce-robot-card:nth-child(2){border-top-color:#40C9F4!important}.ce-robot-card:nth-child(3){border-top-color:#63D6B1!important}
+.ce-robot-card:hover,.ce-landing-card:hover{transform:translateY(-5px);box-shadow:0 20px 36px rgba(5,29,57,.16)!important}
+.ce-robot-card-icon{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:15px;background:linear-gradient(145deg,#E6F7FF,#FFF4D4);font-size:25px;margin-bottom:15px}
+.ce-robot-card-title{font-size:16px!important}.ce-robot-card-copy{font-size:13px!important;line-height:1.7!important}
+.ce-robot-section-title{font-size:clamp(21px,2.5vw,28px)!important;font-weight:900!important;letter-spacing:-.6px!important;margin:28px 0 7px!important}
+.ce-grid-wall{gap:13px!important;margin:18px 0 12px!important}
+.ce-grid-tile{position:relative;overflow:hidden;min-height:124px!important;padding:18px 15px!important;border-radius:17px!important;background:radial-gradient(circle at 100% 0%,rgba(0,199,255,.23),transparent 42%),linear-gradient(145deg,#06152B 0%,#0B2D4C 62%,#10415A 100%)!important;border:1px solid rgba(81,190,232,.4)!important;box-shadow:inset 0 1px rgba(255,255,255,.12),0 10px 24px rgba(5,29,57,.14)!important;transition:transform .24s ease,border-color .24s ease,box-shadow .24s ease!important}
+.ce-grid-tile:hover{transform:translateY(-5px);border-color:#F4CF73!important;box-shadow:0 17px 30px rgba(5,29,57,.2)!important}
+.ce-grid-tile b{font-size:13px!important;color:#FFE29A!important;margin:9px 0 7px!important}.ce-grid-tile span{font-size:11px!important;line-height:1.55!important;color:#E0EEF8!important}
+.ce-money-strip{padding:22px 24px!important;border-radius:20px!important;background:radial-gradient(circle at 0% 50%,rgba(0,193,255,.19),transparent 34%),linear-gradient(110deg,#061327,#0B3150 68%,#123D52)!important;box-shadow:0 15px 35px rgba(5,29,57,.16)!important}
+.ce-landing-card{border-radius:18px!important;padding:21px!important;background:linear-gradient(145deg,#07162C,#0A2A4B)!important;transition:transform .22s ease,box-shadow .22s ease!important}
+@keyframes ce-robot-hover{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-10px) rotate(2deg)}}
+@keyframes ce-stage-orbit{to{rotate:360deg}}
+@media(max-width:760px){.ce-robot-stage{min-height:0!important;padding:25px 20px!important}.ce-robot-title{font-size:38px!important}.ce-robot-layout{grid-template-columns:1fr!important;gap:8px!important}.ce-robot-visual{min-height:175px!important;justify-content:center!important}.ce-robot-orb{width:145px!important;height:145px!important;font-size:78px!important}.ce-robot-visual:before{width:175px;height:175px}.ce-robot-visual:after{width:195px;height:195px}.ce-grid-wall{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}.ce-grid-tile{min-height:112px!important;padding:14px 12px!important}.ce-robot-card{min-height:0!important}}
+@media(prefers-reduced-motion:reduce){.ce-robot-stage:before,.ce-robot-orb,.ce-robot-visual:before,.ce-robot-visual:after,.ce-robot-card,.ce-grid-tile,.ce-landing-card{animation:none!important;transition:none!important}}
+
 </style>
 """, unsafe_allow_html=True)
 

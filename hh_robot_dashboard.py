@@ -9,7 +9,7 @@ import streamlit as st
 from hh_grid_marketplace import GRID_CATALOG
 from hh_robotics import robot_grid_catalog
 
-WORKER_TARGET = 25_000_000
+WORKER_TARGET = 250_000_000
 PACKAGES = [
     {"name": "Cedars Seed", "amount": 300, "purpose": "Entry services, basic dashboard and training"},
     {"name": "Cedars Root", "amount": 1_000, "purpose": "Expanded services, reporting and business planning"},
@@ -52,13 +52,13 @@ def render_robot_dashboard() -> None:
     robots = robot_grid_catalog()
     connected = sum(1 for item in robots if item.get("status") == "connected")
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Long-term AI worker target", f"{WORKER_TARGET:,}")
+    c1.metric("Planned AI worker target", f"{WORKER_TARGET:,}")
     c2.metric("Configured grid catalogue", len(GRID_CATALOG))
     c3.metric("Robot grid entries", len(robots))
     c4.metric("Connected robot grids", connected)
     st.caption("VISUAL SIMULATION ONLY · NO HARDWARE CONNECTED — runtime connection must be independently verified.")
     st.caption(
-        "The 25,000,000 figure is a long-term target, not the number of deployed workers. "
+        "The 250,000,000 figure is a long-term target, not the number of deployed workers. "
         "These counts describe configured catalogue entries, not active hardware or verified revenue."
     )
 

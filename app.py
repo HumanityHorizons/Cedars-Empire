@@ -45,7 +45,7 @@ PBKDF2_ITERATIONS = 310_000
 st.set_page_config(page_title="CEDARS EMPIRE", page_icon="🌍", layout="wide")
 st.markdown("""
 <style>
-:root { color-scheme: light; --ce-navy:#0A2342; --ce-gold:#FFFFFF; --ce-charcoal:#0A2342; --ce-pearl:#FFFFFF; --ce-silver:#DDE1E5; }
+:root { color-scheme: light; --ce-navy:#0A2342; --ce-gold:#D6A84F; --ce-charcoal:#0A2342; --ce-pearl:#FFFFFF; --ce-silver:#DDE1E5; }
 html, body, [class*="css"] { font-family: Arial, Roboto, sans-serif; }
 .stApp, [data-testid="stAppViewContainer"] {
   background: radial-gradient(ellipse at 18% 0%, rgba(255,255,255,1) 0%, rgba(248,248,248,.99) 58%, rgba(238,241,245,.96) 100%) !important;
@@ -69,7 +69,7 @@ input, textarea, [data-baseweb="select"] input {
 
 st.markdown("""
 <style>
-:root { --ce-navy:#0A2342; --ce-blue:#0A2342; --ce-gold:#FFFFFF; --ce-green:#0A2342; --ce-amber:#0A2342; --ce-bg:#FFFFFF; --ce-card:#FFFFFF; --ce-border:#DCE4ED; --ce-text:#0A2342; --ce-muted:#0A2342; }
+:root { --ce-navy:#0A2342; --ce-blue:#0A2342; --ce-gold:#D6A84F; --ce-green:#16794B; --ce-amber:#A86400; --ce-bg:#FFFFFF; --ce-card:#FFFFFF; --ce-border:#DCE4ED; --ce-text:#0A2342; --ce-muted:#0A2342; }
 .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] { background:linear-gradient(135deg,#FFFFFF 0%,#FFFFFF 52%,#EEF1F5 100%) !important; color:var(--ce-text) !important; }
 [data-testid="stMain"] h1,[data-testid="stMain"] h2,[data-testid="stMain"] h3,[data-testid="stMain"] h4 { color:var(--ce-navy) !important; letter-spacing:-.01em; }
 [data-testid="stMain"] p,[data-testid="stMain"] li,[data-testid="stMain"] label,[data-testid="stMain"] [data-testid="stMarkdownContainer"],[data-testid="stMain"] [data-testid="stCaptionContainer"] { color:var(--ce-text) !important; }
@@ -84,6 +84,16 @@ st.markdown("""
 .ce-dashboard-intro .ce-eyebrow { color:#9A7621 !important; font-size:10px; font-weight:800; letter-spacing:1.5px; margin:0; }
 .ce-dashboard-intro-title { color:#0A2342 !important; font-size:23px; line-height:1.2; font-weight:800; letter-spacing:-.35px; }
 .ce-dashboard-intro-copy { color:#53657A !important; font-size:12px; line-height:1.4; }
+.ce-dashboard-intro-layout { display:flex; align-items:center; justify-content:space-between; gap:18px; }
+.ce-dashboard-intro-text { min-width:0; flex:1; }
+.ce-dashboard-robot { position:relative; width:112px; height:92px; flex:0 0 112px; display:flex; align-items:center; justify-content:center;
+  border-radius:14px; overflow:hidden; background:radial-gradient(circle at 50% 45%,rgba(214,168,79,.20),#0A2342 72%); }
+.ce-dashboard-robot .ce-robot-avatar { font-size:48px; z-index:1; animation:ce-robot-float 2.8s ease-in-out infinite; filter:drop-shadow(0 0 8px rgba(96,213,255,.35)); }
+.ce-dashboard-robot .ce-robot-orbit { position:absolute; width:70px; height:70px; border:1px solid rgba(214,168,79,.65); border-radius:50%; animation:ce-orbit 8s linear infinite; }
+.ce-dashboard-robot .ce-robot-orbit:before { content:""; position:absolute; top:7px; left:11px; width:6px; height:6px; border-radius:50%; background:#D6A84F; box-shadow:0 0 8px #D6A84F; }
+@keyframes ce-robot-float { 0%,100% { transform:translateY(3px) rotate(-2deg); } 50% { transform:translateY(-6px) rotate(2deg); } }
+@keyframes ce-orbit { to { transform:rotate(360deg); } }
+@media(max-width:600px) { .ce-dashboard-robot { width:76px; height:76px; flex-basis:76px; } .ce-dashboard-robot .ce-robot-avatar { font-size:38px; } }
 .ce-section-label { color:#0A2342 !important; font-size:11px; font-weight:800; letter-spacing:1.4px; margin:14px 0 8px; }
 .ce-stat-card { background:linear-gradient(145deg,#FFFFFF 0%,#FFFFFF 72%,#EEF1F5 100%); border:1px solid #DCE4ED; border-top:3px solid #FFFFFF; border-radius:12px; padding:10px 14px 5px; min-height:100px; box-shadow:0 5px 16px rgba(10,35,66,.055), inset 0 1px 0 rgba(255,255,255,1); }
 .ce-stat-kicker { color:#0A2342 !important; font-size:10px; font-weight:800; letter-spacing:1px; margin-bottom:6px; }
@@ -997,6 +1007,7 @@ with st.container(key="ce_locked_header"):
         current_submenu = st.session_state.get("ce_sub_menu", submenu_options[0])
         if current_submenu not in submenu_options:
             current_submenu = submenu_options[0]
+            st.session_state["ce_sub_menu"] = current_submenu
         selected_page = st.selectbox("Pages", submenu_options, index=submenu_options.index(current_submenu),
                                      key="ce_sub_menu", label_visibility="collapsed")
     with nav_cols[2]:
@@ -1304,10 +1315,15 @@ if page in BUSINESS_PAGES:
         # The shared locked navigation above is the only site header.
         # Keep the dashboard start compact: no second oversized hero/header.
         st.markdown("""
-        <div class="ce-dashboard-intro">
-          <div class="ce-eyebrow">CEDARS EMPIRE · BUSINESS OVERVIEW</div>
-          <div class="ce-dashboard-intro-title">Business dashboard</div>
-          <div class="ce-dashboard-intro-copy">Operational grids, contract readiness and verified financial records.</div>
+        <div class="ce-dashboard-intro ce-dashboard-intro-layout">
+          <div class="ce-dashboard-intro-text">
+            <div class="ce-eyebrow">CEDARS EMPIRE · BUSINESS OVERVIEW</div>
+            <div class="ce-dashboard-intro-title">Business dashboard</div>
+            <div class="ce-dashboard-intro-copy">Operational grids, contract readiness and verified financial records.</div>
+          </div>
+          <div class="ce-dashboard-robot" aria-label="Robot visual simulation only">
+            <div class="ce-robot-orbit"></div><div class="ce-robot-avatar">🤖</div>
+          </div>
         </div>
         """, unsafe_allow_html=True)
         st.markdown('<div class="ce-section-label">FINANCIAL CONTROL</div>', unsafe_allow_html=True)
@@ -1335,7 +1351,8 @@ if page in BUSINESS_PAGES:
                 st.markdown(f'<div class="ce-grid-card"><div class="ce-grid-number">{item[0]}</div><div class="ce-grid-title">{item[1]}</div><div class="ce-grid-copy">{item[2]}</div></div>', unsafe_allow_html=True)
                 if st.button("Open grid", key="ce_business_grid_" + item[3], use_container_width=True):
                     if item[3] in pages:
-                        st.session_state["ce_header_menu"] = item[3]
+                        st.session_state["ce_top_menu"] = "Grids"
+                        st.session_state["ce_sub_menu"] = item[3]
                         st.rerun()
                     else:
                         st.info("This grid is available through the Real Money Business navigation.")
@@ -1377,7 +1394,7 @@ if page in BUSINESS_PAGES:
     elif page == "Robot Operations Dashboard":
         render_robot_dashboard()
     elif page == "World Grid Marketplace__OLD":
-        st.header("World Grid Marketplace")
+        st.info("Legacy marketplace handler disabled; use the integrated grid registry.")
         st.write("A marketplace operations dashboard for provider checks, customer demand, delivery, costs and receipt reconciliation.")
         st.caption("Listings remain unverified until supporting evidence is reviewed. No marketplace transaction or income is implied by a saved record.")
         render_engine_dashboard("World Grid marketplace")

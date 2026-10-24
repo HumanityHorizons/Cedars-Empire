@@ -24,6 +24,8 @@ import extra_streamlit_components as stx
 import pymupdf
 from docx import Document
 from hh_workspace_widgets import render_action_grid, render_calendar, render_document_exports
+from hh_grid_marketplace import render_grid_marketplace, GRID_CATALOG
+from hh_robot_dashboard import render_robot_dashboard
 from hh_real_payments import (
     ensure_payment_tables, render_deposit_page, render_cashout_page,
     render_payment_ops_page, render_user_treasury_overview_page,
@@ -36,7 +38,7 @@ from daily_crediting import initialize as initialize_daily_crediting, process_da
 # Build marker retained for integration checks: Deposit & Packages QR integration (build 2026-10-21)
 # -----------------------------------------------------------------------------
 APP_DIR = Path(__file__).parent
-# Use only the CEDARS EMPIRE logo asset when uploaded; do not fall back to legacy branding.
+# Use only the new CEDARS EMPIRE logo asset when uploaded; never fall back to legacy Humanity Horizons branding.
 LOGO = APP_DIR / "assets" / "cedars_empire_logo.png"
 LOCAL_DB = Path(os.getenv("HH_DATA_DIR", tempfile.gettempdir())) / "humanity_horizons.db"
 PBKDF2_ITERATIONS = 310_000
@@ -44,11 +46,11 @@ PBKDF2_ITERATIONS = 310_000
 st.set_page_config(page_title="CEDARS EMPIRE", page_icon="🌍", layout="wide")
 st.markdown("""
 <style>
-:root { color-scheme: light; }
+:root { color-scheme: light; --ce-navy:#0A2342; --ce-gold:#D6A84F; --ce-charcoal:#0A2342; --ce-pearl:#FFFFFF; --ce-silver:#DDE1E5; }
 html, body, [class*="css"] { font-family: Arial, Roboto, sans-serif; }
 .stApp, [data-testid="stAppViewContainer"] {
-  background: #F5F7FA !important;
-  color: #1F2937 !important;
+  background: radial-gradient(ellipse at 18% 0%, rgba(255,255,255,1) 0%, rgba(248,248,248,.99) 58%, rgba(238,241,245,.96) 100%) !important;
+  color: #0A2342 !important;
 }
 [data-testid="stMain"] h1, [data-testid="stMain"] h2,
 [data-testid="stMain"] h3, [data-testid="stMain"] h4,
@@ -57,55 +59,69 @@ html, body, [class*="css"] { font-family: Arial, Roboto, sans-serif; }
 [data-testid="stMain"] [data-testid="stMarkdownContainer"],
 [data-testid="stMain"] [data-testid="stCaptionContainer"],
 [data-testid="stMain"] [data-testid="stWidgetLabel"] {
-  color: #1F2937;
+  color: #0A2342;
 }
 input, textarea, [data-baseweb="select"] input {
-  color: #1F2937 !important; background-color: #FFFFFF !important;
+  color: #0A2342 !important; background-color: #FFFFFF !important;
 }
-.hh-small { font-size: .88rem; color: #526579 !important; }
+.hh-small { font-size: .88rem; color: #0A2342 !important; }
 </style>
 """, unsafe_allow_html=True)
 
 st.markdown("""
 <style>
-:root { --ce-navy:#0A2540; --ce-blue:#0A2540; --ce-gold:#D6A84F; --ce-green:#16794B; --ce-amber:#A86400; --ce-bg:#F5F7FA; --ce-card:#FFFFFF; --ce-border:#D9E0E7; --ce-text:#1F2937; --ce-muted:#526579; }
-.stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] { background:var(--ce-bg) !important; color:var(--ce-text) !important; }
+:root { --ce-navy:#0A2342; --ce-blue:#0A2342; --ce-gold:#D6A84F; --ce-green:#16794B; --ce-amber:#A86400; --ce-bg:#FFFFFF; --ce-card:#FFFFFF; --ce-border:#DCE4ED; --ce-text:#0A2342; --ce-muted:#0A2342; }
+.stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] { background:linear-gradient(135deg,#FFFFFF 0%,#FFFFFF 52%,#EEF1F5 100%) !important; color:var(--ce-text) !important; }
 [data-testid="stMain"] h1,[data-testid="stMain"] h2,[data-testid="stMain"] h3,[data-testid="stMain"] h4 { color:var(--ce-navy) !important; letter-spacing:-.01em; }
 [data-testid="stMain"] p,[data-testid="stMain"] li,[data-testid="stMain"] label,[data-testid="stMain"] [data-testid="stMarkdownContainer"],[data-testid="stMain"] [data-testid="stCaptionContainer"] { color:var(--ce-text) !important; }
 [data-testid="stSidebar"],[data-testid="stSidebarCollapsedControl"] { display:none !important; }
 [data-testid="stMetric"] { background:transparent !important; border:0 !important; border-radius:0 !important; padding:4px 0 !important; box-shadow:none !important; }
-.ce-dashboard-hero { background:linear-gradient(115deg,#0A2540 0%,#123D60 70%,#1B4D70 100%); color:#fff; border-radius:18px; padding:28px 30px 20px; margin:0 0 24px; border-bottom:4px solid #D6A84F; box-shadow:0 12px 30px rgba(10,37,64,.13); }
-.ce-eyebrow { color:#E7C77D !important; font-size:11px; font-weight:800; letter-spacing:2px; margin-bottom:10px; }
+.ce-dashboard-hero { background:radial-gradient(circle at 88% 10%,rgba(96,213,255,.23),transparent 30%),linear-gradient(115deg,#071A33 0%,#0A2342 54%,#176078 100%); color:#fff; border-radius:18px; padding:22px 26px 16px; margin:0 0 18px; border-bottom:3px solid #D6A84F; box-shadow:0 12px 30px rgba(10,35,66,.18), inset 0 1px 0 rgba(255,255,255,.18); }
+.ce-eyebrow { color:#FFFFFF !important; font-size:11px; font-weight:800; letter-spacing:2px; margin-bottom:10px; }
 .ce-hero-title { color:#fff !important; font-size:30px; line-height:1.2; font-weight:800; letter-spacing:-.6px; }
-.ce-hero-subtitle { color:#E5EDF5 !important; margin-top:8px; font-size:14px; }
-.ce-hero-strip { display:flex; flex-wrap:wrap; gap:9px 22px; margin-top:22px; padding-top:14px; border-top:1px solid rgba(255,255,255,.18); color:#DDE8F1 !important; font-size:10px; font-weight:700; letter-spacing:1px; }
-.ce-section-label { color:#526579 !important; font-size:11px; font-weight:800; letter-spacing:1.4px; margin:18px 0 10px; }
-.ce-stat-card { background:#fff; border:1px solid #D9E0E7; border-top:3px solid #D6A84F; border-radius:12px; padding:10px 14px 5px; min-height:100px; box-shadow:0 4px 14px rgba(10,37,64,.045); }
-.ce-stat-kicker { color:#526579 !important; font-size:10px; font-weight:800; letter-spacing:1px; margin-bottom:6px; }
-.ce-stat-value { color:#0A2540 !important; font-size:30px; line-height:1.15; font-weight:800; margin:10px 0 5px; } .ce-stat-foot { color:#738295 !important; font-size:10px; }
-.ce-action-card,.ce-grid-card,.ce-business-metric,.ce-workflow-card,.ce-empty-state { background:#fff; border:1px solid #D9E0E7; border-radius:12px; padding:16px; box-shadow:0 4px 14px rgba(10,37,64,.04); min-height:104px; }
-.ce-action-card { border-top:3px solid #0A2540; margin-bottom:8px; }
-.ce-action-title,.ce-grid-title { color:#0A2540 !important; font-size:14px; font-weight:800; margin-bottom:7px; }
-.ce-action-copy,.ce-grid-copy,.ce-business-detail { color:#526579 !important; font-size:12px; line-height:1.5; }
+.ce-hero-subtitle { color:#FFFFFF !important; margin-top:8px; font-size:14px; }
+.ce-hero-strip { display:flex; flex-wrap:wrap; gap:9px 22px; margin-top:22px; padding-top:14px; border-top:1px solid rgba(255,255,255,.18); color:#FFFFFF !important; font-size:10px; font-weight:700; letter-spacing:1px; }
+.ce-login-heading { background:linear-gradient(110deg,#FFFFFF 0%,#F4F8FC 72%,#E8F1F8 100%); border-left:4px solid #D6A84F; border-radius:10px; padding:18px 20px; margin:0 0 14px; box-shadow:0 6px 18px rgba(10,35,66,.06); } .ce-dashboard-intro { display:flex; flex-direction:column; gap:5px; margin:4px 0 14px; padding:0 0 12px; border-bottom:1px solid #DCE4ED; }
+.ce-dashboard-intro .ce-eyebrow { color:#9A7621 !important; font-size:10px; font-weight:800; letter-spacing:1.5px; margin:0; }
+.ce-dashboard-intro-title { color:#0A2342 !important; font-size:23px; line-height:1.2; font-weight:800; letter-spacing:-.35px; }
+.ce-dashboard-intro-copy { color:#53657A !important; font-size:12px; line-height:1.4; }
+.ce-dashboard-intro-layout { display:flex; align-items:center; justify-content:space-between; gap:18px; }
+.ce-dashboard-intro-text { min-width:0; flex:1; }
+.ce-dashboard-robot { position:relative; width:112px; height:92px; flex:0 0 112px; display:flex; align-items:center; justify-content:center;
+  border-radius:14px; overflow:hidden; background:radial-gradient(circle at 50% 45%,rgba(214,168,79,.20),#0A2342 72%); }
+.ce-dashboard-robot .ce-robot-avatar { font-size:48px; z-index:1; animation:ce-robot-float 2.8s ease-in-out infinite; filter:drop-shadow(0 0 8px rgba(96,213,255,.35)); }
+.ce-dashboard-robot .ce-robot-orbit { position:absolute; width:70px; height:70px; border:1px solid rgba(214,168,79,.65); border-radius:50%; animation:ce-orbit 8s linear infinite; }
+.ce-dashboard-robot .ce-robot-orbit:before { content:""; position:absolute; top:7px; left:11px; width:6px; height:6px; border-radius:50%; background:#D6A84F; box-shadow:0 0 8px #D6A84F; }
+@keyframes ce-robot-float { 0%,100% { transform:translateY(3px) rotate(-2deg); } 50% { transform:translateY(-6px) rotate(2deg); } }
+@keyframes ce-orbit { to { transform:rotate(360deg); } }
+@media(max-width:600px) { .ce-dashboard-robot { width:76px; height:76px; flex-basis:76px; } .ce-dashboard-robot .ce-robot-avatar { font-size:38px; } }
+.ce-section-label { color:#0A2342 !important; font-size:11px; font-weight:800; letter-spacing:1.4px; margin:14px 0 8px; }
+.ce-stat-card { background:linear-gradient(145deg,#FFFFFF 0%,#F8FBFF 72%,#E5EEF8 100%); border:1px solid #DCE4ED; border-top:3px solid #D6A84F; border-radius:12px; padding:10px 14px 8px; min-height:100px; box-shadow:0 7px 20px rgba(10,35,66,.08), inset 0 1px 0 rgba(255,255,255,1); }
+.ce-stat-kicker { color:#0A2342 !important; font-size:10px; font-weight:800; letter-spacing:1px; margin-bottom:6px; }
+.ce-stat-value { color:#0A2342 !important; font-size:30px; line-height:1.15; font-weight:800; margin:10px 0 5px; } .ce-stat-foot { color:#0A2342 !important; font-size:10px; }
+.ce-action-card,.ce-grid-card,.ce-business-metric,.ce-workflow-card,.ce-empty-state { background:linear-gradient(145deg,#FFFFFF 0%,#FFFFFF 72%,#EEF1F5 100%); border:1px solid #DCE4ED; border-radius:12px; padding:16px; box-shadow:0 5px 16px rgba(10,35,66,.05), inset 0 1px 0 rgba(255,255,255,1); min-height:104px; }
+.ce-action-card { border-top:3px solid #D6A84F; margin-bottom:8px; transition:transform .18s ease,box-shadow .18s ease; } .ce-action-card:hover,.ce-grid-card:hover { transform:translateY(-2px); box-shadow:0 12px 24px rgba(10,35,66,.12); }
+.ce-action-title,.ce-grid-title { color:#0A2342 !important; font-size:14px; font-weight:800; margin-bottom:7px; }
+.ce-action-copy,.ce-grid-copy,.ce-business-detail { color:#0A2342 !important; font-size:12px; line-height:1.5; }
 .ce-workflow-card { padding:6px 16px; }
-.ce-step { display:flex; align-items:center; gap:12px; padding:13px 0; border-bottom:1px solid #E8EDF2; }
+.ce-step { display:flex; align-items:center; gap:12px; padding:13px 0; border-bottom:1px solid #DCE4ED; }
 .ce-step:last-child { border-bottom:0; }
-.ce-step span { display:flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:9px; background:#F7EBD0; color:#0A2540; font-size:11px; font-weight:800; flex-shrink:0; }
-.ce-step b { display:block; color:#0A2540; font-size:13px; }
-.ce-step small { display:block; color:#526579; font-size:11px; margin-top:3px; }
-.ce-empty-state { text-align:center; padding:30px 16px; color:#526579; }
-.ce-empty-icon { margin:0 auto 10px; display:flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:50%; background:#E8F5EE; color:#16794B; font-size:22px; }
-.ce-grid-card { min-height:116px; margin-bottom:10px; border-top:3px solid #D6A84F; }
-.ce-grid-number { color:#A86400; font-size:11px; font-weight:900; letter-spacing:1px; margin-bottom:9px; }
-.ce-business-metric { min-height:126px; border-left:4px solid #D6A84F; }
-.ce-business-value { color:#0A2540 !important; font-size:22px; font-weight:800; margin:10px 0 6px; }
+.ce-step span { display:flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:9px; background:#E8EDF5; color:#0A2342; font-size:11px; font-weight:800; flex-shrink:0; }
+.ce-step b { display:block; color:#0A2342; font-size:13px; }
+.ce-step small { display:block; color:#0A2342; font-size:11px; margin-top:3px; }
+.ce-empty-state { text-align:center; padding:30px 16px; color:#0A2342; }
+.ce-empty-icon { margin:0 auto 10px; display:flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:50%; background:#E8EDF5; color:#0A2342; font-size:22px; }
+.ce-grid-card { min-height:116px; margin-bottom:10px; border-top:3px solid #D6A84F; background:linear-gradient(145deg,#FFFFFF 0%,#F6FBFF 70%,#E2F0F4 100%); }
+.ce-grid-number { color:#0A2342; font-size:11px; font-weight:900; letter-spacing:1px; margin-bottom:9px; }
+.ce-business-metric { min-height:126px; border-left:4px solid #FFFFFF; }
+.ce-business-value { color:#0A2342 !important; font-size:22px; font-weight:800; margin:10px 0 6px; }
 @media(max-width:768px) { .ce-dashboard-hero { padding:22px 18px 16px; border-radius:13px; } .ce-hero-title { font-size:24px; } .ce-stat-card { min-height:84px; padding:9px; } .ce-stat-value { font-size:24px; } .ce-action-card,.ce-grid-card { padding:12px; } }
 [data-testid="stDataFrame"],[data-testid="stTable"],[data-testid="stForm"] { border:1px solid var(--ce-border) !important; border-radius:8px !important; background:var(--ce-card) !important; }
 [data-testid="stForm"] { padding:1rem !important; }
-[data-testid="stTextInput"] input,[data-testid="stNumberInput"] input,[data-testid="stTextArea"] textarea,[data-testid="stDateInput"] input,[data-testid="stTimeInput"] input,[data-baseweb="select"] > div { border-radius:6px !important; border-color:#C7D0DA !important; }
+[data-testid="stTextInput"] input,[data-testid="stNumberInput"] input,[data-testid="stTextArea"] textarea,[data-testid="stDateInput"] input,[data-testid="stTimeInput"] input,[data-baseweb="select"] > div { border-radius:6px !important; border-color:#DCE4ED !important; }
 div.stButton > button,[data-testid="stDownloadButton"] button,[data-testid="stFormSubmitButton"] button { min-height:2.5rem; border-radius:6px !important; font-weight:650 !important; }
 div.stButton > button[kind="primary"],[data-testid="stFormSubmitButton"] button[kind="primary"] { background:var(--ce-navy) !important; color:white !important; border:1px solid var(--ce-navy) !important; }
-div.stButton > button:not([kind="primary"]),[data-testid="stDownloadButton"] button { background:white !important; color:var(--ce-navy) !important; border:1px solid #C7D0DA !important; }
+div.stButton > button:not([kind="primary"]),[data-testid="stDownloadButton"] button { background:white !important; color:var(--ce-navy) !important; border:1px solid #DCE4ED !important; }
 [data-testid="stTabs"] button[aria-selected="true"] { color:var(--ce-navy) !important; border-bottom-color:var(--ce-gold) !important; }
 [data-testid="stAlert"] { border-radius:8px !important; }
 [data-testid="stMainBlockContainer"] { max-width:1440px; }
@@ -119,11 +135,11 @@ st.markdown("""
 [class*="st-key-ce_locked_header"] {
  position:relative !important; top:auto !important; left:auto !important; right:auto !important;
  z-index:10 !important; width:100% !important; box-sizing:border-box !important;
- padding:10px 24px 8px !important; background:#0A2540 !important; color:#FFFFFF !important;
- border-bottom:3px solid #D6A84F !important; box-shadow:0 4px 16px rgba(10,37,64,.18) !important;
+ padding:10px 24px 8px !important; background:#0A2342 !important; color:#FFFFFF !important;
+ border-bottom:2px solid #FFFFFF !important; box-shadow:0 4px 20px rgba(10,35,66,.14) !important;
 }
 .ce-brand-mark { width:42px; height:42px; border-radius:10px; display:flex; align-items:center;
- justify-content:center; background:#D6A84F; color:#0A2540; font-weight:900; font-size:21px; }
+ justify-content:center; background:#FFFFFF; color:#0A2342; font-weight:900; font-size:21px; }
 .ce-brand-title { font-size:19px; font-weight:800; letter-spacing:.7px; color:#FFFFFF !important; line-height:1.2; }
 .ce-header-right { margin-left:auto; color:#E8F1F8 !important; font-size:12px; text-align:right; }
 [class*="st-key-ce_locked_header"] [data-testid="stRadio"] label,
@@ -743,6 +759,7 @@ HH_STANDARDS_CHECKS = [
 # Page chrome and auth
 # -----------------------------------------------------------------------------
 
+
 AUTH_COOKIE_NAME = "cedars_empire_session"
 AUTH_SESSION_DAYS = 14
 AUTH_COOKIE_MANAGER = stx.CookieManager(key="ce_auth_cookie_manager")
@@ -768,46 +785,58 @@ def _issue_persistent_session(email: str) -> None:
 
 
 def _restore_persistent_session() -> None:
-    """Restore a login only when a valid unrevoked token exists in durable storage."""
     if st.session_state.get("user_email"):
         return
     try:
-        raw_token = AUTH_COOKIE_MANAGER.get(AUTH_COOKIE_NAME)
-    except Exception:
-        raw_token = None
-    if not isinstance(raw_token, str) or len(raw_token) < 32:
-        return
-    token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
-    sessions = db_all(
-        "SELECT user_email,expires_at FROM login_sessions WHERE token_hash=? AND revoked_at IS NULL",
-        (token_hash,),
-    )
-    if not sessions:
-        return
-    try:
-        expires = datetime.fromisoformat(sessions[0]["expires_at"])
-        if expires.tzinfo is None:
-            expires = expires.replace(tzinfo=timezone.utc)
-        if expires <= datetime.now(timezone.utc):
-            db_exec("UPDATE login_sessions SET revoked_at=? WHERE token_hash=?", (now_iso(), token_hash))
-            AUTH_COOKIE_MANAGER.delete(AUTH_COOKIE_NAME, key="ce_auth_cookie_expire")
+        # CookieManager's browser component must be initialized before reading an
+        # individual cookie; get_all() also avoids depending on a stale first-run value.
+        cookies = AUTH_COOKIE_MANAGER.get_all()
+        token = cookies.get(AUTH_COOKIE_NAME) if isinstance(cookies, dict) else None
+        if not token:
+            token = AUTH_COOKIE_MANAGER.get(AUTH_COOKIE_NAME)
+        if not token or not isinstance(token, str):
             return
-    except (TypeError, ValueError, KeyError):
-        db_exec("UPDATE login_sessions SET revoked_at=? WHERE token_hash=?", (now_iso(), token_hash))
-        AUTH_COOKIE_MANAGER.delete(AUTH_COOKIE_NAME, key="ce_auth_cookie_invalid")
-        return
-    users = db_all("SELECT * FROM users WHERE email=?", (sessions[0]["user_email"],))
-    if not users:
-        db_exec("UPDATE login_sessions SET revoked_at=? WHERE token_hash=?", (now_iso(), token_hash))
-        AUTH_COOKIE_MANAGER.delete(AUTH_COOKIE_NAME, key="ce_auth_cookie_orphan")
-        return
-    user = users[0]
-    st.session_state.user_email = user["email"]
-    st.session_state.full_name = user["full_name"]
-    st.session_state.account_type = user.get("account_type", "Individual")
-    st.session_state.followup_optin = int(user.get("followup_optin", 0)) == 1
-    st.session_state.last_login = now_iso()
-    db_exec("UPDATE login_sessions SET last_seen_at=? WHERE token_hash=?", (now_iso(), token_hash))
+        token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+        sessions = db_all("SELECT * FROM login_sessions WHERE token_hash=? AND revoked_at IS NULL", (token_hash,))
+        if not sessions:
+            return
+        session = sessions[0]
+        # Normalize TEXT and datetime-like expiry values returned by database
+        # adapters before comparing; this avoids silently dropping valid sessions
+        # if a hosted PostgreSQL schema/driver returns a different representation.
+        expires_value = session["expires_at"]
+        if isinstance(expires_value, datetime):
+            expires_at = expires_value
+        else:
+            expires_at = datetime.fromisoformat(str(expires_value).replace("Z", "+00:00"))
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        else:
+            expires_at = expires_at.astimezone(timezone.utc)
+        if expires_at <= datetime.now(timezone.utc):
+            db_exec("UPDATE login_sessions SET revoked_at=? WHERE token_hash=?", (now_iso(), token_hash))
+            AUTH_COOKIE_MANAGER.delete(AUTH_COOKIE_NAME)
+            return
+        users = db_all("SELECT * FROM users WHERE LOWER(email)=LOWER(?)", (session["user_email"],))
+        if not users:
+            db_exec("UPDATE login_sessions SET revoked_at=? WHERE token_hash=?", (now_iso(), token_hash))
+            AUTH_COOKIE_MANAGER.delete(AUTH_COOKIE_NAME)
+            return
+        user = users[0]
+        st.session_state.user_email = user["email"]
+        st.session_state.full_name = user["full_name"]
+        st.session_state.account_type = user.get("account_type", "Individual")
+        st.session_state.followup_optin = int(user.get("followup_optin", 0)) == 1
+        st.session_state.last_login = now_iso()
+        st.session_state.setdefault("ce_top_menu", "Overview")
+        st.session_state.setdefault("ce_sub_menu", "Dashboard")
+        db_exec("UPDATE login_sessions SET last_seen_at=? WHERE token_hash=?", (now_iso(), token_hash))
+    except Exception as exc:
+        # Fail closed but retain a safe diagnostic category. Never log cookies,
+        # passwords, email addresses, or database connection strings.
+        import logging
+        logging.exception("CEDARS_SESSION_RESTORE_FAILED error_type=%s", type(exc).__name__)
+        st.session_state.pop("user_email", None)
 
 
 def set_login(user: dict[str, Any], login_purpose: str = "") -> None:
@@ -831,25 +860,15 @@ def set_login(user: dict[str, Any], login_purpose: str = "") -> None:
 
 
 def signup_page() -> None:
+    # Public authentication screen only: do not render business-grid cards, robot panels,
+    # member navigation, or dashboard components before successful sign-in.
     st.markdown("""
-    <div class="ce-dashboard-hero ce-business-hero">
-      <div class="ce-eyebrow">GLOBAL BUSINESS PLATFORM</div>
-      <div class="ce-hero-title">CEDARS EMPIRE</div>
-      <div class="ce-hero-subtitle">Business operations, customer services, contracts, Grid marketplace and evidence-led financial controls.</div>
-      <div class="ce-hero-strip"><span>ONE WORKSPACE</span><span>VERIFIABLE RECORDS</span><span>CONTROLLED PAYMENTS</span></div>
+    <div class="ce-login-heading">
+      <div class="ce-eyebrow" style="color:#9A7621 !important">CEDARS EMPIRE</div>
+      <div style="font-size:25px;font-weight:800;letter-spacing:-.4px;color:#0A2342">Business workspace sign in</div>
+      <div style="font-size:13px;color:#53657A;margin-top:6px">Sign in or create an account to access business grids and tools.</div>
     </div>
     """, unsafe_allow_html=True)
-    st.markdown("### Business workspace")
-    landing_cols = st.columns(3)
-    landing_items = [
-        ("Business operations", "Customer records, calendar, tasks, contracts and reports."),
-        ("Grid marketplace", "Explore service categories and submit evidence-backed activity."),
-        ("Earnings & controls", "Review recorded credits and transaction history; finance controls are role-restricted."),
-    ]
-    for col, (heading, detail) in zip(landing_cols, landing_items):
-        with col:
-            st.markdown(f'<div class="ce-business-metric"><div class="ce-stat-kicker">{heading.upper()}</div><div class="ce-business-detail">{detail}</div></div>', unsafe_allow_html=True)
-    st.caption("Only verified receipts and approved records can be reported as actual financial results. Displayed scenarios are not guaranteed returns.")
     signin, signup, public, reset_request, reset_finish = st.tabs(
         ["Sign in", "Create account", "Public noticeboard", "Forgot password", "Set new password"])
     with signin:
@@ -866,8 +885,14 @@ def signup_page() -> None:
             elif not password:
                 st.error("Enter your password.")
             else:
-                users = db_all("SELECT * FROM users WHERE email=?", (email,))
-                if not users or not verify_password(password, users[0]["password_salt"], users[0]["password_hash"]):
+                users = db_all("SELECT * FROM users WHERE LOWER(email)=LOWER(?)", (email,))
+                if not users:
+                    import logging
+                    logging.warning("CEDARS_SIGNIN_REJECTED reason=account_lookup_miss")
+                    st.error("Email or password is incorrect.")
+                elif not verify_password(password, users[0]["password_salt"], users[0]["password_hash"]):
+                    import logging
+                    logging.warning("CEDARS_SIGNIN_REJECTED reason=password_hash_mismatch")
                     st.error("Email or password is incorrect.")
                 else:
                     set_login(users[0], signin_purpose.strip())
@@ -881,9 +906,9 @@ def signup_page() -> None:
             email = st.text_input("Email address").strip().lower()
             password = st.text_input("Create password (at least 10 characters)", type="password")
             password2 = st.text_input("Confirm password", type="password")
-            account_type = st.selectbox("Account type", ["Individual / professional", "Business / private sector", "Service provider", "Research / academic", "Other"])
+            account_type = st.selectbox("Account type", ["Individual", "Business / private sector", "Public institution", "Research / academic", "Other"])
             organization = st.text_input("Organization (optional for individuals)")
-            sector = st.selectbox("Main sector", ["Select…", "Education", "Health", "Climate / environment", "Livelihoods / economic inclusion", "Gender / protection", "Governance / peacebuilding", "Humanitarian response", "Agriculture / food security", "Digital / technology", "Research / evaluation", "Multiple sectors", "Other"])
+            sector = st.selectbox("Main sector", ["Select…", "Energy & utilities", "AI & data services", "Cleaning & property services", "Accommodation", "Mobility & logistics", "Education & training", "Business services", "Health & wellbeing services", "Agriculture", "Digital technology", "Multiple sectors", "Other"])
             purpose = st.text_area("B2B / workspace purpose — how will you use Cedars Empire?", placeholder="Example: identify grants, draft proposals and monitor a youth employment project.")
             followup = st.checkbox("I opt in to follow-up emails and identifiable attendance records. Optional; I can opt out later.")
             agree = st.checkbox("I agree to the Cedars Empire platform terms and privacy notice. I understand that outputs are decision-support drafts and do not guarantee funding, employment or compliance outcomes.")
@@ -1006,16 +1031,9 @@ def signup_page() -> None:
                 except Exception:
                     pass
 
-# Streamlit session_state alone is lost on a full browser refresh. Recover the
-# account from the signed-by-randomness, database-backed browser session token.
 _restore_persistent_session()
-
 is_logged_in = bool(st.session_state.get("user_email"))
 if not is_logged_in:
-    with st.sidebar:
-        st.subheader("Workspace access")
-        st.write("Sign in or create an account to save your work, manage tasks and use the personal tools.")
-        st.caption("Administrator tools are enabled only for addresses explicitly configured in Streamlit secrets.")
     signup_page()
     st.stop()
 
@@ -1023,22 +1041,37 @@ USER_EMAIL = st.session_state.user_email
 USER_NAME = st.session_state.full_name
 IS_ADMIN = USER_EMAIL.lower() in ADMIN_EMAILS
 
-# CEDARS EMPIRE is a business-only platform; legacy non-business pages are not exposed.
+# CEDARS EMPIRE is a business-only platform. NGO workspace is permanently retired.
 # Compact top-level navigation with grouped submenus; internal finance stays admin-only.
 business_menu = {
-    "Overview": ["Dashboard", "Studio"],
-    "Business": ["Customer & Client Management", "Calendar & Events", "Work & Contracts", "Business Reports"],
-    "Earnings": ["Earnings & Wallet", "Deposit", "Withdraw", "Refer"],
-    "Grids": ["Grid Marketplace"],
-    "Account": ["Account"],
+    "Overview": ["Dashboard"],
+    "Business": ["Customer & Client Management", "Calendar & Events", "Live Studio", "Work & Contracts", "Client Services & Contracts"],
+    "Earnings": ["Earnings & Wallet", "Deposit & Packages", "Withdrawals & Full KYC", "Staking & Compounding", "Referral Program"],
+    "Grids": ["World Grid Marketplace", "Cleaning Grid", "Shelter & Accommodation Grid", "Energy & Utilities Grid", "AI Training & Data Operations", "Robot Operations Dashboard"],
+    "AI & Reports": ["Business Reports"],
+    "Account": ["My Work & Wallet", "My Tasks"],
 }
 admin_menu = {
     **business_menu,
-    "Executive": ["Executive Command Center", "Treasury Management", "Real Money Engines"],
-    "Payments": ["Payments & Treasury", "Blockchain & Treasury", "Payment Operations"],
-    "Automation": ["Daily Crediting", "Reports & Referrals", "AI Operations"],
+    "Business": ["Customer & Client Management", "Calendar & Events", "Live Studio", "Work & Contracts", "Client Services & Contracts", "Business Opportunity Pipeline"],
+    "AI & Reports": ["AI Business Scenario Lab", "Business Reports"],
+    "Command & Finance": ["Executive Command Center", "Treasury Management", "Real Money Engines", "Payments & Treasury", "Blockchain & Treasury", "Payment Operations"],
+    "Automation & Admin": ["Daily Crediting", "Reports & Referrals", "AI Operations", "Branding Settings", "Admin Console"],
 }
 menu_groups = admin_menu if IS_ADMIN else business_menu
+# Flatten visible navigation groups for page checks and admin branding controls.
+pages = [page for group_pages in menu_groups.values() for page in group_pages]
+
+# Apply navigation requests before creating widgets that own these session-state keys.
+# Button handlers below write only to pending keys, then rerun; this avoids
+# StreamlitWidgetAlreadyInstantiatedError for ce_top_menu / ce_sub_menu.
+_pending_group = st.session_state.pop("ce_pending_top_menu", None)
+_pending_page = st.session_state.pop("ce_pending_sub_menu", None)
+if _pending_group in menu_groups:
+    st.session_state["ce_top_menu"] = _pending_group
+    if _pending_page in menu_groups[_pending_group]:
+        st.session_state["ce_sub_menu"] = _pending_page
+
 with st.container(key="ce_locked_header"):
     logo_bytes = None
     try:
@@ -1057,20 +1090,21 @@ with st.container(key="ce_locked_header"):
         with brand_col:
             st.markdown('<div class="ce-brand-title">CEDARS EMPIRE</div>', unsafe_allow_html=True)
     with header_status_col:
-        st.markdown('<div class="ce-header-right">DIE RICH OR DIE TRYING</div>', unsafe_allow_html=True)
+        st.markdown('<div class="ce-header-right">BUSINESS WORKSPACE</div>', unsafe_allow_html=True)
     nav_cols = st.columns([1.0, 1.65, 1.2], vertical_alignment="center")
     with nav_cols[0]:
         menu_keys = list(menu_groups)
         current_group = st.session_state.get("ce_top_menu", menu_keys[0])
         if current_group not in menu_keys:
             current_group = menu_keys[0]
-        top_menu = st.selectbox("Menu", menu_keys, index=menu_keys.index(current_group),
-                                key="ce_top_menu", label_visibility="collapsed")
+        top_menu = st.radio("Menu", menu_keys, index=menu_keys.index(current_group),
+                           key="ce_top_menu", horizontal=True, label_visibility="collapsed")
     with nav_cols[1]:
         submenu_options = menu_groups[top_menu]
         current_submenu = st.session_state.get("ce_sub_menu", submenu_options[0])
         if current_submenu not in submenu_options:
             current_submenu = submenu_options[0]
+            st.session_state["ce_sub_menu"] = current_submenu
         selected_page = st.selectbox("Pages", submenu_options, index=submenu_options.index(current_submenu),
                                      key="ce_sub_menu", label_visibility="collapsed")
     with nav_cols[2]:
@@ -1090,6 +1124,7 @@ page_routes = {
     "Refer": "Referral Program",
     "Account": "Payments & Treasury",
     "Grid Marketplace": "World Grid Marketplace",
+    "Robot Operations Dashboard": "Robot Operations Dashboard",
     "Work & Contracts": "Client Services & Contracts",
     "Payments & Treasury": "Blockchain & Treasury",
     "Payment Operations": "Payment Operations",
@@ -1124,8 +1159,7 @@ INTERNAL_ONLY_PAGES = {
     "AI Business Scenario Lab", "Business Opportunity Pipeline",
     "NeuroWave + Health", "EchoMap + Mobility", "BioLoop + Finance",
     "DreamGrid + Education", "EmoFlux + Shelter", "IdeaForge + Data",
-    "QuantumLeap + Energy", "Cleaning Grid", "Shelter & Accommodation Grid",
-    "Energy & Utilities Grid", "AI Training & Data Operations",
+    "QuantumLeap + Energy",
     "Deposit QR & TIGERS", "Deposits & Withdrawals", "Reports & Referrals",
     "Admin Console", "Admin Studio", "Income & Revenue", "Finance Department",
     "40/60 Allocation Foundation", "HR Department", "Admin Noticeboard",
@@ -1155,10 +1189,9 @@ with signout_col:
             st.session_state.pop(key, None)
         st.rerun()
 st.divider()
-st.caption("AI: connected" if OPENAI_API_KEY else "AI: local structured mode (API key not configured)")
 
 # Cedars Empire: real-business scenario workspace.
-# Legacy non-business handlers are not exposed by the business-only navigation.
+# NGO operations pages remain in the codebase but are intentionally inaccessible from this business-only navigation.
 BUSINESS_PAGES = {
     "Investor Landing", "Business Dashboard", "Real Money Engines", "NeuroWave + Health", "EchoMap + Mobility", "BioLoop + Finance", "DreamGrid + Education", "EmoFlux + Shelter", "IdeaForge + Data", "QuantumLeap + Energy", "AI Business Scenario Lab",
     "Cleaning Grid", "Shelter & Accommodation Grid", "Energy & Utilities Grid",
@@ -1166,13 +1199,13 @@ BUSINESS_PAGES = {
     "Business Opportunity Pipeline", "Blockchain & Treasury", "Deposit QR & TIGERS",
     "Withdrawals & Full KYC", "Staking & Compounding", "Referral Program",
     "Business Reports", "Live Studio", "Customer & Client Management", "Calendar & Events", "Executive Command Center", "Treasury Management", "Grid Marketplace", "Work & Contracts",
-    "Payments & Treasury", "Deposits & Withdrawals", "Payment Operations", "Deposit & Packages", "Withdraw / Cash Out", "Reports & Referrals", "AI Operations", "Daily Crediting"
+    "Payments & Treasury", "Deposits & Withdrawals", "Payment Operations", "Deposit & Packages", "Withdraw / Cash Out", "Reports & Referrals", "AI Operations"
 }
-# Fail closed: retired non-business handlers cannot render, even if a stale route is supplied.
+# Fail closed: retired or unknown handlers cannot render from stale routes.
 if page not in BUSINESS_PAGES:
     page = "Business Dashboard"
 if page in BUSINESS_PAGES:
-    # Internal administrator oversight; keep public-facing branding clean.
+    # Internal command oversight; keep public-facing branding clean.
     media_rows = db_all("SELECT setting_key,setting_value FROM app_settings WHERE setting_key IN (?,?)",
                         ("site_logo", "page_image:" + page))
     media = {row["setting_key"]: row["setting_value"] for row in media_rows}
@@ -1182,9 +1215,12 @@ if page in BUSINESS_PAGES:
     if media.get("page_image:" + page):
         try: st.image(io.BytesIO(__import__("base64").b64decode(media["page_image:" + page])), use_container_width=True)
         except Exception: pass
-    # Shared branded header above already displays CEDARS EMPIRE; avoid a duplicate page title.
-    st.caption("AI Real Business Scenarios")
-    st.info("Integrity rule: scenarios, leads, estimates and planned contracts are not revenue. Record income only after a verifiable payment is received and reconciled. No earnings or contract is guaranteed.")
+    # AI diagnostics and revenue-integrity guidance belong only on the AI scenario page,
+    # never on the dashboard or every other business page.
+    if page == "AI Business Scenario Lab":
+        st.caption("AI: connected" if OPENAI_API_KEY else "AI: local structured mode (API key not configured)")
+        st.caption("AI Real Business Scenarios")
+        st.info("Integrity rule: scenarios, leads, estimates and planned contracts are not revenue. Record income only after a verifiable payment is received and reconciled. No earnings or contract is guaranteed.")
     MERGED_GRID_CATALOG = {
         "NeuroWave + Health": {"service":"Workplace wellbeing education and opt-in, non-clinical wellbeing workshops", "buyer":"Employers, universities, care-service operators and wellbeing providers", "revenue":"Fixed-fee workshops, organization subscriptions, and vetted non-clinical care/wellbeing service referrals", "proof":"Written client scope, qualified facilitator/provider, participant consent, safeguarding plan and delivery sign-off", "guardrail":"Do not diagnose, claim clinical outcomes, collect mental-health histories for resale or sell identifiable/sensitive health data.", "integrated_streams":["Care services (non-clinical, safeguarding-led)","Corporate wellbeing workshops","Education and training partnerships"]},
         "EchoMap + Mobility": {"service":"Licensed soundscape design and accessible audio experiences for journeys, delivery routes and venues", "buyer":"Transport operators, delivery businesses, hotels, tourism operators and mobility apps", "revenue":"Licensed content packages, integration fees, business subscriptions, and verified mobility/delivery service referrals", "proof":"Rights-cleared audio assets, accessibility testing, signed license, qualified provider agreements and delivery/usage records", "guardrail":"Do not sell individual location histories. Collect only necessary, consented, aggregated usage metrics.", "integrated_streams":["Mobility and delivery services","Travel soundscapes and audio guides","World Grid Marketplace provider listings"]},
@@ -1221,8 +1257,11 @@ if page in BUSINESS_PAGES:
     elif page == "Real Money Engines":
         st.header("Real Money Engines")
         st.write("Each engine should have a verified provider, evidence of customer demand, agreed service terms, delivery proof, itemized costs and reconciled receipts.")
-        engines = ["Cleaning services", "Shelter & accommodation", "Energy & utilities", "AI training & data operations", "World Grid marketplace", "Client services & contracts"]
-        chosen_engine = st.selectbox("Choose an engine", engines)
+        # Use the canonical grid registry so every registered grid can track its own operating evidence.
+        # This expands coverage only; it does not mark a grid live or claim that it has earned money.
+        engines = sorted(set([item["name"] for item in GRID_CATALOG] + ["Cleaning services", "Shelter & accommodation", "Energy & utilities", "AI training & data operations", "World Grid marketplace", "Client services & contracts"]))
+        chosen_engine = st.selectbox("Choose a grid / engine", engines)
+        st.caption("Record demand, delivery, costs and receipt evidence for the selected grid. A saved amount or self-declared status is not verified revenue; reconciliation remains a separate control.")
         with st.form("engine_record_form"):
             record_type = st.selectbox("Record type", ["Provider verification", "Customer demand", "Service delivery", "Operating cost", "Receipt / settlement", "Risk / incident"])
             title = st.text_input("Record title / service reference")
@@ -1385,14 +1424,6 @@ if page in BUSINESS_PAGES:
         own_refs = db_all("SELECT referral_code,referred_email,status,reward_amount,reward_asset,evidence_ref,created_at FROM referral_records WHERE referrer_email=? ORDER BY created_at DESC", (USER_EMAIL,))
         if own_refs: render_bank_table(pd.DataFrame(own_refs), use_container_width=True, hide_index=True)
     elif page == "Business Dashboard":
-        st.markdown("""
-        <div class="ce-dashboard-hero ce-business-hero">
-          <div class="ce-eyebrow">REAL MONEY BUSINESS</div>
-          <div class="ce-hero-title">Business Command Overview</div>
-          <div class="ce-hero-subtitle">Monitor service grids, customer activity, contract readiness and reconciled receipts.</div>
-          <div class="ce-hero-strip"><span>GLOBAL OPERATIONS</span><span>CONTROLLED PAYMENTS</span><span>VERIFIED RECORDS</span></div>
-        </div>
-        """, unsafe_allow_html=True)
         st.markdown('<div class="ce-section-label">FINANCIAL CONTROL</div>', unsafe_allow_html=True)
         cols = st.columns(3)
         for col, label, value, detail in [
@@ -1412,6 +1443,7 @@ if page in BUSINESS_PAGES:
             ("04", "AI Training & Data", "Scoped work · quality checks · approvals", "AI Training & Data Operations"),
             ("05", "World Grid Marketplace", "Listings · demand · provider verification", "World Grid Marketplace"),
             ("06", "Client Services & Contracts", "Buyers · deliverables · written terms", "Client Services & Contracts"),
+            ("07", "Robot Operations", "Readiness checks · safe standby · simulation only", "Robot Operations Dashboard"),
         ]
         for col, item in zip(grid_cols * 2, grid_items):
             with col:
@@ -1424,8 +1456,9 @@ if page in BUSINESS_PAGES:
                         None,
                     )
                     if target_group is not None:
-                        st.session_state["ce_top_menu"] = target_group
-                        st.session_state["ce_sub_menu"] = target_page
+                        # Defer widget-key updates until the next run, before the nav widgets exist.
+                        st.session_state["ce_pending_top_menu"] = target_group
+                        st.session_state["ce_pending_sub_menu"] = target_page
                         st.rerun()
                     else:
                         st.info("This grid is not currently available in your navigation.")
@@ -1462,8 +1495,12 @@ if page in BUSINESS_PAGES:
         st.header("AI Training & Data Operations")
         st.write("Validate buyer identity, written scope, data rights, privacy/security requirements, participant consent, age eligibility and payment terms before work begins.")
         render_engine_dashboard("AI training & data operations")
-    elif page == "World Grid Marketplace":
-        st.header("World Grid Marketplace")
+    elif page in {"World Grid Marketplace", "Real Work & Robot Grid Marketplace"}:
+        render_grid_marketplace()
+    elif page == "Robot Operations Dashboard":
+        render_robot_dashboard()
+    elif page == "World Grid Marketplace__OLD":
+        st.info("Legacy marketplace handler disabled; use the integrated grid registry.")
         st.write("A marketplace operations dashboard for provider checks, customer demand, delivery, costs and receipt reconciliation.")
         st.caption("Listings remain unverified until supporting evidence is reviewed. No marketplace transaction or income is implied by a saved record.")
         render_engine_dashboard("World Grid marketplace")
@@ -1940,7 +1977,7 @@ if page in BUSINESS_PAGES:
             render_treasury_management(db_all, db_exec, record_event, USER_EMAIL, bool(DATABASE_URL))
     st.stop()
 
-# Legacy non-business handlers are intentionally unreachable from the business-only navigation.
+# Legacy NGO operations handlers are intentionally unreachable from the business-only navigation.
 # Shared working grids and calendar controls are available throughout the authenticated workspace.
 render_action_grid(page, USER_EMAIL, db_all, db_exec, record_event)
 if page != "Calendar & Events":
@@ -1955,14 +1992,7 @@ if page == "Dashboard":
     in_progress = sum(1 for t in tasks if t["status"] == "In progress")
     completed = sum(1 for t in tasks if t["status"] == "Executed / completed")
     published = len(db_all("SELECT id FROM noticeboard WHERE status=?", ("Published",)))
-    st.markdown("""
-    <div class="ce-dashboard-hero">
-      <div class="ce-eyebrow">PERSONAL WORKSPACE</div>
-      <div class="ce-hero-title">Welcome back</div>
-      <div class="ce-hero-subtitle">Your work, opportunities and delivery progress in one place.</div>
-      <div class="ce-hero-strip"><span>WORKSPACE OVERVIEW</span><span>LIVE RECORDS ONLY</span></div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="ce-dashboard-intro"><div class="ce-dashboard-intro-title">Business overview</div><div class="ce-dashboard-intro-copy">Your business at a glance — tasks, grids and delivery progress.</div></div>', unsafe_allow_html=True)
     st.markdown('<div class="ce-section-label">YOUR ACTIVITY</div>', unsafe_allow_html=True)
     col1, col2, col3, col4 = st.columns(4)
     for col, kicker, value in [
@@ -1976,20 +2006,48 @@ if page == "Dashboard":
     st.markdown('<div class="ce-section-label">QUICK ACCESS</div>', unsafe_allow_html=True)
     quick = st.columns(4)
     quick_items = [
-        ("Find opportunities", "Opportunity Analysis", "Review eligibility and requirements"),
-        ("Build a proposal", "Proposal Studio", "Draft and check a funding application"),
-        ("Manage tasks", "My Tasks", "Update work and due dates"),
-        ("Impact and SDGs", "SDG Navigator", "Connect activities to impact goals"),
+        ("Explore business grids", "World Grid Marketplace", "Review services, providers and evidence requirements"),
+        ("Manage earnings", "Earnings & Wallet", "Review account-scoped wallet and transaction status"),
+        ("Manage tasks", "My Tasks", "Track work, priority and due dates"),
+        ("Business reports", "Business Reports", "Review operational records and evidence status"),
     ]
     for col, item in zip(quick, quick_items):
         with col:
             st.markdown(f'<div class="ce-action-card"><div class="ce-action-title">{item[0]}</div><div class="ce-action-copy">{item[2]}</div></div>', unsafe_allow_html=True)
             if st.button("Open", key="ce_quick_" + item[1], use_container_width=True):
-                if item[1] in pages:
-                    st.session_state["ce_header_menu"] = item[1]
+                destination = item[1]
+                destination_group = next((group for group, group_pages in menu_groups.items() if destination in group_pages), None)
+                if destination_group:
+                    st.session_state["ce_pending_top_menu"] = destination_group
+                    st.session_state["ce_pending_sub_menu"] = destination
                     st.rerun()
                 else:
-                    st.info("This legacy workspace is not available in CEDARS EMPIRE.")
+                    st.warning("This destination is not currently registered in the workspace navigation.")
+
+    st.markdown('<div class="ce-section-label">EXPLORE THE BUSINESS GRIDS</div>', unsafe_allow_html=True)
+    st.markdown('<div style="color:#526579;font-size:12px;margin:0 0 10px">Choose a live business workspace. Availability, tasks and revenue are shown only when supported by verified records.</div>', unsafe_allow_html=True)
+    grid_items = [
+        ("01", "World Grid Marketplace", "Browse the connected business grid catalogue and service opportunities.", "🌐"),
+        ("02", "Cleaning Grid", "Property cleaning, turnover and service-delivery workflows.", "🧹"),
+        ("03", "Shelter & Accommodation Grid", "Accommodation and property-service listings with provider checks.", "🏠"),
+        ("04", "Energy & Utilities Grid", "Solar+, energy-efficiency and qualified provider services.", "⚡"),
+        ("05", "AI Training & Data Operations", "Human-reviewed data work, AI support and evidence-led tasks.", "🧠"),
+        ("06", "Robot Operations Dashboard", "Review robot grid readiness and safety gates; simulation is not hardware.", "🤖"),
+    ]
+    for row_start in range(0, len(grid_items), 3):
+        grid_cols = st.columns(3)
+        for grid_col, item in zip(grid_cols, grid_items[row_start:row_start + 3]):
+            with grid_col:
+                st.markdown(f'<div class="ce-grid-card"><div style="display:flex;align-items:center;gap:10px;margin-bottom:9px"><span style="font-size:23px">{item[3]}</span><span class="ce-grid-number">{item[0]} · BUSINESS GRID</span></div><div class="ce-grid-title">{item[1]}</div><div class="ce-grid-copy">{item[2]}</div></div>', unsafe_allow_html=True)
+                if st.button("Open grid", key="ce_dashboard_grid_" + item[1], use_container_width=True):
+                    destination = item[1]
+                    destination_group = next((group for group, group_pages in menu_groups.items() if destination in group_pages), None)
+                    if destination_group:
+                        st.session_state["ce_pending_top_menu"] = destination_group
+                        st.session_state["ce_pending_sub_menu"] = destination
+                        st.rerun()
+                    else:
+                        st.warning("This grid is not currently registered in the workspace navigation.")
     left, right = st.columns([1.5, 1])
     with left:
         st.markdown('<div class="ce-section-label">RECENT TASKS</div>', unsafe_allow_html=True)
@@ -1998,11 +2056,13 @@ if page == "Dashboard":
         else:
             st.markdown('<div class="ce-empty-state"><div class="ce-empty-icon">✓</div><b>No tasks yet</b><div>Create your first task to start tracking delivery.</div></div>', unsafe_allow_html=True)
             if st.button("Create your first task", key="ce_create_first_task", type="primary"):
-                if "My Tasks" in pages:
-                    st.session_state["ce_header_menu"] = "My Tasks"
+                destination_group = next((group for group, group_pages in menu_groups.items() if "My Tasks" in group_pages), None)
+                if destination_group:
+                    st.session_state["ce_pending_top_menu"] = destination_group
+                    st.session_state["ce_pending_sub_menu"] = "My Tasks"
                     st.rerun()
                 else:
-                    st.info("Task tools are available through the business workspace navigation.")
+                    st.warning("Task management is not currently registered in the workspace navigation.")
     with right:
         st.markdown('<div class="ce-section-label">WORKFLOW</div>', unsafe_allow_html=True)
         st.markdown('<div class="ce-workflow-card"><div class="ce-step"><span>01</span><div><b>Discover</b><small>Review an opportunity</small></div></div><div class="ce-step"><span>02</span><div><b>Prepare</b><small>Check requirements and draft</small></div></div><div class="ce-step"><span>03</span><div><b>Deliver</b><small>Track tasks and evidence</small></div></div><div class="ce-step"><span>04</span><div><b>Report</b><small>Measure results and learning</small></div></div></div>', unsafe_allow_html=True)
@@ -2502,10 +2562,10 @@ elif page == "Donor Feedback":
 # -----------------------------------------------------------------------------
 elif page == "B2B Collaboration":
     st.header("B2B collaboration and platform sustainability")
-    st.write("Connect businesses, clients, researchers and service providers around measurable outcomes.")
+    st.write("Connect NGOs, funders, researchers, service providers and businesses around measurable development outcomes.")
     st.markdown("**Transparent approach:** This release does not charge hidden access fees, sell visitor data or pay users for downloads. Sponsored content must be labelled and reviewed. A real revenue programme requires written sponsor/advertiser agreements, tax/accounting review and a tested payment provider.")
     with st.form("b2b_form"):
-        kind = st.selectbox("Collaboration type", ["Institutional partnership", "Corporate sponsorship", "Sponsored noticeboard placement", "Research / data collaboration", "Service provider offer", "Business-to-business collaboration", "Professional training", "Other"])
+        kind = st.selectbox("Collaboration type", ["Institutional partnership", "Corporate sponsorship", "Sponsored noticeboard placement", "Research / data collaboration", "Service provider offer", "NGO-to-NGO collaboration", "Training / CV support", "Other"])
         org = st.text_input("Organization / business")
         sector = st.text_input("Sector / capability")
         offer = st.text_area("What can you offer or what do you need?")
@@ -2523,7 +2583,7 @@ elif page == "B2B Collaboration":
             record_event(USER_EMAIL, "b2b_collaboration_request")
             st.success("Request saved for review. This prototype does not automatically sell placements or settle revenue.")
     st.subheader("B2B engagement ideas")
-    st.markdown("- Clearly labelled sponsored opportunity placements.\n- Paid training or institutional workshops with written terms.\n- Professional services (translation, design, evaluation and data tools).\n- Approved downloadable templates with transparent licensing.\n- Research partnerships with data minimization and consent.")
+    st.markdown("- Clearly labelled sponsored opportunity placements.\n- Paid training or institutional workshops with written terms.\n- Ethical business services for NGOs (translation, design, evaluation, data tools).\n- Approved downloadable templates with transparent licensing.\n- Research partnerships with data minimization and consent.")
 
 # -----------------------------------------------------------------------------
 # Privacy and user data
@@ -3091,9 +3151,9 @@ elif page == "Revenue & Sustainability":
         ("Budget and budget-narrative support", "Professional services"), ("CV and resume coaching", "Career services"),
         ("Cover-letter and application coaching", "Career services"), ("Interview preparation workshops", "Training"),
         ("Grant-writing training", "Training"), ("M&E training", "Training"),
-        ("Digital-skills training", "Training"), ("Business governance workshops", "Training"),
+        ("Digital-skills training", "Training"), ("NGO governance workshops", "Training"),
         ("Safeguarding and accountability training", "Training"), ("Institutional subscriptions", "Subscription"),
-        ("Business team subscriptions", "Subscription"), ("University / research institution licences", "Institutional licence"),
+        ("NGO team subscriptions", "Subscription"), ("University / research institution licences", "Institutional licence"),
         ("White-label platform licence", "Licensing"), ("API access for approved clients", "Licensing"),
         ("Custom integrations", "Technology services"), ("Data migration and setup", "Technology services"),
         ("Custom dashboard development", "Technology services"), ("Impact measurement services", "Research and evaluation"),

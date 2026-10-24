@@ -777,9 +777,10 @@ def issue_persistent_session(email: str) -> None:
             (token_hash, email.lower(), expires.isoformat(), created.isoformat(), None))
     if auth_cookie_manager is None:
         raise RuntimeError("Secure browser session storage is unavailable. Please reload and try signing in again.")
-    # Initialize the browser cookie component before writing. Its first render can
-    # otherwise race with the login rerun and leave the cookie unavailable on refresh.
-    auth_cookie_manager.get_all()
+    # Do not call get_all() here: restore_persistent_session() already renders
+    # this component earlier in the same Streamlit run. Calling get_all() again
+    # during sign-in reuses its element key and raises StreamlitDuplicateElementKey.
+    # Write the cookie directly; restoration reads it on the next app run.
     auth_cookie_manager.set(AUTH_COOKIE_NAME, token, expires_at=expires)
 
 

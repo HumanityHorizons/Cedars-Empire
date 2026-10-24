@@ -55,8 +55,8 @@ def test_dashboard_route_and_quick_actions_use_registered_business_navigation():
     assert '"Account": ["My Work & Wallet", "My Tasks"]' in source
     assert '("Explore business grids", "World Grid Marketplace"' in source
     assert '("Manage earnings", "Earnings & Wallet"' in source
-    assert 'st.session_state["ce_top_menu"] = destination_group' in source
-    assert 'st.session_state["ce_sub_menu"] = destination' in source
+    assert 'st.session_state["ce_pending_top_menu"] = destination_group' in source
+    assert 'st.session_state["ce_pending_sub_menu"] = destination' in source
     assert "Switch to NGO Operations" not in source
 
 
@@ -111,3 +111,15 @@ def test_dashboard_header_is_not_a_second_brand_header():
     assert "st.title(" not in dashboard
     assert "st.header(" not in dashboard
     assert '"07", "Robot Operations"' in dashboard
+
+
+
+def test_navigation_buttons_defer_widget_state_updates_until_before_widget_creation():
+    source = (ROOT / "app.py").read_text(encoding="utf-8")
+    apply_pending = source.index('_pending_group = st.session_state.pop("ce_pending_top_menu", None)')
+    create_menu = source.index('key="ce_top_menu"')
+    assert apply_pending < create_menu
+    assert 'st.session_state["ce_pending_top_menu"] = destination_group' in source
+    assert 'st.session_state["ce_pending_sub_menu"] = destination' in source
+    assert 'st.session_state["ce_top_menu"] = destination_group' not in source
+    assert 'st.session_state["ce_sub_menu"] = destination' not in source

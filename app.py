@@ -866,8 +866,16 @@ def signup_page() -> None:
             elif not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
                 st.error("Enter a valid email address.")
             else:
-                users = db_all("SELECT * FROM users WHERE email=?", (email,))
-                if not users or not verify_password(password, users[0]["password_salt"], users[0]["password_hash"]):
+                users = db_all("SELECT * FROM users WHERE LOWER(email)=LOWER(?)", (email,))
+                if not users:
+                    # Test-branch diagnostic only: do not log email addresses or credentials.
+                    import logging
+                    logging.warning("CEDARS_SIGNIN_REJECTED reason=account_lookup_miss branch=test")
+                    st.error("Email or password is incorrect.")
+                elif not verify_password(password, users[0]["password_salt"], users[0]["password_hash"]):
+                    # Keep the public error generic; write only the failure category to app logs.
+                    import logging
+                    logging.warning("CEDARS_SIGNIN_REJECTED reason=password_hash_mismatch branch=test")
                     st.error("Email or password is incorrect.")
                 else:
                     set_login(users[0], signin_purpose.strip())

@@ -88,7 +88,7 @@ def test_dashboard_shows_grid_cards_and_uses_single_brand_shell():
     ]:
         assert f'"{member_grid}"' not in internal
     assert "Your business at a glance" in source
-    assert "CEDARS EMPIRE · BUSINESS OVERVIEW" in source
+    assert "CEDARS EMPIRE · BUSINESS OVERVIEW" not in source
 
 
 def test_public_login_stays_separate_from_business_grid_workspace():
@@ -106,7 +106,8 @@ def test_dashboard_header_is_not_a_second_brand_header():
     source = (ROOT / "app.py").read_text(encoding="utf-8")
     assert source.count('with st.container(key="ce_locked_header")') == 1
     dashboard = source.split('elif page == "Business Dashboard":', 1)[1].split('\n    elif page ==', 1)[0]
-    assert "CEDARS EMPIRE · BUSINESS OVERVIEW" in dashboard
+    assert "CEDARS EMPIRE · BUSINESS OVERVIEW" not in dashboard
+    assert '<div class="ce-dashboard-intro-title">Business dashboard</div>' not in dashboard
     assert "ce-dashboard-intro" in dashboard
     assert "st.title(" not in dashboard
     assert "st.header(" not in dashboard

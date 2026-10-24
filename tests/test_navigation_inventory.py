@@ -51,7 +51,7 @@ def test_robot_motion_is_explicitly_simulated_not_live_hardware():
 
 def test_dashboard_route_and_quick_actions_use_registered_business_navigation():
     source = (ROOT / "app.py").read_text(encoding="utf-8")
-    assert '"Dashboard": "Dashboard"' in source
+    assert '"Dashboard": "Business Dashboard"' in source
     assert '"Account": ["My Work & Wallet", "My Tasks"]' in source
     assert '("Explore business grids", "World Grid Marketplace"' in source
     assert '("Manage earnings", "Earnings & Wallet"' in source
@@ -105,8 +105,9 @@ def test_public_login_stays_separate_from_business_grid_workspace():
 def test_dashboard_header_is_not_a_second_brand_header():
     source = (ROOT / "app.py").read_text(encoding="utf-8")
     assert source.count('with st.container(key="ce_locked_header")') == 1
-    dashboard = source.split('if page == "Dashboard":', 1)[1].split('\n# ', 1)[0]
+    dashboard = source.split('elif page == "Business Dashboard":', 1)[1].split('\n    elif page ==', 1)[0]
     assert "CEDARS EMPIRE · BUSINESS OVERVIEW" in dashboard
-    assert "ce-dashboard-hero" in dashboard
+    assert "ce-dashboard-intro" in dashboard
     assert "st.title(" not in dashboard
     assert "st.header(" not in dashboard
+    assert '"07", "Robot Operations"' in dashboard

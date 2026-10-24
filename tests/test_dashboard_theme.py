@@ -25,3 +25,17 @@ def test_dashboard_branding_css_and_components_remain_in_app():
         "SERVICE GRID PORTFOLIO",
     ):
         assert marker in source, f"Missing dashboard theme marker: {marker}"
+
+
+def test_single_landing_page_and_ai_notices_are_scoped_to_ai_page():
+    source = (ROOT / "app.py").read_text(encoding="utf-8")
+    assert '"Overview": ["Dashboard"],' in source
+    assert '"Overview": ["Dashboard", "Investor Landing"]' not in source
+    assert 'st.caption("AI: connected" if OPENAI_API_KEY else "AI: local structured mode (API key not configured)")' in source
+    assert 'if page == "AI Business Scenario Lab":' in source
+    assert 'st.caption("AI Real Business Scenarios")' in source
+    assert 'st.info("Integrity rule: scenarios, leads, estimates and planned contracts are not revenue.' in source
+    # The AI status must not be emitted in the shared account/header section.
+    header_start = source.index('st.divider()\n\n# Cedars Empire: real-business scenario workspace.')
+    ai_notice = source.index('st.caption("AI: connected" if OPENAI_API_KEY else "AI: local structured mode (API key not configured)")')
+    assert ai_notice > header_start

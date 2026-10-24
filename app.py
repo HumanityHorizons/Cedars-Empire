@@ -2027,8 +2027,8 @@ if page == "Dashboard":
                     destination = item[1]
                     destination_group = next((group for group, group_pages in menu_groups.items() if destination in group_pages), None)
                     if destination_group:
-                        st.session_state["ce_top_menu"] = destination_group
-                        st.session_state["ce_sub_menu"] = destination
+                        st.session_state["ce_pending_top_menu"] = destination_group
+                        st.session_state["ce_pending_sub_menu"] = destination
                         st.rerun()
                     else:
                         st.warning("This grid is not currently registered in the workspace navigation.")

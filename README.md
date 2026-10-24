@@ -48,7 +48,7 @@ DATABASE_URL = "postgresql://USER:PASSWORD@HOST:5432/DBNAME?sslmode=require"
 ADMIN_EMAILS = "authorized-admin@example.com"
 ```
 
-A managed persistent database is required for durable hosted accounts and records. If `DATABASE_URL` is absent, the application may use local SQLite; a temporary filesystem on hosted infrastructure is not durable production storage.
+A managed persistent database is required for durable hosted accounts and records. Hosted/production mode requires `DATABASE_URL` and fails closed if it is absent or the database cannot be reached. Local SQLite is for local development only; a temporary hosted filesystem is not durable production storage.
 
 Optional integrations must remain clearly unavailable until configured and tested. These may include an AI provider key, SMTP settings for password-reset email, and explorer/provider API credentials. Never store seed phrases, private keys, passwords, API keys, or withdrawal credentials in the repository or application source.
 

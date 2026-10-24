@@ -60,6 +60,15 @@ def test_dashboard_route_and_quick_actions_use_registered_business_navigation():
     assert "Switch to NGO Operations" not in source
 
 
+def test_ai_scenario_lab_is_admin_only_and_not_a_dead_member_route():
+    source = (ROOT / "app.py").read_text(encoding="utf-8")
+    member_menu = source.split("business_menu = {", 1)[1].split("\n}", 1)[0]
+    admin_menu = source.split("admin_menu = {", 1)[1].split("\n}", 1)[0]
+    internal = source.split("INTERNAL_ONLY_PAGES = {", 1)[1].split("}", 1)[0]
+    assert '"AI Business Scenario Lab"' not in member_menu
+    assert '"AI Business Scenario Lab"' in admin_menu
+    assert '"AI Business Scenario Lab"' in internal
+
 def test_signup_choices_do_not_offer_retired_ngo_account_category():
     source = (ROOT / "app.py").read_text(encoding="utf-8")
     assert "NGO / civil society organization" not in source

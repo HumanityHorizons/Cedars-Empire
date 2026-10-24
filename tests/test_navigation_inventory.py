@@ -64,3 +64,28 @@ def test_signup_choices_do_not_offer_retired_ngo_account_category():
     source = (ROOT / "app.py").read_text(encoding="utf-8")
     assert "NGO / civil society organization" not in source
     assert '["Individual", "Business / private sector", "Public institution", "Research / academic", "Other"]' in source
+
+
+def test_dashboard_shows_grid_cards_and_uses_single_brand_shell():
+    source = (ROOT / "app.py").read_text(encoding="utf-8")
+    assert source.count('with st.container(key="ce_locked_header")') == 1
+    assert 'st.markdown(\'<div class="ce-section-label">EXPLORE THE BUSINESS GRIDS</div>\'' in source
+    for label in [
+        "World Grid Marketplace",
+        "Cleaning Grid",
+        "Shelter & Accommodation Grid",
+        "Energy & Utilities Grid",
+        "AI Training & Data Operations",
+        "Robot Operations Dashboard",
+    ]:
+        assert f'("{label}"' in source or f'"{label}"' in source
+    internal = source.split("INTERNAL_ONLY_PAGES = {", 1)[1].split("}", 1)[0]
+    for member_grid in [
+        "Cleaning Grid",
+        "Shelter & Accommodation Grid",
+        "Energy & Utilities Grid",
+        "AI Training & Data Operations",
+    ]:
+        assert f'"{member_grid}"' not in internal
+    assert "Your business at a glance" in source
+    assert "CEDARS EMPIRE · BUSINESS OVERVIEW" in source

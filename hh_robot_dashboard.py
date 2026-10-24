@@ -49,7 +49,7 @@ def render_robot_dashboard() -> None:
     m4.metric("CONNECTED GRID ENTRIES", connected_entries)
 
     st.caption("VISUAL SIMULATION ONLY · NO HARDWARE CONNECTED")
-    st.caption("250,000,000 is a long-term target, not the number of deployed workers. Catalogue counts are not live worker counts or revenue.")
+    st.caption("The 250,000,000 figure is a long-term target, not the number of deployed workers. Catalogue counts are not live worker counts or revenue.")
 
     fleet_tab, grids_tab, packages_tab, money_tab, checks_tab = st.tabs(
         ["ROBOT FLEET", "BUSINESS GRIDS", "PACKAGES", "REAL MONEY FLOW", "SYSTEM CHECKS"]

@@ -204,7 +204,14 @@ class Database:
             amount = format(parsed_amount, "f")
         contract_id, now = str(uuid.uuid4()), utc_now()
         with self.transaction() as conn:
-            conn.cursor().execute(self._sql(
+            cur = conn.cursor()
+            if client_id:
+                cur.execute(self._sql(
+                    "SELECT id FROM business_clients WHERE id = ? AND owner_email = ?"
+                ), (client_id, owner))
+                if not cur.fetchone():
+                    raise ValueError("Client was not found in this owner's workspace.")
+            cur.execute(self._sql(
                 "INSERT INTO business_contracts "
                 "(id, owner_email, client_id, title, description, status, start_date, end_date, currency, amount, created_at, updated_at) "
                 "VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?, ?, ?)"
@@ -220,7 +227,13 @@ class Database:
             raise ValueError("Task, submitter, evidence type and evidence reference are required.")
         evidence_id, now = str(uuid.uuid4()), utc_now()
         with self.transaction() as conn:
-            conn.cursor().execute(self._sql(
+            cur = conn.cursor()
+            cur.execute(self._sql(
+                "SELECT id FROM business_tasks WHERE id = ? AND owner_email = ?"
+            ), (task_id, submitter))
+            if not cur.fetchone():
+                raise ValueError("Task was not found in this submitter's workspace.")
+            cur.execute(self._sql(
                 "INSERT INTO task_evidence "
                 "(id, task_id, submitted_by, evidence_type, evidence_ref, review_status, created_at) "
                 "VALUES (?, ?, ?, ?, ?, 'PENDING', ?)"

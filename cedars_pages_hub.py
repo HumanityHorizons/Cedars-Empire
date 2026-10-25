@@ -69,7 +69,8 @@ def render_cedars_pages_hub(menu_groups: dict[str, list[str]], is_admin: bool) -
     """Render an ordered catalog and route users through the host app's navigation."""
     st.header("CEDARS EMPIRE · 53-page website")
     st.caption("One navigation hub for the member portal, business operations, and administrator workspace.")
-    st.info("This hub routes to existing application handlers. A catalog entry is not proof that a separate workflow, payment rail, or external integration is fully implemented.")
+    st.info("UI ASSEMBLED · VERIFICATION PENDING. This directory brings all 53 page entries into one website. Verify each page in its deployed workflow; a catalog entry is not proof that its business process, payment rail, persistence, or external integration is operational.")
+    st.warning("Status legend: UI ASSEMBLED = page is listed in the website hub; ROUTE MAPPED = an existing application destination was found; VERIFICATION PENDING = deployment/runtime and workflow checks remain outstanding. No page is marked production-verified by this directory.")
 
     visible = dict(CATALOG)
     if not is_admin:
@@ -88,13 +89,15 @@ def render_cedars_pages_hub(menu_groups: dict[str, list[str]], is_admin: bool) -
                        if query.casefold() in " ".join(item).casefold()]
             st.markdown("**Search results**")
             for group, item in results:
-                st.write(f"{item[0]} — {group}")
+                st.write(f"{item[0]} — {group} · UI assembled · verification pending")
 
     with col2:
         st.subheader(selected[0])
         st.write(selected[1])
         target = selected[2]
         st.markdown(f"**Existing application destination:** {target}")
+        st.warning("PAGE STATUS: UI ASSEMBLED · VERIFICATION PENDING")
+        st.caption("Verify on deployment: page loads, correct role/access, save and reload, persistence after restart, and relevant workflow-specific behavior. For money-related pages, independently verify settlement before treating funds as real or available.")
         if target in {"Executive Command Center", "Treasury Management", "Real Money Engines",
                       "Payments & Treasury", "Blockchain & Treasury", "Payment Operations",
                       "Daily Crediting", "Reports & Referrals", "AI Operations", "Branding Settings",
@@ -116,6 +119,6 @@ def render_cedars_pages_hub(menu_groups: dict[str, list[str]], is_admin: bool) -
         with st.expander(f"{group} · {len(items)} pages", expanded=(group == section)):
             for title, description, target in items:
                 st.markdown(f"**{title}** — {description}")
-                st.caption(f"Route target: {target}")
+                st.caption(f"Route target: {target} · UI assembled · verification pending")
 
     st.caption("Integrity note: estimates, draft records, and unverified transaction claims must not be presented as confirmed revenue or available funds.")

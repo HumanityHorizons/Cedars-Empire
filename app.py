@@ -1426,18 +1426,52 @@ if page in BUSINESS_PAGES:
         own_refs = db_all("SELECT referral_code,referred_email,status,reward_amount,reward_asset,evidence_ref,created_at FROM referral_records WHERE referrer_email=? ORDER BY created_at DESC", (USER_EMAIL,))
         if own_refs: render_bank_table(pd.DataFrame(own_refs), use_container_width=True, hide_index=True)
     elif page == "Business Dashboard":
-        st.markdown('<div class="ce-section-label">FINANCIAL CONTROL</div>', unsafe_allow_html=True)
-        cols = st.columns(3)
-        for col, label, value, detail in [
-            (cols[0], "VERIFIED REVENUE", "Not connected", "Requires reconciled receipt records"),
-            (cols[1], "ACTIVE CONTRACTS", "Not connected", "Requires contract records"),
-            (cols[2], "TREASURY BALANCE", "Not connected", "Requires verified wallet and ledger data"),
-        ]:
+        st.markdown("""
+        <div class="ce-dashboard-hero">
+          <div class="ce-eyebrow">CEDARS EMPIRE · BUSINESS WORKSPACE</div>
+          <div class="ce-hero-title">Business command dashboard</div>
+          <div class="ce-hero-subtitle">A clear operating view of verified finances, service grids, and the next actions required to bring each system online.</div>
+          <div class="ce-hero-strip"><span>REAL ACTIVITY ONLY</span><span>VERIFIED RECORDS</span><span>NO FABRICATED TOTALS</span></div>
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown('<div class="ce-section-label">FINANCIAL CONTROL · LIVE DATA STATUS</div>', unsafe_allow_html=True)
+        st.caption("These indicators remain disconnected until the required source records are connected and independently reconciled. This dashboard will not substitute estimates for actual financial data.")
+        cols = st.columns(3, gap="medium")
+        finance_cards = [
+            (cols[0], "VERIFIED REVENUE", "Not connected", "Requires reconciled receipt records", "Next step: reconcile a receipt against source evidence."),
+            (cols[1], "ACTIVE CONTRACTS", "Not connected", "Requires signed or approved contract records", "Next step: record counterparties, terms, and deliverables."),
+            (cols[2], "TREASURY BALANCE", "Not connected", "Requires verified wallet and ledger data", "Next step: connect read-only wallet data and reconcile the ledger."),
+        ]
+        for col, label, value, detail, next_step in finance_cards:
             with col:
-                st.markdown(f'<div class="ce-business-metric"><div class="ce-stat-kicker">{label}</div><div class="ce-business-value">{value}</div><div class="ce-business-detail">{detail}</div></div>', unsafe_allow_html=True)
-        st.caption("No financial values are estimated or fabricated. Connect and verify the underlying records before displaying live totals.")
+                st.markdown(
+                    f'<div class="ce-business-metric"><div class="ce-stat-kicker">{label}</div>'
+                    f'<div class="ce-business-value">{value}</div>'
+                    f'<div class="ce-business-detail">{detail}</div>'
+                    f'<div style="margin-top:12px;padding-top:10px;border-top:1px solid #DCE4ED;'
+                    f'font-size:11px;line-height:1.45;color:#53657A">{next_step}</div></div>',
+                    unsafe_allow_html=True,
+                )
+        st.markdown('<div class="ce-section-label">OPERATING READINESS · FOUR EVIDENCE GATES</div>', unsafe_allow_html=True)
+        gate_cols = st.columns(4, gap="small")
+        gates = [
+            ("01", "Demand", "Real customer or buyer evidence"),
+            ("02", "Agreement", "Written scope and terms"),
+            ("03", "Delivery", "Completion and acceptance evidence"),
+            ("04", "Settlement", "Reconciled receipt or payment proof"),
+        ]
+        for col, (number, title, detail) in zip(gate_cols, gates):
+            with col:
+                st.markdown(
+                    f'<div class="ce-action-card" style="min-height:104px">'
+                    f'<div class="ce-grid-number">{number} · REQUIRED GATE</div>'
+                    f'<div class="ce-action-title">{title}</div>'
+                    f'<div class="ce-action-copy">{detail}</div></div>',
+                    unsafe_allow_html=True,
+                )
         st.markdown('<div class="ce-section-label">SERVICE GRID PORTFOLIO</div>', unsafe_allow_html=True)
-        grid_cols = st.columns(3)
+        st.caption("Choose a grid to review its operating records. A grid card is an entry point, not proof that the service is staffed, deployed, or earning revenue.")
+        grid_cols = st.columns(3, gap="medium")
         grid_items = [
             ("01", "Cleaning Services", "Jobs · providers · delivery evidence", "Cleaning Grid"),
             ("02", "Shelter & Accommodation", "Rooms · beds · availability checks", "Shelter & Accommodation Grid"),
@@ -1447,10 +1481,15 @@ if page in BUSINESS_PAGES:
             ("06", "Client Services & Contracts", "Buyers · deliverables · written terms", "Client Services & Contracts"),
             ("07", "Robot Operations", "Readiness checks · safe standby · simulation only", "Robot Operations Dashboard"),
         ]
-        for col, item in zip(grid_cols * 2, grid_items):
+        for col, item in zip(grid_cols * 3, grid_items):
             with col:
-                st.markdown(f'<div class="ce-grid-card"><div class="ce-grid-number">{item[0]}</div><div class="ce-grid-title">{item[1]}</div><div class="ce-grid-copy">{item[2]}</div></div>', unsafe_allow_html=True)
-                if st.button("Open grid", key="ce_business_grid_" + item[3], use_container_width=True):
+                st.markdown(
+                    f'<div class="ce-grid-card"><div class="ce-grid-number">{item[0]} · BUSINESS GRID</div>'
+                    f'<div class="ce-grid-title">{item[1]}</div><div class="ce-grid-copy">{item[2]}</div>'
+                    f'<div style="margin-top:10px"><span class="ce-hub-chip">STATUS: CHECK IN WORKFLOW</span></div></div>',
+                    unsafe_allow_html=True,
+                )
+                if st.button("Open grid →", key="ce_business_grid_" + item[3], use_container_width=True):
                     target_page = item[3]
                     target_group = next(
                         (group_name for group_name, group_pages in menu_groups.items()
@@ -1464,7 +1503,18 @@ if page in BUSINESS_PAGES:
                         st.rerun()
                     else:
                         st.info("This grid is not currently available in your navigation.")
-
+        st.divider()
+        st.markdown('<div class="ce-section-label">TRUST & CONTROL</div>', unsafe_allow_html=True)
+        trust_cols = st.columns([1, 1, 1.6], gap="medium")
+        with trust_cols[0]:
+            st.markdown("**Financial integrity**")
+            st.caption("Only reconciled receipts count as verified revenue.")
+        with trust_cols[1]:
+            st.markdown("**Robot safety**")
+            st.caption("Robot operations remain simulation-only until hardware and safety checks are verified.")
+        with trust_cols[2]:
+            st.markdown("**Production readiness**")
+            st.caption("Authentication, persistent storage, external integrations, and each workflow must pass separate tests before being described as production-ready.")
     elif page == "AI Business Scenario Lab":
         st.header("AI Business Scenario Lab")
         st.write("Build a testable operating plan. Estimates are planning inputs only; they are not evidence of market demand or income.")

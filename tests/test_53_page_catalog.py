@@ -49,6 +49,48 @@ class CedarsPageCatalogTests(unittest.TestCase):
         self.assertIn('st.session_state["ce_pending_sub_menu"]', self.source)
         self.assertIn("Existing app authentication, database, and role checks remain the source of truth.", self.source)
 
+
+    def test_every_catalog_destination_exists_for_its_role(self):
+        app_tree = ast.parse(self.app_source)
+        assignments = {
+            target.id: node.value
+            for node in app_tree.body
+            if isinstance(node, ast.Assign)
+            for target in node.targets
+            if isinstance(target, ast.Name) and target.id in {"business_menu", "admin_menu"}
+        }
+        self.assertIn("business_menu", assignments)
+        self.assertIn("admin_menu", assignments)
+
+        def literal_menu_items(node):
+            values = set()
+            for item in ast.walk(node):
+                if isinstance(item, ast.Dict):
+                    for value in item.values:
+                        if isinstance(value, ast.List):
+                            values.update(
+                                element.value for element in value.elts
+                                if isinstance(element, ast.Constant) and isinstance(element.value, str)
+                            )
+            return values
+
+        member_targets = literal_menu_items(assignments["business_menu"])
+        admin_targets = literal_menu_items(assignments["admin_menu"]) | member_targets
+        member_catalog = self.groups["01 · Member Portal"] + self.groups["02 · Business Operations"]
+        admin_catalog = self.groups["03 · Administrator"]
+        self.assertTrue(
+            all(item[2] in member_targets for item in member_catalog),
+            "Every member/business catalog destination must exist in member navigation.",
+        )
+        self.assertTrue(
+            all(item[2] in admin_targets for item in admin_catalog),
+            "Every administrator catalog destination must exist in administrator navigation.",
+        )
+
+    def test_administrator_catalog_is_hidden_from_members(self):
+        self.assertIn('if not is_admin:', self.source)
+        self.assertIn('visible.pop("03 · Administrator", None)', self.source)
+
     def test_catalog_discloses_unimplemented_workflows(self):
         self.assertIn("A catalog entry is not proof", self.source)
         self.assertIn("No new account store is created", self.source)

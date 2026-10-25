@@ -136,11 +136,50 @@ def render_cedars_pages_hub(menu_groups: dict[str, list[str]], is_admin: bool) -
         st.caption("No new account store is created. Existing app authentication, database, and role checks remain the source of truth.")
 
     st.divider()
-    st.subheader("Complete page directory")
-    for group, items in visible.items():
-        with st.expander(f"{group} · {len(items)} pages", expanded=True):
-            for title, description, target in items:
-                st.markdown(f"**{title}** — {description}")
-                st.markdown(f"<span class=\"ce-hub-chip\">ROUTE: {target}</span> <span class=\"ce-hub-chip\">VERIFICATION PENDING</span>", unsafe_allow_html=True)
+    st.markdown("""
+    <div class="ce-hub-hero" style="background:radial-gradient(circle at 90% 0%,rgba(214,168,79,.24),transparent 32%),linear-gradient(115deg,#071a33,#103c5a 65%,#145c63)">
+      <h2>🤖 Robot Simulation · Landing Page</h2>
+      <p>Explore the robot fleet concept, business grids, task-evidence gates, commercial readiness, and system checks.</p>
+    </div>
+    """, unsafe_allow_html=True)
+    st.info("SIMULATION ONLY · NO PHYSICAL ROBOTS CONNECTED. Worker targets and catalogue entries are planning information, not live workers, completed jobs, or earned revenue.")
+    robot_target = "Robot Operations Dashboard"
+    robot_group = next((group for group, pages in menu_groups.items() if robot_target in pages), None)
+    if robot_group:
+        if st.button("Open Robot Simulation Dashboard →", type="primary", key="cedars_robot_landing_open"):
+            st.session_state["ce_pending_top_menu"] = robot_group
+            st.session_state["ce_pending_sub_menu"] = robot_target
+            st.rerun()
+    else:
+        st.warning("Robot dashboard is not present in this account's navigation. The simulation landing information is shown here, but the dashboard route needs to be enabled for this role.")
 
+    st.divider()
+    st.subheader("All 53 pages · visible directory")
+    st.caption("All 53 catalog entries are displayed below as cards. Administrator pages remain locked for member accounts. Each route must still be tested in the deployed app.")
+    flat_items = [(group, item) for group, group_items in visible.items() for item in group_items]
+    page_cols = st.columns(3, gap="medium")
+    for index, (group, item) in enumerate(flat_items):
+        title, description, target = item
+        with page_cols[index % 3]:
+            is_admin_entry = group == "03 · Administrator"
+            target_group = next((name for name, pages in menu_groups.items() if target in pages), None)
+            locked = is_admin_entry and not is_admin
+            st.markdown(
+                f'<div class="ce-grid-card" style="min-height:140px;margin-bottom:8px">'
+                f'<div class="ce-grid-number">{group} · PAGE {index + 1:02d}</div>'
+                f'<div class="ce-grid-title">{title}</div>'
+                f'<div class="ce-grid-copy">{description}</div>'
+                f'<div style="margin-top:9px"><span class="ce-hub-chip">{"LOCKED · ADMIN ONLY" if locked else "VERIFICATION PENDING"}</span></div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+            if locked:
+                st.button("Restricted to administrators", key=f"cedars53_card_{index}", disabled=True, use_container_width=True)
+            elif target_group:
+                if st.button("Open page →", key=f"cedars53_card_{index}", use_container_width=True):
+                    st.session_state["ce_pending_top_menu"] = target_group
+                    st.session_state["ce_pending_sub_menu"] = target
+                    st.rerun()
+            else:
+                st.button("Route not enabled", key=f"cedars53_card_{index}", disabled=True, use_container_width=True)
     st.caption("Integrity note: estimates, draft records, and unverified transaction claims must not be presented as confirmed revenue or available funds.")

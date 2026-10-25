@@ -32,6 +32,7 @@ from hh_real_payments import (
 )
 from hh_table_ui import render_bank_table, reset_table_counter, set_table_scope
 from daily_crediting import initialize as initialize_daily_crediting, process_daily_credits
+from cedars_pages_hub import render_cedars_pages_hub
 
 # -----------------------------------------------------------------------------
 # CEDARS EMPIRE — functional MVP / deployment-safe prototype
@@ -1048,13 +1049,13 @@ business_menu = {
     "Business": ["Customer & Client Management", "Calendar & Events", "Live Studio", "Work & Contracts", "Client Services & Contracts"],
     "Earnings": ["Earnings & Wallet", "Deposit & Packages", "Withdrawals & Full KYC", "Staking & Compounding", "Referral Program"],
     "Grids": ["World Grid Marketplace", "Cleaning Grid", "Shelter & Accommodation Grid", "Energy & Utilities Grid", "AI Training & Data Operations", "Robot Operations Dashboard"],
-    "AI & Reports": ["Business Reports"],
+    "AI & Reports": ["Business Reports", "53-page Website Hub"],
     "Account": ["My Work & Wallet", "My Tasks"],
 }
 admin_menu = {
     **business_menu,
     "Business": ["Customer & Client Management", "Calendar & Events", "Live Studio", "Work & Contracts", "Client Services & Contracts", "Business Opportunity Pipeline"],
-    "AI & Reports": ["AI Business Scenario Lab", "Business Reports"],
+    "AI & Reports": ["AI Business Scenario Lab", "Business Reports", "53-page Website Hub"],
     "Command & Finance": ["Executive Command Center", "Treasury Management", "Real Money Engines", "Payments & Treasury", "Blockchain & Treasury", "Payment Operations"],
     "Automation & Admin": ["Daily Crediting", "Reports & Referrals", "AI Operations", "Branding Settings", "Admin Console"],
 }
@@ -1198,7 +1199,7 @@ BUSINESS_PAGES = {
     "AI Training & Data Operations", "World Grid Marketplace", "Client Services & Contracts",
     "Business Opportunity Pipeline", "Blockchain & Treasury", "Deposit QR & TIGERS",
     "Withdrawals & Full KYC", "Staking & Compounding", "Referral Program",
-    "Business Reports", "Live Studio", "Customer & Client Management", "Calendar & Events", "Executive Command Center", "Treasury Management", "Grid Marketplace", "Work & Contracts",
+    "Business Reports", "53-page Website Hub", "Live Studio", "Customer & Client Management", "Calendar & Events", "Executive Command Center", "Treasury Management", "Grid Marketplace", "Work & Contracts",
     "Payments & Treasury", "Deposits & Withdrawals", "Payment Operations", "Deposit & Packages", "Withdraw / Cash Out", "Reports & Referrals", "AI Operations"
 }
 # Fail closed: retired or unknown handlers cannot render from stale routes.
@@ -3270,6 +3271,9 @@ elif page == "Report Automation":
 
 elif page == "Calendar & Events":
     render_calendar(USER_EMAIL, IS_ADMIN, db_all, db_exec, record_event, full_page=True)
+
+elif page == "53-page Website Hub":
+    render_cedars_pages_hub(menu_groups, IS_ADMIN)
 
 # Unknown page guard
 else:

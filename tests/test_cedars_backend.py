@@ -37,6 +37,17 @@ class DatabaseFoundationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.db.create_task("owner@example.com", "Bad priority", priority="SUPER")
 
+    def test_contracts_and_evidence_are_owner_scoped(self):
+        client_id = self.db.create_client("owner@example.com", "Owned Client")
+        with self.assertRaises(ValueError):
+            self.db.create_contract("other@example.com", "Foreign contract", client_id=client_id)
+        contract_id = self.db.create_contract("owner@example.com", "Service contract", client_id=client_id)
+        task_id = self.db.create_task("owner@example.com", "Deliver work", contract_id=contract_id)
+        evidence_id = self.db.create_evidence(task_id, "owner@example.com", "URL", "https://example.invalid/evidence")
+        self.assertTrue(evidence_id)
+        with self.assertRaises(ValueError):
+            self.db.create_evidence(task_id, "other@example.com", "URL", "https://example.invalid/foreign")
+
     def test_missing_owner_or_name_is_rejected(self):
         with self.assertRaises(ValueError):
             self.db.create_client("", "Acme")

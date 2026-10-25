@@ -36,6 +36,13 @@ class CedarsPageCatalogTests(unittest.TestCase):
         self.assertIn('render_cedars_pages_hub(menu_groups, IS_ADMIN)', self.app_source)
         self.assertIn("from cedars_pages_hub import render_cedars_pages_hub", self.app_source)
 
+    def test_existing_member_routes_are_allowed_by_the_page_guard(self):
+        start = self.app_source.index("BUSINESS_PAGES =")
+        end = self.app_source.index("# Fail closed", start)
+        allowlist = self.app_source[start:end]
+        for route in ["Earnings & Wallet", "My Work & Wallet", "My Tasks", "Staking & Compounding", "53-page Website Hub"]:
+            self.assertIn("\\"" + route + "\\"", allowlist)
+
     def test_hub_uses_existing_session_and_database_context(self):
         self.assertIn("menu_groups: dict[str, list[str]]", self.source)
         self.assertIn('st.session_state["ce_pending_top_menu"]', self.source)

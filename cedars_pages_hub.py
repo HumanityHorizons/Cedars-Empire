@@ -67,7 +67,26 @@ CATALOG = {
 
 def render_cedars_pages_hub(menu_groups: dict[str, list[str]], is_admin: bool) -> None:
     """Render an ordered catalog and route users through the host app's navigation."""
-    st.header("CEDARS EMPIRE · 53-page website")
+    st.markdown("""
+    <style>
+    .ce-hub-hero { padding:22px 24px; border-radius:16px; color:#fff;
+      background:radial-gradient(circle at 90% 0%,rgba(71,211,218,.28),transparent 32%),
+      linear-gradient(115deg,#071a33,#0a3453 65%,#146a70);
+      border-bottom:3px solid #d6a84f; margin-bottom:16px; }
+    .ce-hub-hero h2 { color:#fff !important; margin:0; font-size:27px; }
+    .ce-hub-hero p { color:#e0edf6 !important; margin:6px 0 0; }
+    [data-testid="stExpander"] { border:1px solid #d5e0ea; border-radius:12px;
+      background:linear-gradient(145deg,#fff,#f3f8fc); margin-bottom:10px; }
+    [data-testid="stExpander"] summary { font-weight:800; color:#0a2342; }
+    .ce-hub-chip { display:inline-block; padding:4px 8px; border-radius:20px;
+      background:#e8f4f5; color:#0a4954; font-size:11px; font-weight:700; }
+    </style>
+    <div class="ce-hub-hero">
+      <h2>CEDARS EMPIRE · BUSINESS & AI COMMAND HUB</h2>
+      <p>53-page directory · Member services · Business grids · Robotics · Admin controls</p>
+    </div>
+    """, unsafe_allow_html=True)
+    st.header("Complete 53-page directory")
     st.caption("One navigation hub for the member portal, business operations, and administrator workspace.")
     st.info("UI ASSEMBLED · VERIFICATION PENDING. This directory brings all 53 page entries into one website. Verify each page in its deployed workflow; a catalog entry is not proof that its business process, payment rail, persistence, or external integration is operational.")
     st.warning("Status legend: UI ASSEMBLED = page is listed in the website hub; ROUTE MAPPED = an existing application destination was found; VERIFICATION PENDING = deployment/runtime and workflow checks remain outstanding. No page is marked production-verified by this directory.")
@@ -119,9 +138,9 @@ def render_cedars_pages_hub(menu_groups: dict[str, list[str]], is_admin: bool) -
     st.divider()
     st.subheader("Complete page directory")
     for group, items in visible.items():
-        with st.expander(f"{group} · {len(items)} pages", expanded=(group == section)):
+        with st.expander(f"{group} · {len(items)} pages", expanded=True):
             for title, description, target in items:
                 st.markdown(f"**{title}** — {description}")
-                st.caption(f"Route target: {target} · UI assembled · verification pending")
+                st.markdown(f"<span class=\"ce-hub-chip\">ROUTE: {target}</span> <span class=\"ce-hub-chip\">VERIFICATION PENDING</span>", unsafe_allow_html=True)
 
     st.caption("Integrity note: estimates, draft records, and unverified transaction claims must not be presented as confirmed revenue or available funds.")

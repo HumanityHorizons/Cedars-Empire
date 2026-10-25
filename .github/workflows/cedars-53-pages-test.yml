@@ -1,0 +1,27 @@
+name: CEDARS 53-page integration checks
+
+on:
+  pull_request:
+    branches:
+      - website-assembly/cedars-empire-a-to-z
+  push:
+    branches:
+      - integration/cedars-53-pages-streamlit
+
+permissions:
+  contents: read
+
+jobs:
+  page-catalog-integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile integration modules
+        run: python -m compileall -q app.py cedars_pages_hub.py
+      - name: Verify 53-page catalog and route integration
+        run: python -m unittest discover -s tests -p "test_53_page_catalog.py" -v

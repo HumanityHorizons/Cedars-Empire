@@ -186,6 +186,48 @@ class Database:
                 fields.get("status", "ACTIVE").strip().upper(), fields.get("notes", "").strip(), now, now))
         return client_id
 
+    def create_contract(self, owner_email: str, title: str, client_id: str | None = None,
+                        description: str = "", currency: str = "USD",
+                        amount: str | None = None, start_date: str | None = None,
+                        end_date: str | None = None) -> str:
+        owner, clean_title = owner_email.lower().strip(), title.strip()
+        if not owner or not clean_title:
+            raise ValueError("A signed-in owner email and contract title are required.")
+        if amount is not None:
+            from decimal import Decimal, InvalidOperation
+            try:
+                parsed_amount = Decimal(str(amount))
+            except (InvalidOperation, TypeError, ValueError) as exc:
+                raise ValueError("Contract amount must be numeric.") from exc
+            if not parsed_amount.is_finite() or parsed_amount < 0:
+                raise ValueError("Contract amount cannot be negative or non-finite.")
+            amount = format(parsed_amount, "f")
+        contract_id, now = str(uuid.uuid4()), utc_now()
+        with self.transaction() as conn:
+            conn.cursor().execute(self._sql(
+                "INSERT INTO business_contracts "
+                "(id, owner_email, client_id, title, description, status, start_date, end_date, currency, amount, created_at, updated_at) "
+                "VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?, ?, ?)"
+            ), (contract_id, owner, client_id, clean_title, description.strip(),
+                start_date, end_date, currency.strip().upper(), amount, now, now))
+        return contract_id
+
+    def create_evidence(self, task_id: str, submitted_by: str, evidence_type: str,
+                        evidence_ref: str) -> str:
+        """Store a reference to evidence; file hosting and review remain separate."""
+        submitter = submitted_by.lower().strip()
+        if not task_id or not submitter or not evidence_type.strip() or not evidence_ref.strip():
+            raise ValueError("Task, submitter, evidence type and evidence reference are required.")
+        evidence_id, now = str(uuid.uuid4()), utc_now()
+        with self.transaction() as conn:
+            conn.cursor().execute(self._sql(
+                "INSERT INTO task_evidence "
+                "(id, task_id, submitted_by, evidence_type, evidence_ref, review_status, created_at) "
+                "VALUES (?, ?, ?, ?, ?, 'PENDING', ?)"
+            ), (evidence_id, task_id, submitter, evidence_type.strip().upper(),
+                evidence_ref.strip(), now))
+        return evidence_id
+
     def list_clients(self, owner_email: str) -> list[dict[str, Any]]:
         with self.transaction() as conn:
             cur = conn.cursor()

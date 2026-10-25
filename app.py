@@ -1200,7 +1200,8 @@ BUSINESS_PAGES = {
     "Business Opportunity Pipeline", "Blockchain & Treasury", "Deposit QR & TIGERS",
     "Withdrawals & Full KYC", "Staking & Compounding", "Referral Program",
     "Business Reports", "Live Studio", "Customer & Client Management", "Calendar & Events", "Executive Command Center", "Treasury Management", "Grid Marketplace", "Work & Contracts",
-    "Payments & Treasury", "Deposits & Withdrawals", "Payment Operations", "Deposit & Packages", "Withdraw / Cash Out", "Reports & Referrals", "AI Operations", "53-page Website Hub"
+    "Payments & Treasury", "Deposits & Withdrawals", "Payment Operations", "Deposit & Packages", "Withdraw / Cash Out", "Reports & Referrals", "AI Operations", "53-page Website Hub",
+    "Earnings & Wallet", "My Work & Wallet", "My Tasks", "Staking & Compounding"
 }
 # Fail closed: retired or unknown handlers cannot render from stale routes.
 if page not in BUSINESS_PAGES:

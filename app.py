@@ -1048,7 +1048,8 @@ business_menu = {
     "Overview": ["Dashboard"],
     "Business": ["Customer & Client Management", "Calendar & Events", "Live Studio", "Work & Contracts", "Client Services & Contracts"],
     "Earnings": ["Earnings & Wallet", "Deposit & Packages", "Withdrawals & Full KYC", "Staking & Compounding", "Referral Program"],
-    "Grids": ["World Grid Marketplace", "Cleaning Grid", "Shelter & Accommodation Grid", "Energy & Utilities Grid", "AI Training & Data Operations", "Robot Operations Dashboard"],
+    "Grids": ["World Grid Marketplace", "Cleaning Grid", "Shelter & Accommodation Grid", "Energy & Utilities Grid", "AI Training & Data Operations"],
+    "Robotics": ["Robot Operations Dashboard"],
     "AI & Reports": ["Business Reports", "53-page Website Hub"],
     "Account": ["My Work & Wallet", "My Tasks"],
 }
@@ -1196,7 +1197,7 @@ st.divider()
 BUSINESS_PAGES = {
     "Investor Landing", "Business Dashboard", "Real Money Engines", "NeuroWave + Health", "EchoMap + Mobility", "BioLoop + Finance", "DreamGrid + Education", "EmoFlux + Shelter", "IdeaForge + Data", "QuantumLeap + Energy", "AI Business Scenario Lab",
     "Cleaning Grid", "Shelter & Accommodation Grid", "Energy & Utilities Grid",
-    "AI Training & Data Operations", "World Grid Marketplace", "Client Services & Contracts",
+    "AI Training & Data Operations", "Robot Operations Dashboard", "World Grid Marketplace", "Client Services & Contracts",
     "Business Opportunity Pipeline", "Blockchain & Treasury", "Deposit QR & TIGERS",
     "Withdrawals & Full KYC", "Staking & Compounding", "Referral Program",
     "Business Reports", "53-page Website Hub", "Earnings & Wallet", "My Work & Wallet", "My Tasks", "Staking & Compounding", "Live Studio", "Customer & Client Management", "Calendar & Events", "Executive Command Center", "Treasury Management", "Grid Marketplace", "Work & Contracts",

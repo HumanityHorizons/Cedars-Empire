@@ -39,7 +39,7 @@ CATALOG = {
         ("30 Mobility Grid", "Mobility and logistics services", "World Grid Marketplace"),
         ("31 Agriculture Grid", "Agriculture service operations", "World Grid Marketplace"),
         ("32 Data Operations", "Data and AI service delivery", "AI Training & Data Operations"),
-        ("33 Robot Operations", "Robot task monitoring", "Robot Operations Dashboard"),
+        ("33 Robot Operations Dashboard", "Robot fleet, grid readiness, task workflow, evidence gates and system checks (simulation until hardware is verified)", "Robot Operations Dashboard"),
         ("34 Enterprise Grid", "Enterprise service operations", "World Grid Marketplace"),
         ("35 Secure Grid", "Security and compliance service records", "World Grid Marketplace"),
         ("36 Health Grid", "Non-clinical health and wellbeing services", "World Grid Marketplace"),
@@ -72,9 +72,10 @@ def render_cedars_pages_hub(menu_groups: dict[str, list[str]], is_admin: bool) -
     st.info("UI ASSEMBLED · VERIFICATION PENDING. This directory brings all 53 page entries into one website. Verify each page in its deployed workflow; a catalog entry is not proof that its business process, payment rail, persistence, or external integration is operational.")
     st.warning("Status legend: UI ASSEMBLED = page is listed in the website hub; ROUTE MAPPED = an existing application destination was found; VERIFICATION PENDING = deployment/runtime and workflow checks remain outstanding. No page is marked production-verified by this directory.")
 
+    # Keep all 53 catalog entries visible to make the complete site auditable.
+    # Authorization is enforced below: member accounts can view locked admin
+    # entries in the directory but cannot open administrator workflows.
     visible = dict(CATALOG)
-    if not is_admin:
-        visible.pop("03 · Administrator", None)
 
     col1, col2 = st.columns([1, 2], gap="large")
     with col1:
@@ -98,11 +99,13 @@ def render_cedars_pages_hub(menu_groups: dict[str, list[str]], is_admin: bool) -
         st.markdown(f"**Existing application destination:** {target}")
         st.warning("PAGE STATUS: UI ASSEMBLED · VERIFICATION PENDING")
         st.caption("Verify on deployment: page loads, correct role/access, save and reload, persistence after restart, and relevant workflow-specific behavior. For money-related pages, independently verify settlement before treating funds as real or available.")
-        if target in {"Executive Command Center", "Treasury Management", "Real Money Engines",
-                      "Payments & Treasury", "Blockchain & Treasury", "Payment Operations",
-                      "Daily Crediting", "Reports & Referrals", "AI Operations", "Branding Settings",
-                      "Admin Console", "Business Opportunity Pipeline"} and not is_admin:
-            st.error("This destination is administrator-only.")
+        if section == "03 · Administrator" and not is_admin:
+            st.error("LOCKED · Administrator access required. This page is listed for completeness but cannot be opened by a member account.")
+        elif target in {"Executive Command Center", "Treasury Management", "Real Money Engines",
+                        "Payments & Treasury", "Blockchain & Treasury", "Payment Operations",
+                        "Daily Crediting", "Reports & Referrals", "AI Operations", "Branding Settings",
+                        "Admin Console", "Business Opportunity Pipeline"} and not is_admin:
+            st.error("LOCKED · This destination is administrator-only.")
         else:
             group_match = next((group for group, pages in menu_groups.items() if target in pages), None)
             if group_match and st.button("Open existing workflow", type="primary", key="cedars53_open"):

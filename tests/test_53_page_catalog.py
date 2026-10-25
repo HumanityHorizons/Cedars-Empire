@@ -105,7 +105,7 @@ class CedarsPageCatalogTests(unittest.TestCase):
         self.assertEqual(robot_entries[0][2], "Robot Operations Dashboard")
 
     def test_catalog_discloses_unimplemented_workflows(self):
-        self.assertIn("A catalog entry is not proof", self.source)
+        self.assertIn("a catalog entry is not proof", self.source)
         self.assertIn("No new account store is created", self.source)
 
 

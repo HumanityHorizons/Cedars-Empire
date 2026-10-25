@@ -340,7 +340,7 @@ class PaymentModuleTests(unittest.TestCase):
         self.assertNotIn('elif page == "Packages":', source)
         # Navigation is now grouped into compact business menus; test the new contract
         # instead of depending on the retired flat user_pages list.
-        self.assertIn('"Earnings": ["Earnings & Wallet", "Deposit", "Withdraw", "Refer"]', source)
+        self.assertIn('"Earnings": ["Earnings & Wallet", "Deposit & Packages", "Withdrawals & Full KYC", "Staking & Compounding", "Referral Program"]', source)
         self.assertIn('"Customer & Client Management"', source)
         self.assertIn('"Studio": "Live Studio"', source)
         self.assertIn('"Deposit": "Deposit & Packages"', source)

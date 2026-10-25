@@ -41,7 +41,7 @@ class CedarsPageCatalogTests(unittest.TestCase):
         end = self.app_source.index("# Fail closed", start)
         allowlist = self.app_source[start:end]
         for route in ["Earnings & Wallet", "My Work & Wallet", "My Tasks", "Staking & Compounding", "53-page Website Hub"]:
-            self.assertIn("\\"" + route + "\\"", allowlist)
+            self.assertIn('"' + route + '"', allowlist)
 
     def test_hub_uses_existing_session_and_database_context(self):
         self.assertIn("menu_groups: dict[str, list[str]]", self.source)

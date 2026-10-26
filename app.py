@@ -1092,7 +1092,26 @@ with st.container(key="ce_locked_header"):
         with brand_col:
             st.markdown('<div class="ce-brand-title">CEDARS EMPIRE</div>', unsafe_allow_html=True)
     with header_status_col:
-        st.markdown('<div class="ce-header-right">BUSINESS WORKSPACE</div>', unsafe_allow_html=True)
+        # Live connection indicator: test the configured durable database on each app run.
+        # This is database health only; it does not imply that treasury/revenue is reconciled.
+        try:
+            _db_probe = db_all("SELECT 1 AS connection_ok")
+            _db_connected = bool(_db_probe and _db_probe[0].get("connection_ok") == 1)
+            _db_kind = "PostgreSQL" if DATABASE_URL else "Local database"
+            if _db_connected:
+                st.markdown(
+                    '<div class="ce-header-right" style="color:#16794B">● DATABASE CONNECTED</div>'
+                    '<div style="font-size:10px;text-align:right;color:#53657A">' + _db_kind + '</div>',
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown('<div class="ce-header-right" style="color:#A86400">● DATABASE CHECK FAILED</div>', unsafe_allow_html=True)
+        except Exception as _db_exc:
+            st.markdown(
+                '<div class="ce-header-right" style="color:#A12622">● DATABASE DISCONNECTED</div>'
+                '<div style="font-size:10px;text-align:right;color:#A12622">' + type(_db_exc).__name__ + '</div>',
+                unsafe_allow_html=True,
+            )
     nav_cols = st.columns([1.0, 1.65, 1.2], vertical_alignment="center")
     with nav_cols[0]:
         menu_keys = list(menu_groups)
@@ -1435,7 +1454,7 @@ if page in BUSINESS_PAGES:
         </div>
         """, unsafe_allow_html=True)
         st.markdown('<div class="ce-section-label">FINANCIAL CONTROL · LIVE DATA STATUS</div>', unsafe_allow_html=True)
-        st.caption("These indicators remain disconnected until the required source records are connected and independently reconciled. This dashboard will not substitute estimates for actual financial data.")
+        st.caption("Database reachability is shown in the header. Revenue, contracts, and treasury remain separate evidence gates and are shown as connected only after their source records are independently reconciled.")
         cols = st.columns(3, gap="medium")
         finance_cards = [
             (cols[0], "VERIFIED REVENUE", "Not connected", "Requires reconciled receipt records", "Next step: reconcile a receipt against source evidence."),

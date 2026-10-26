@@ -1107,9 +1107,19 @@ with st.container(key="ce_locked_header"):
             else:
                 st.markdown('<div class="ce-header-right" style="color:#A86400">● DATABASE CHECK FAILED</div>', unsafe_allow_html=True)
         except Exception as _db_exc:
+            # Show a safe, actionable diagnostic without exposing connection strings or secrets.
+            _db_message = str(_db_exc)
+            if "Durable storage is not configured" in _db_message:
+                _db_reason = "Add DATABASE_URL in this app's Streamlit Secrets"
+            elif "psycopg is missing" in _db_message:
+                _db_reason = "Database driver missing; rebuild dependencies"
+            elif "could not be reached" in _db_message:
+                _db_reason = "DATABASE_URL or database availability needs checking"
+            else:
+                _db_reason = "Check app logs for database initialization or migration errors"
             st.markdown(
                 '<div class="ce-header-right" style="color:#A12622">● DATABASE DISCONNECTED</div>'
-                '<div style="font-size:10px;text-align:right;color:#A12622">' + type(_db_exc).__name__ + '</div>',
+                '<div style="font-size:10px;text-align:right;color:#A12622">' + _db_reason + '</div>',
                 unsafe_allow_html=True,
             )
     nav_cols = st.columns([1.0, 1.65, 1.2], vertical_alignment="center")

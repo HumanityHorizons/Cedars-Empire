@@ -87,12 +87,25 @@ class CedarsPageCatalogTests(unittest.TestCase):
             "Every administrator catalog destination must exist in administrator navigation.",
         )
 
-    def test_administrator_catalog_is_hidden_from_members(self):
-        self.assertIn('if not is_admin:', self.source)
-        self.assertIn('visible.pop("03 · Administrator", None)', self.source)
+    def test_all_53_catalog_entries_remain_visible_with_admin_pages_locked(self):
+        self.assertIn("visible = dict(CATALOG)", self.source)
+        self.assertNotIn('visible.pop("03 · Administrator", None)', self.source)
+        self.assertIn('section == "03 · Administrator" and not is_admin', self.source)
+        self.assertIn("cannot be opened by a member account", self.source)
+
+    def test_robot_operations_has_navigation_allowlist_and_handler(self):
+        self.assertIn('"Robotics": ["Robot Operations Dashboard"]', self.app_source)
+        start = self.app_source.index("BUSINESS_PAGES =")
+        end = self.app_source.index("# Fail closed", start)
+        self.assertIn('"Robot Operations Dashboard"', self.app_source[start:end])
+        self.assertIn('elif page == "Robot Operations Dashboard":', self.app_source)
+        robot_entries = [item for items in self.groups.values() for item in items
+                         if "Robot" in item[0]]
+        self.assertTrue(robot_entries, "The 53-page catalog must include a robot operations page.")
+        self.assertEqual(robot_entries[0][2], "Robot Operations Dashboard")
 
     def test_catalog_discloses_unimplemented_workflows(self):
-        self.assertIn("A catalog entry is not proof", self.source)
+        self.assertIn("a catalog entry is not proof", self.source)
         self.assertIn("No new account store is created", self.source)
 
 

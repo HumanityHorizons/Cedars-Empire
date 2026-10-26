@@ -47,7 +47,7 @@ PBKDF2_ITERATIONS = 310_000
 st.set_page_config(page_title="CEDARS EMPIRE", page_icon="🌍", layout="wide")
 st.markdown("""
 <style>
-:root { color-scheme: light; --ce-navy:#0A2342; --ce-gold:#D6A84F; --ce-charcoal:#0A2342; --ce-pearl:#FFFFFF; --ce-silver:#DDE1E5; }
+:root { color-scheme: light; --ce-navy:#0A2342; --ce-gold:#E9EDF2; --ce-charcoal:#0A2342; --ce-pearl:#FFFFFF; --ce-silver:#DDE1E5; }
 html, body, [class*="css"] { font-family: Arial, Roboto, sans-serif; }
 .stApp, [data-testid="stAppViewContainer"] {
   background: radial-gradient(ellipse at 18% 0%, rgba(255,255,255,1) 0%, rgba(248,248,248,.99) 58%, rgba(238,241,245,.96) 100%) !important;
@@ -71,18 +71,18 @@ input, textarea, [data-baseweb="select"] input {
 
 st.markdown("""
 <style>
-:root { --ce-navy:#0A2342; --ce-blue:#0A2342; --ce-gold:#D6A84F; --ce-green:#16794B; --ce-amber:#A86400; --ce-bg:#FFFFFF; --ce-card:#FFFFFF; --ce-border:#DCE4ED; --ce-text:#0A2342; --ce-muted:#0A2342; }
-.stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] { background:linear-gradient(135deg,#FFFFFF 0%,#FFFFFF 52%,#EEF1F5 100%) !important; color:var(--ce-text) !important; }
+:root { --ce-navy:#0A2342; --ce-blue:#0A2342; --ce-gold:#E9EDF2; --ce-green:#0A2342; --ce-amber:#0A2342; --ce-bg:#FFFFFF; --ce-card:#FFFFFF; --ce-border:#DCE4ED; --ce-text:#0A2342; --ce-muted:#0A2342; }
+.stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] { background:radial-gradient(ellipse at 15% 0%,#FFFFFF 0%,#FFFFFF 44%,#E7ECF2 100%) !important; color:var(--ce-text) !important; }
 [data-testid="stMain"] h1,[data-testid="stMain"] h2,[data-testid="stMain"] h3,[data-testid="stMain"] h4 { color:var(--ce-navy) !important; letter-spacing:-.01em; }
 [data-testid="stMain"] p,[data-testid="stMain"] li,[data-testid="stMain"] label,[data-testid="stMain"] [data-testid="stMarkdownContainer"],[data-testid="stMain"] [data-testid="stCaptionContainer"] { color:var(--ce-text) !important; }
 [data-testid="stSidebar"],[data-testid="stSidebarCollapsedControl"] { display:none !important; }
 [data-testid="stMetric"] { background:transparent !important; border:0 !important; border-radius:0 !important; padding:4px 0 !important; box-shadow:none !important; }
-.ce-dashboard-hero { background:radial-gradient(circle at 88% 10%,rgba(96,213,255,.23),transparent 30%),linear-gradient(115deg,#071A33 0%,#0A2342 54%,#176078 100%); color:#fff; border-radius:18px; padding:22px 26px 16px; margin:0 0 18px; border-bottom:3px solid #D6A84F; box-shadow:0 12px 30px rgba(10,35,66,.18), inset 0 1px 0 rgba(255,255,255,.18); }
+.ce-dashboard-hero { background:radial-gradient(circle at 88% 10%,rgba(255,255,2555,.23),transparent 30%),linear-gradient(115deg,#071A33 0%,#0A2342 54%,#176078 100%); color:#fff; border-radius:18px; padding:22px 26px 16px; margin:0 0 18px; border-bottom:3px solid #E9EDF2; box-shadow:0 12px 30px rgba(10,35,66,.18), inset 0 1px 0 rgba(255,255,255,.18); }
 .ce-eyebrow { color:#FFFFFF !important; font-size:11px; font-weight:800; letter-spacing:2px; margin-bottom:10px; }
 .ce-hero-title { color:#fff !important; font-size:30px; line-height:1.2; font-weight:800; letter-spacing:-.6px; }
 .ce-hero-subtitle { color:#FFFFFF !important; margin-top:8px; font-size:14px; }
 .ce-hero-strip { display:flex; flex-wrap:wrap; gap:9px 22px; margin-top:22px; padding-top:14px; border-top:1px solid rgba(255,255,255,.18); color:#FFFFFF !important; font-size:10px; font-weight:700; letter-spacing:1px; }
-.ce-login-heading { background:linear-gradient(110deg,#FFFFFF 0%,#F4F8FC 72%,#E8F1F8 100%); border-left:4px solid #D6A84F; border-radius:10px; padding:18px 20px; margin:0 0 14px; box-shadow:0 6px 18px rgba(10,35,66,.06); } .ce-dashboard-intro { display:flex; flex-direction:column; gap:5px; margin:4px 0 14px; padding:0 0 12px; border-bottom:1px solid #DCE4ED; }
+.ce-login-heading { background:linear-gradient(110deg,#FFFFFF 0%,#F4F8FC 72%,#E8F1F8 100%); border-left:4px solid #E9EDF2; border-radius:10px; padding:18px 20px; margin:0 0 14px; box-shadow:0 6px 18px rgba(10,35,66,.06); } .ce-dashboard-intro { display:flex; flex-direction:column; gap:5px; margin:4px 0 14px; padding:0 0 12px; border-bottom:1px solid #DCE4ED; }
 .ce-dashboard-intro .ce-eyebrow { color:#9A7621 !important; font-size:10px; font-weight:800; letter-spacing:1.5px; margin:0; }
 .ce-dashboard-intro-title { color:#0A2342 !important; font-size:23px; line-height:1.2; font-weight:800; letter-spacing:-.35px; }
 .ce-dashboard-intro-copy { color:#53657A !important; font-size:12px; line-height:1.4; }
@@ -90,18 +90,18 @@ st.markdown("""
 .ce-dashboard-intro-text { min-width:0; flex:1; }
 .ce-dashboard-robot { position:relative; width:112px; height:92px; flex:0 0 112px; display:flex; align-items:center; justify-content:center;
   border-radius:14px; overflow:hidden; background:radial-gradient(circle at 50% 45%,rgba(214,168,79,.20),#0A2342 72%); }
-.ce-dashboard-robot .ce-robot-avatar { font-size:48px; z-index:1; animation:ce-robot-float 2.8s ease-in-out infinite; filter:drop-shadow(0 0 8px rgba(96,213,255,.35)); }
+.ce-dashboard-robot .ce-robot-avatar { font-size:48px; z-index:1; animation:ce-robot-float 2.8s ease-in-out infinite; filter:drop-shadow(0 0 8px rgba(255,255,2555,.35)); }
 .ce-dashboard-robot .ce-robot-orbit { position:absolute; width:70px; height:70px; border:1px solid rgba(214,168,79,.65); border-radius:50%; animation:ce-orbit 8s linear infinite; }
-.ce-dashboard-robot .ce-robot-orbit:before { content:""; position:absolute; top:7px; left:11px; width:6px; height:6px; border-radius:50%; background:#D6A84F; box-shadow:0 0 8px #D6A84F; }
+.ce-dashboard-robot .ce-robot-orbit:before { content:""; position:absolute; top:7px; left:11px; width:6px; height:6px; border-radius:50%; background:#E9EDF2; box-shadow:0 0 8px #E9EDF2; }
 @keyframes ce-robot-float { 0%,100% { transform:translateY(3px) rotate(-2deg); } 50% { transform:translateY(-6px) rotate(2deg); } }
 @keyframes ce-orbit { to { transform:rotate(360deg); } }
 @media(max-width:600px) { .ce-dashboard-robot { width:76px; height:76px; flex-basis:76px; } .ce-dashboard-robot .ce-robot-avatar { font-size:38px; } }
 .ce-section-label { color:#0A2342 !important; font-size:11px; font-weight:800; letter-spacing:1.4px; margin:14px 0 8px; }
-.ce-stat-card { background:linear-gradient(145deg,#FFFFFF 0%,#F8FBFF 72%,#E5EEF8 100%); border:1px solid #DCE4ED; border-top:3px solid #D6A84F; border-radius:12px; padding:10px 14px 8px; min-height:100px; box-shadow:0 7px 20px rgba(10,35,66,.08), inset 0 1px 0 rgba(255,255,255,1); }
+.ce-stat-card { background:linear-gradient(145deg,#FFFFFF 0%,#F8FBFF 72%,#E5EEF8 100%); border:1px solid #DCE4ED; border-top:3px solid #E9EDF2; border-radius:12px; padding:10px 14px 8px; min-height:100px; box-shadow:0 7px 20px rgba(10,35,66,.08), inset 0 1px 0 rgba(255,255,255,1); }
 .ce-stat-kicker { color:#0A2342 !important; font-size:10px; font-weight:800; letter-spacing:1px; margin-bottom:6px; }
 .ce-stat-value { color:#0A2342 !important; font-size:30px; line-height:1.15; font-weight:800; margin:10px 0 5px; } .ce-stat-foot { color:#0A2342 !important; font-size:10px; }
 .ce-action-card,.ce-grid-card,.ce-business-metric,.ce-workflow-card,.ce-empty-state { background:linear-gradient(145deg,#FFFFFF 0%,#FFFFFF 72%,#EEF1F5 100%); border:1px solid #DCE4ED; border-radius:12px; padding:16px; box-shadow:0 5px 16px rgba(10,35,66,.05), inset 0 1px 0 rgba(255,255,255,1); min-height:104px; }
-.ce-action-card { border-top:3px solid #D6A84F; margin-bottom:8px; transition:transform .18s ease,box-shadow .18s ease; } .ce-action-card:hover,.ce-grid-card:hover { transform:translateY(-2px); box-shadow:0 12px 24px rgba(10,35,66,.12); }
+.ce-action-card { border-top:3px solid #E9EDF2; margin-bottom:8px; transition:transform .18s ease,box-shadow .18s ease; } .ce-action-card:hover,.ce-grid-card:hover { transform:translateY(-2px); box-shadow:0 12px 24px rgba(10,35,66,.12); }
 .ce-action-title,.ce-grid-title { color:#0A2342 !important; font-size:14px; font-weight:800; margin-bottom:7px; }
 .ce-action-copy,.ce-grid-copy,.ce-business-detail { color:#0A2342 !important; font-size:12px; line-height:1.5; }
 .ce-workflow-card { padding:6px 16px; }
@@ -112,7 +112,7 @@ st.markdown("""
 .ce-step small { display:block; color:#0A2342; font-size:11px; margin-top:3px; }
 .ce-empty-state { text-align:center; padding:30px 16px; color:#0A2342; }
 .ce-empty-icon { margin:0 auto 10px; display:flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:50%; background:#E8EDF5; color:#0A2342; font-size:22px; }
-.ce-grid-card { min-height:116px; margin-bottom:10px; border-top:3px solid #D6A84F; background:linear-gradient(145deg,#FFFFFF 0%,#F6FBFF 70%,#E2F0F4 100%); }
+.ce-grid-card { min-height:116px; margin-bottom:10px; border-top:3px solid #E9EDF2; background:linear-gradient(145deg,#FFFFFF 0%,#F6FBFF 70%,#E2F0F4 100%); }
 .ce-grid-number { color:#0A2342; font-size:11px; font-weight:900; letter-spacing:1px; margin-bottom:9px; }
 .ce-business-metric { min-height:126px; border-left:4px solid #FFFFFF; }
 .ce-business-value { color:#0A2342 !important; font-size:22px; font-weight:800; margin:10px 0 6px; }
@@ -1100,12 +1100,12 @@ with st.container(key="ce_locked_header"):
             _db_kind = "PostgreSQL" if DATABASE_URL else "Local database"
             if _db_connected:
                 st.markdown(
-                    '<div class="ce-header-right" style="color:#16794B">● DATABASE CONNECTED</div>'
+                    '<div class="ce-header-right" style="color:#0A2342">● DATABASE CONNECTED</div>'
                     '<div style="font-size:10px;text-align:right;color:#53657A">' + _db_kind + '</div>',
                     unsafe_allow_html=True,
                 )
             else:
-                st.markdown('<div class="ce-header-right" style="color:#A86400">● DATABASE CHECK FAILED</div>', unsafe_allow_html=True)
+                st.markdown('<div class="ce-header-right" style="color:#0A2342">● DATABASE CHECK FAILED</div>', unsafe_allow_html=True)
         except Exception as _db_exc:
             # Show a safe, actionable diagnostic without exposing connection strings or secrets.
             _db_message = str(_db_exc)
@@ -1118,8 +1118,8 @@ with st.container(key="ce_locked_header"):
             else:
                 _db_reason = "Check app logs for database initialization or migration errors"
             st.markdown(
-                '<div class="ce-header-right" style="color:#A12622">● DATABASE DISCONNECTED</div>'
-                '<div style="font-size:10px;text-align:right;color:#A12622">' + _db_reason + '</div>',
+                '<div class="ce-header-right" style="color:#0A2342">● DATABASE DISCONNECTED</div>'
+                '<div style="font-size:10px;text-align:right;color:#0A2342">' + _db_reason + '</div>',
                 unsafe_allow_html=True,
             )
     nav_cols = st.columns([1.0, 1.65, 1.2], vertical_alignment="center")
